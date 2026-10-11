@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ResetPasswordForm } from "@/component/auth/ResetPasswordForm";
 
 export const metadata: Metadata = { title: "Choose a new password · streetio" };
+export const instant = false;
 
 type Props = { searchParams: Promise<{ token?: string; error?: string }> };
 
