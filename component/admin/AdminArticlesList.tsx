@@ -109,7 +109,7 @@ export function AdminArticlesList({
               <th>Sold Unlocks</th>
               <th>Revenue Generated</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="admin-table__actions-head">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -210,8 +210,8 @@ export function AdminArticlesList({
                     </span>
                   </td>
 
-                  <td>
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                  <td className="admin-table__actions-cell">
+                    <div className="admin-table__action-group">
                       {confirmDeleteId === art.id ? (
                         <div className="admin-table__delete-confirm-box">
                           <span style={{ fontSize: "11px", color: "#B91C1C", fontWeight: "bold" }}>

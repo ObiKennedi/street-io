@@ -19,6 +19,48 @@ $bp-wide: 1200px;
   }
 }
 
+// ---- Admin Alert Banner ----------------------------------------------------
+.admin-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  animation: fadeIn 0.2s ease-out;
+
+  &--danger {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+
+    svg {
+      color: #DC2626;
+      flex-shrink: 0;
+    }
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0.7;
+    margin-left: auto;
+    transition: opacity var(--duration-fast);
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
 // ---- Admin Header Bar ------------------------------------------------------
 .admin-header {
   display: flex;
@@ -547,6 +589,33 @@ $bp-wide: 1200px;
     cursor: pointer;
   }
 
+  &__actions-head {
+    min-width: 200px;
+  }
+
+  &__actions-cell {
+    min-width: 200px;
+    white-space: nowrap;
+  }
+
+  &__action-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  &__delete-confirm-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: var(--radius-md);
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    animation: fadeIn 0.15s ease-out;
+  }
+
   &__action-btn {
     display: inline-flex;
     align-items: center;
@@ -562,11 +631,40 @@ $bp-wide: 1200px;
     cursor: pointer;
     transition:
       border-color var(--duration-fast),
-      background-color var(--duration-fast);
+      background-color var(--duration-fast),
+      color var(--duration-fast);
 
     &:hover {
       border-color: var(--brand-charcoal);
       color: var(--brand-charcoal);
+    }
+
+    &--danger {
+      color: #DC2626;
+      border-color: #FECACA;
+      background: #FEF2F2;
+
+      svg {
+        stroke: currentColor;
+      }
+
+      &:hover {
+        border-color: #DC2626;
+        background: #DC2626;
+        color: #FFFFFF;
+      }
+    }
+
+    &--danger-confirm {
+      color: #FFFFFF;
+      background: #DC2626;
+      border-color: #DC2626;
+      font-weight: var(--font-weight-bold);
+
+      &:hover {
+        background: #B91C1C;
+        border-color: #B91C1C;
+      }
     }
   }
 }

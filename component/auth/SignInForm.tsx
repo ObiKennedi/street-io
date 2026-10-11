@@ -18,7 +18,7 @@ type Status =
 
 export function SignInForm({ next }: { next?: string }) {
   const router = useRouter();
-  const returnTo = safePath(next);
+  const returnTo = next ? safePath(next, "/redirect") : "/redirect";
   const [status, setStatus] = useState<Status>({ type: "idle" });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

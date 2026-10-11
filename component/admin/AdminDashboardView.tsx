@@ -7,10 +7,12 @@ import {
   INITIAL_ADMIN_USERS,
   INITIAL_ARTICLE_REPORTS,
   calculateRevenueSummary,
+  deleteAdminArticle,
   type AdminArticle,
   type AdminUser,
   type ArticleReport,
 } from "@/lib/admin-data";
+import { deleteArticle } from "@/lib/articles";
 import { AdminHeader } from "./AdminHeader";
 import { AdminStatsOverview } from "./AdminStatsOverview";
 import { AdminArticleUpload } from "./AdminArticleUpload";
@@ -26,6 +28,7 @@ export function AdminDashboardView() {
   const [articles, setArticles] = useState<AdminArticle[]>(INITIAL_ADMIN_ARTICLES);
   const [users, setUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS);
   const [reports, setReports] = useState<ArticleReport[]>(INITIAL_ARTICLE_REPORTS);
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
   const summary = useMemo(() => {
     return calculateRevenueSummary(articles);
@@ -43,6 +46,26 @@ export function AdminDashboardView() {
   const handleArticleCreated = (newArticle: AdminArticle) => {
     setArticles((prev) => [newArticle, ...prev]);
     setActiveTab("articles");
+  };
+
+  const handleDeleteArticle = (articleId: string) => {
+    const art = articles.find((a) => a.id === articleId);
+    const title = art ? art.title : "Article";
+    setArticles((prev) => prev.filter((a) => a.id !== articleId));
+    deleteAdminArticle(articleId);
+    deleteArticle(articleId);
+
+    // Persist deletion to PostgreSQL via server route
+    fetch("/api/article/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: articleId }),
+    }).catch(() => {});
+
+    setDeleteNotice(`"${title}" has been permanently deleted from inventory.`);
+    setTimeout(() => {
+      setDeleteNotice(null);
+    }, 4500);
   };
 
   const handlePriceUpdate = (articleId: string, newPriceFormatted: string) => {
@@ -124,6 +147,25 @@ export function AdminDashboardView() {
       {/* Header */}
       <AdminHeader onPublishClick={() => setActiveTab("upload")} />
 
+      {/* Delete Feedback Toast/Banner */}
+      {deleteNotice && (
+        <div className="admin-alert-banner admin-alert-banner--danger" role="status" aria-live="polite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          <span style={{ flex: 1 }}>{deleteNotice}</span>
+          <button
+            type="button"
+            onClick={() => setDeleteNotice(null)}
+            className="admin-alert-banner__close"
+            aria-label="Dismiss notice"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* KPI Overview Metrics */}
       <AdminStatsOverview
         summary={summary}
@@ -195,6 +237,7 @@ export function AdminDashboardView() {
             articles={articles}
             onPriceUpdate={handlePriceUpdate}
             onStatusToggle={handleStatusToggle}
+            onDeleteArticle={handleDeleteArticle}
           />
 
           {/* User Moderation section */}
@@ -225,6 +268,7 @@ export function AdminDashboardView() {
           articles={articles}
           onPriceUpdate={handlePriceUpdate}
           onStatusToggle={handleStatusToggle}
+          onDeleteArticle={handleDeleteArticle}
         />
       )}
 

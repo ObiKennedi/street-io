@@ -56,7 +56,7 @@ export type UserRole = "user" | "admin" | "owner" | string;
  */
 export function getDashboardPath(role?: string | null): string {
   if (role === "admin" || role === "owner") {
-    return "/owner/dashboard";
+    return "/admin";
   }
   return "/dashboard";
 }

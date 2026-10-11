@@ -16,7 +16,7 @@ type Status =
   | { type: "sent"; email: string };
 
 export function SignUpForm({ next }: { next?: string }) {
-  const returnTo = safePath(next);
+  const returnTo = next ? safePath(next, "/redirect") : "/redirect";
   const [status, setStatus] = useState<Status>({ type: "idle" });
   const [resent, setResent] = useState(false);
 
