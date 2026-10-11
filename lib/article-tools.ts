@@ -5,7 +5,7 @@ export type ArticleTool = {
   name: string;
   description: string;
   category: string;
-  type: "Verification" | "Forensics" | "Defense" | "Regulatory" | "Intelligence";
+  type: "Verification" | "Forensics" | "Defense" | "Regulatory" | "Intelligence" | "Security";
   url: string;
   isExternal?: boolean;
   badge?: string;
