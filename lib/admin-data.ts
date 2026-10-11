@@ -226,3 +226,15 @@ export function formatAdminNaira(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+export function deleteAdminArticle(articleId: string): boolean {
+  const clean = articleId.trim().toLowerCase();
+  const index = INITIAL_ADMIN_ARTICLES.findIndex(
+    (a) => a.id.toLowerCase() === clean || a.slug.toLowerCase() === clean
+  );
+  if (index !== -1) {
+    INITIAL_ADMIN_ARTICLES.splice(index, 1);
+    return true;
+  }
+  return false;
+}

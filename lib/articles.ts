@@ -695,6 +695,18 @@ export function getArticlesByCategory(categorySlug: string): Article[] {
   );
 }
 
+export function deleteArticle(articleIdOrSlug: string): boolean {
+  const clean = articleIdOrSlug.trim().toLowerCase();
+  const index = ARTICLES_DATABASE.findIndex(
+    (a) => a.id.toLowerCase() === clean || a.slug.toLowerCase() === clean
+  );
+  if (index !== -1) {
+    ARTICLES_DATABASE.splice(index, 1);
+    return true;
+  }
+  return false;
+}
+
 export function getCategoryBySlug(slug: string): DashboardCategory | undefined {
   const clean = slug.trim().toLowerCase();
   return exploreCategories.find((c) => c.slug.toLowerCase() === clean);

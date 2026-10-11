@@ -9,15 +9,18 @@ type AdminArticlesListProps = {
   articles: AdminArticle[];
   onPriceUpdate: (articleId: string, newPriceFormatted: string) => void;
   onStatusToggle?: (articleId: string) => void;
+  onDeleteArticle?: (articleId: string) => void;
 };
 
 export function AdminArticlesList({
   articles,
   onPriceUpdate,
   onStatusToggle,
+  onDeleteArticle,
 }: AdminArticlesListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingPrice, setEditingPrice] = useState<string>("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -208,25 +211,70 @@ export function AdminArticlesList({
                   </td>
 
                   <td>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      {!isEditing && (
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(art)}
-                          className="admin-table__action-btn"
-                          title="Adjust Article Price in Naira"
-                        >
-                          Set Price
-                        </button>
-                      )}
-                      {onStatusToggle && (
-                        <button
-                          type="button"
-                          onClick={() => onStatusToggle(art.id)}
-                          className="admin-table__action-btn"
-                        >
-                          {art.status === "published" ? "Archive" : "Publish"}
-                        </button>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                      {confirmDeleteId === art.id ? (
+                        <div className="admin-table__delete-confirm-box">
+                          <span style={{ fontSize: "11px", color: "#B91C1C", fontWeight: "bold" }}>
+                            Delete?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onDeleteArticle?.(art.id);
+                              setConfirmDeleteId(null);
+                            }}
+                            className="admin-table__action-btn admin-table__action-btn--danger-confirm"
+                            title="Permanently remove article"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="admin-table__action-btn"
+                            title="Cancel"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {!isEditing && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(art)}
+                              className="admin-table__action-btn"
+                              title="Adjust Article Price in Naira"
+                            >
+                              Set Price
+                            </button>
+                          )}
+                          {onStatusToggle && (
+                            <button
+                              type="button"
+                              onClick={() => onStatusToggle(art.id)}
+                              className="admin-table__action-btn"
+                            >
+                              {art.status === "published" ? "Archive" : "Publish"}
+                            </button>
+                          )}
+                          {onDeleteArticle && (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(art.id)}
+                              className="admin-table__action-btn admin-table__action-btn--danger"
+                              title="Delete this article permanently"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                              <span>Delete</span>
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </td>

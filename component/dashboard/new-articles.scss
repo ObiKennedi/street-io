@@ -1,5 +1,5 @@
 // File: component/dashboard/new-articles.scss
-// streetio new page — latest uploaded articles feed with responsive grid, portrait cards, and stacked metric cards.
+// streetio new page — latest uploaded articles feed with mobile-first column stack, responsive portrait cards, and clean box constraints.
 
 $bp-mobile-sm: 480px;
 $bp-tablet: 768px;
@@ -11,8 +11,10 @@ $bp-desktop: 1024px;
   gap: var(--space-4);
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   margin-inline: auto;
+  overflow-x: hidden;
 
   @media (min-width: 640px) {
     gap: var(--space-5);
@@ -32,19 +34,24 @@ $bp-desktop: 1024px;
   text-align: center;
   gap: var(--space-2);
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  padding-inline: var(--space-2);
+  padding-inline: var(--space-1);
 
   &__tag {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     font-family: var(--font-mono);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
     letter-spacing: var(--tracking-caps);
     text-transform: uppercase;
     color: var(--color-steel-700);
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
 
     @media (min-width: $bp-tablet) {
       font-size: 11px;
@@ -56,6 +63,7 @@ $bp-desktop: 1024px;
     display: inline-flex;
     width: 8px;
     height: 8px;
+    flex-shrink: 0;
 
     &::before {
       content: "";
@@ -81,11 +89,12 @@ $bp-desktop: 1024px;
   &__title {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.65rem;
+    font-size: 1.55rem;
     font-weight: var(--font-weight-black);
     line-height: 1.15;
     letter-spacing: -0.03em;
     word-break: break-word;
+    max-width: 100%;
 
     @media (min-width: $bp-mobile-sm) {
       font-size: 1.95rem;
@@ -100,8 +109,9 @@ $bp-desktop: 1024px;
     max-width: 580px;
     margin: 0;
     color: var(--color-steel-800);
-    font-size: 13px;
+    font-size: 12.5px;
     line-height: 1.5;
+    word-break: break-word;
 
     @media (min-width: $bp-tablet) {
       font-size: var(--text-sm);
@@ -117,12 +127,14 @@ $bp-desktop: 1024px;
   }
 }
 
-// ---- Upload Stats Cards (Cut in two, stacked responsively) -----------------
+// ---- Upload Stats Cards (Column on mobile, 2 cols on tablet+) --------------
 .new-stats-group {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 
   @media (min-width: 640px) {
@@ -138,12 +150,17 @@ $bp-desktop: 1024px;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
-  padding: var(--space-3-5, 14px) var(--space-4);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-3-5, 14px);
   border: 1px solid var(--dash-border);
   border-radius: var(--radius-xl);
   background: var(--dash-card);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.02);
-  min-height: 110px;
+  min-height: 100px;
+  overflow: hidden;
+  gap: var(--space-2);
   transition:
     border-color var(--duration-fast),
     box-shadow var(--duration-fast);
@@ -163,10 +180,17 @@ $bp-desktop: 1024px;
 
   &__top {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin-bottom: var(--space-2);
+    flex-direction: column; // Display column on mobile
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+
+    @media (min-width: 480px) {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
   }
 
   &__tag {
@@ -179,6 +203,7 @@ $bp-desktop: 1024px;
     letter-spacing: var(--tracking-caps);
     text-transform: uppercase;
     color: var(--color-steel-600);
+    flex-shrink: 0;
 
     svg {
       color: var(--color-steel-700);
@@ -191,6 +216,7 @@ $bp-desktop: 1024px;
     display: inline-flex;
     width: 7px;
     height: 7px;
+    flex-shrink: 0;
 
     &::before {
       content: "";
@@ -214,14 +240,15 @@ $bp-desktop: 1024px;
 
   &__badge {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: var(--font-weight-semibold);
     color: #065F46;
     background: #ECFDF5;
     border: 1px solid #A7F3D0;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: var(--radius-full);
     white-space: nowrap;
+    max-width: 100%;
 
     &--currency {
       color: var(--color-steel-800);
@@ -234,11 +261,13 @@ $bp-desktop: 1024px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    width: 100%;
+    min-width: 0;
   }
 
   &__label {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: var(--font-weight-bold);
     letter-spacing: var(--tracking-caps);
     text-transform: uppercase;
@@ -247,10 +276,11 @@ $bp-desktop: 1024px;
 
   &__value {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     font-weight: var(--font-weight-black);
     color: var(--dash-text);
     letter-spacing: -0.02em;
+    word-break: break-word;
 
     @media (min-width: $bp-tablet) {
       font-size: 1.25rem;
@@ -258,10 +288,11 @@ $bp-desktop: 1024px;
   }
 
   &__note {
-    margin: var(--space-2) 0 0;
+    margin: 0;
     font-size: 11.5px;
     line-height: 1.45;
     color: var(--color-steel-700);
+    word-break: break-word;
 
     @media (min-width: $bp-tablet) {
       font-size: 12px;
@@ -281,6 +312,7 @@ $bp-desktop: 1024px;
   gap: 6px;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   overflow-x: auto;
   padding-block: 2px;
@@ -293,14 +325,14 @@ $bp-desktop: 1024px;
 
   &__chip {
     flex: none;
-    height: 32px;
-    padding: 0 12px;
+    height: 30px;
+    padding: 0 10px;
     border: 1px solid var(--dash-border);
     border-radius: var(--radius-full);
     background: var(--dash-card);
     color: var(--color-steel-700);
     font-family: var(--font-sans);
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.02em;
     cursor: pointer;
@@ -334,18 +366,21 @@ $bp-desktop: 1024px;
   }
 }
 
-// ---- Latest Articles Grid (Less wide, longer portrait cards) ---------------
+// ---- Latest Articles Grid (Column on mobile, 2 cols on tablet+) ------------
 .new-feed {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
+  display: flex;
+  flex-direction: column; // Display column on mobile so it stays within frame!
+  gap: var(--space-3-5, 14px);
   list-style: none;
   margin: 0;
   padding: 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 
   @media (min-width: 640px) {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
   }
@@ -359,23 +394,25 @@ $bp-desktop: 1024px;
   position: relative;
   box-sizing: border-box;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; // Display column
   width: 100%;
-  height: 100%;
-  padding: var(--space-4);
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-3-5, 14px); // Comfortable padding for mobile width
   border: 1px solid var(--dash-border);
   border-radius: var(--radius-xl);
   background: var(--dash-card);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.03);
   word-break: break-word;
   overflow-wrap: break-word;
+  overflow: hidden;
   transition:
     border-color var(--duration-base) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out),
     transform var(--duration-base) var(--ease-out);
 
   @media (min-width: $bp-mobile-sm) {
-    padding: var(--space-4-5, 18px);
+    padding: var(--space-4);
   }
 
   @media (min-width: $bp-tablet) {
@@ -388,14 +425,21 @@ $bp-desktop: 1024px;
     transform: translateY(-2px);
   }
 
+  // Top header section: Column on mobile, row on tablet+
   &__top {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
+    flex-direction: column; // Display column on mobile
+    align-items: flex-start;
+    gap: 8px;
     margin-bottom: var(--space-2-5, 10px);
     width: 100%;
+    min-width: 0;
+
+    @media (min-width: 520px) {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
   }
 
   &__tags {
@@ -403,7 +447,12 @@ $bp-desktop: 1024px;
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
+    width: 100%;
     min-width: 0;
+
+    @media (min-width: 520px) {
+      width: auto;
+    }
   }
 
   &__recency-badge {
@@ -417,10 +466,13 @@ $bp-desktop: 1024px;
     border: 1px solid #A7F3D0;
     color: #065F46;
     font-family: var(--font-mono);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.02em;
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     @media (min-width: $bp-tablet) {
       height: 24px;
@@ -442,10 +494,13 @@ $bp-desktop: 1024px;
     border-radius: var(--radius-full);
     background: var(--color-steel-100);
     color: var(--color-steel-700);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: var(--font-weight-semibold);
     text-decoration: none;
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     @media (min-width: $bp-tablet) {
       height: 24px;
@@ -462,21 +517,26 @@ $bp-desktop: 1024px;
   &__read-time {
     color: var(--color-steel-600);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: var(--font-weight-medium);
-    margin-left: auto;
     white-space: nowrap;
+    margin-left: 0;
+
+    @media (min-width: 520px) {
+      margin-left: auto;
+    }
   }
 
   &__title {
     margin: 0 0 var(--space-2);
     font-family: var(--font-display);
-    font-size: clamp(1.08rem, 0.98rem + 0.35vw, 1.25rem);
+    font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.25rem);
     font-weight: var(--font-weight-bold);
     line-height: 1.35;
     letter-spacing: -0.015em;
     word-break: break-word;
     overflow-wrap: break-word;
+    width: 100%;
 
     a {
       color: var(--dash-text);
@@ -491,42 +551,46 @@ $bp-desktop: 1024px;
   }
 
   &__description {
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2-5, 10px);
     color: var(--color-steel-700);
-    font-size: 13px;
+    font-size: 12.5px;
     line-height: 1.5;
     word-break: break-word;
     overflow-wrap: break-word;
+    width: 100%;
   }
 
   &__snippet-box {
-    margin: 0 0 var(--space-3);
-    padding: 9px 12px;
+    margin: 0 0 var(--space-2-5, 10px);
+    padding: 8px 10px;
     border-left: 3px solid var(--brand-charcoal);
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
     background: var(--color-steel-50);
-    font-size: 12px;
-    line-height: 1.48;
+    font-size: 11.5px;
+    line-height: 1.45;
     color: var(--color-steel-800);
     font-style: italic;
     word-break: break-word;
     overflow-wrap: break-word;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   &__takeaways {
-    margin: 0 0 var(--space-4);
+    margin: 0 0 var(--space-3);
     padding: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: 100%;
 
     li {
       display: flex;
       align-items: flex-start;
-      gap: var(--space-2);
+      gap: 6px;
       font-size: 11.5px;
-      line-height: 1.42;
+      line-height: 1.4;
       color: var(--color-steel-700);
       word-break: break-word;
       overflow-wrap: break-word;
@@ -545,11 +609,12 @@ $bp-desktop: 1024px;
     }
   }
 
+  // Footer: Column on mobile
   &__footer {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: var(--space-3-5, 14px);
+    flex-direction: column; // Display column
+    gap: 10px;
+    padding-top: var(--space-3, 12px);
     border-top: 1px solid var(--dash-border);
     margin-top: auto;
     width: 100%;
@@ -558,14 +623,21 @@ $bp-desktop: 1024px;
 
   &__pricing {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    flex-direction: column; // Display column on mobile
+    align-items: flex-start;
+    gap: 2px;
     width: 100%;
+
+    @media (min-width: 480px) {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+    }
   }
 
   &__price-label {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: var(--font-weight-bold);
     letter-spacing: var(--tracking-caps);
     text-transform: uppercase;
@@ -586,20 +658,22 @@ $bp-desktop: 1024px;
 
   &__actions {
     display: flex;
-    align-items: center;
+    flex-direction: column; // Display column: stack buttons so they fit the frame!
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
 
-    @media (max-width: 360px) {
-      flex-direction: column;
+    @media (min-width: 520px) {
+      flex-direction: row;
+      align-items: center;
     }
   }
 
   &__preview-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%; // 100% width on mobile!
     height: 38px;
     padding: 0 12px;
     border: 1px solid var(--dash-border);
@@ -610,16 +684,16 @@ $bp-desktop: 1024px;
     font-weight: var(--font-weight-semibold);
     text-decoration: none;
     white-space: nowrap;
-    flex: 1;
-    min-width: 0;
+    box-sizing: border-box;
     transition:
       border-color var(--duration-fast),
       background-color var(--duration-fast),
       color var(--duration-fast);
 
-    @media (min-width: $bp-tablet) {
+    @media (min-width: 520px) {
+      width: auto;
+      flex: 1;
       height: 40px;
-      font-size: var(--text-xs);
     }
 
     &:hover {
@@ -627,17 +701,14 @@ $bp-desktop: 1024px;
       background: var(--color-steel-100);
       color: var(--brand-charcoal);
     }
-
-    @media (max-width: 360px) {
-      width: 100%;
-    }
   }
 
   &__unlock-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    width: 100%; // 100% width on mobile!
     height: 38px;
     padding: 0 12px;
     border-radius: var(--radius-md);
@@ -650,15 +721,15 @@ $bp-desktop: 1024px;
     text-decoration: none;
     box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
     white-space: nowrap;
-    flex: 1.25;
-    min-width: 0;
+    box-sizing: border-box;
     transition:
       background-color var(--duration-fast) var(--ease-out),
       transform var(--duration-fast) var(--ease-out);
 
-    @media (min-width: $bp-tablet) {
+    @media (min-width: 520px) {
+      width: auto;
+      flex: 1.25;
       height: 40px;
-      font-size: var(--text-xs);
     }
 
     &:hover {
@@ -668,10 +739,6 @@ $bp-desktop: 1024px;
 
     svg {
       flex-shrink: 0;
-    }
-
-    @media (max-width: 360px) {
-      width: 100%;
     }
   }
 }

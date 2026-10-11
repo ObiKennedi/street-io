@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// File: prisma/schema.prisma
+// Street IO Schema - PostgreSQL via Prisma
 
 generator client {
   provider = "prisma-client"
@@ -12,19 +10,27 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          String    @default("user")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+enum Role {
+  user
+  admin
+  owner
+}
 
-  @@unique([email])
+model User {
+  id                 String              @id
+  name               String
+  email              String              @unique
+  emailVerified      Boolean             @default(false)
+  image              String?
+  role               Role                @default(user)
+  walletBalance      Float               @default(0.0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  sessions           Session[]
+  accounts           Account[]
+  purchases          Purchase[]
+  walletTransactions WalletTransaction[]
+
   @@map("user")
 }
 
@@ -74,4 +80,71 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  articles    Article[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("category")
+}
+
+model Article {
+  id               String     @id @default(cuid())
+  title            String
+  slug             String     @unique
+  description      String
+  content          String
+  contentSnippet   String?
+  price            Float      @default(0.0)
+  readTime         String?
+  coverImage       String?
+  published        Boolean    @default(true)
+  status           String     @default("published")
+  categoryId       String?
+  categorySlug     String?
+  category         Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  authorId         String?
+  keyTakeaways     String[]   @default([])
+  tags             String[]   @default([])
+  weeklyReads      Int        @default(0)
+  monthlyReads     Int        @default(0)
+  totalReads       Int        @default(0)
+  trendingDelta    String?
+  soldCopies       Int        @default(0)
+  revenueGenerated Int        @default(0)
+  purchases        Purchase[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@map("article")
+}
+
+model Purchase {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  amount    Float
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("purchase")
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  type        String
+  description String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@map("wallet_transaction")
 }
