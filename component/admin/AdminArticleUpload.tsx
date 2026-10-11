@@ -277,17 +277,7 @@ export function AdminArticleUpload({
             <button
               type="button"
               onClick={onCancel}
-              style={{
-                height: "44px",
-                padding: "0 18px",
-                border: "1px solid var(--dash-border)",
-                borderRadius: "var(--radius-md)",
-                background: "transparent",
-                color: "var(--color-steel-700)",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              className="admin-form__cancel-btn"
             >
               Cancel
             </button>

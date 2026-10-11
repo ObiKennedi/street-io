@@ -35,61 +35,25 @@ export function AdminReportsFeed({
         </div>
 
         {/* Filter Switcher */}
-        <div style={{
-          display: "inline-flex",
-          padding: "3px",
-          border: "1px solid var(--dash-border)",
-          borderRadius: "var(--radius-full)",
-          background: "var(--dash-card)",
-        }}>
+        <div className="admin-reports-pill-group">
           <button
             type="button"
             onClick={() => setFilter("all")}
-            style={{
-              height: "30px",
-              padding: "0 12px",
-              borderRadius: "var(--radius-full)",
-              border: "none",
-              background: filter === "all" ? "var(--brand-charcoal)" : "transparent",
-              color: filter === "all" ? "#FFFFFF" : "var(--color-steel-700)",
-              fontSize: "11px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
+            className={`admin-reports-pill-btn${filter === "all" ? " admin-reports-pill-btn--all-active" : ""}`}
           >
             All Reports ({reports.length})
           </button>
           <button
             type="button"
             onClick={() => setFilter("pending")}
-            style={{
-              height: "30px",
-              padding: "0 12px",
-              borderRadius: "var(--radius-full)",
-              border: "none",
-              background: filter === "pending" ? "#F59E0B" : "transparent",
-              color: filter === "pending" ? "#000000" : "var(--color-steel-700)",
-              fontSize: "11px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
+            className={`admin-reports-pill-btn${filter === "pending" ? " admin-reports-pill-btn--pending-active" : ""}`}
           >
             Pending ({reports.filter((r) => r.status === "pending").length})
           </button>
           <button
             type="button"
             onClick={() => setFilter("resolved")}
-            style={{
-              height: "30px",
-              padding: "0 12px",
-              borderRadius: "var(--radius-full)",
-              border: "none",
-              background: filter === "resolved" ? "#10B981" : "transparent",
-              color: filter === "resolved" ? "#FFFFFF" : "var(--color-steel-700)",
-              fontSize: "11px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
+            className={`admin-reports-pill-btn${filter === "resolved" ? " admin-reports-pill-btn--resolved-active" : ""}`}
           >
             Resolved ({reports.filter((r) => r.status === "resolved").length})
           </button>

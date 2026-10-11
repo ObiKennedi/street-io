@@ -58,62 +58,26 @@ export function AdminUserModeration({
         </div>
 
         {/* Filter & Search Bar */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{
-            display: "inline-flex",
-            padding: "3px",
-            border: "1px solid var(--dash-border)",
-            borderRadius: "var(--radius-full)",
-            background: "var(--dash-card)",
-          }}>
+        <div className="admin-moderation-filters">
+          <div className="admin-moderation-pill-group">
             <button
               type="button"
               onClick={() => setFilter("all")}
-              style={{
-                height: "30px",
-                padding: "0 12px",
-                borderRadius: "var(--radius-full)",
-                border: "none",
-                background: filter === "all" ? "var(--brand-charcoal)" : "transparent",
-                color: filter === "all" ? "#FFFFFF" : "var(--color-steel-700)",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
+              className={`admin-moderation-pill-btn${filter === "all" ? " admin-moderation-pill-btn--active" : ""}`}
             >
               All ({users.length})
             </button>
             <button
               type="button"
               onClick={() => setFilter("active")}
-              style={{
-                height: "30px",
-                padding: "0 12px",
-                borderRadius: "var(--radius-full)",
-                border: "none",
-                background: filter === "active" ? "var(--brand-charcoal)" : "transparent",
-                color: filter === "active" ? "#FFFFFF" : "var(--color-steel-700)",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
+              className={`admin-moderation-pill-btn${filter === "active" ? " admin-moderation-pill-btn--active" : ""}`}
             >
               Active ({users.filter((u) => u.status === "active").length})
             </button>
             <button
               type="button"
               onClick={() => setFilter("blocked")}
-              style={{
-                height: "30px",
-                padding: "0 12px",
-                borderRadius: "var(--radius-full)",
-                border: "none",
-                background: filter === "blocked" ? "#DC2626" : "transparent",
-                color: filter === "blocked" ? "#FFFFFF" : "var(--color-steel-700)",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
+              className={`admin-moderation-pill-btn${filter === "blocked" ? " admin-moderation-pill-btn--blocked" : ""}`}
             >
               Blocked ({users.filter((u) => u.status === "blocked").length})
             </button>
@@ -124,15 +88,7 @@ export function AdminUserModeration({
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              height: "36px",
-              padding: "0 12px",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--dash-border)",
-              fontSize: "12px",
-              background: "var(--color-neutral-0)",
-              color: "var(--dash-text)",
-            }}
+            className="admin-moderation-search"
           />
         </div>
       </div>
@@ -285,33 +241,14 @@ export function AdminUserModeration({
               <button
                 type="button"
                 onClick={() => setBlockingUser(null)}
-                style={{
-                  height: "36px",
-                  padding: "0 14px",
-                  border: "1px solid var(--dash-border)",
-                  borderRadius: "var(--radius-md)",
-                  background: "transparent",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
+                className="admin-modal__cancel-btn"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmBlock}
-                style={{
-                  height: "36px",
-                  padding: "0 16px",
-                  border: "none",
-                  borderRadius: "var(--radius-md)",
-                  background: "#DC2626",
-                  color: "#FFFFFF",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
+                className="admin-modal__confirm-btn"
               >
                 Confirm Block
               </button>

@@ -231,7 +231,7 @@ export function AdminDashboardView() {
 
       {/* Tab Contents */}
       {activeTab === "overview" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+        <div className="admin-overview-stack">
           {/* Articles & Pricing section */}
           <AdminArticlesList
             articles={articles}
