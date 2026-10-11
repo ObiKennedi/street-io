@@ -1,0 +1,411 @@
+// File: component/dashboard/ArticleDetailView.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { type Article } from "@/lib/articles";
+import { type ArticleTool } from "@/lib/article-tools";
+import { formatNaira } from "@/lib/paga";
+import { CategoryIcon } from "./CategoryIcon";
+import "./article-page.scss";
+
+type ArticleDetailViewProps = {
+  article: Article;
+  tools: ArticleTool[];
+  initialIsUnlocked?: boolean;
+  userWalletBalance?: number;
+};
+
+export function ArticleDetailView({
+  article,
+  tools,
+  initialIsUnlocked = false,
+  userWalletBalance = 0,
+}: ArticleDetailViewProps) {
+  const searchParams = useSearchParams();
+  const [isUnlocked, setIsUnlocked] = useState(
+    initialIsUnlocked || searchParams.get("unlocked") === "true"
+  );
+  const [walletBalance, setWalletBalance] = useState(userWalletBalance);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Check client-side storage / query params
+  useEffect(() => {
+    if (searchParams.get("unlocked") === "true") {
+      setIsUnlocked(true);
+      try {
+        localStorage.setItem(`unlocked_${article.slug}`, "true");
+      } catch {}
+    } else {
+      try {
+        const stored = localStorage.getItem(`unlocked_${article.slug}`);
+        if (stored === "true") {
+          setIsUnlocked(true);
+        }
+      } catch {}
+    }
+  }, [searchParams, article.slug]);
+
+  const handleWalletUnlock = async () => {
+    setErrorMsg(null);
+    setIsUnlocking(true);
+
+    try {
+      const res = await fetch("/api/article/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articleSlug: article.slug }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setIsUnlocked(true);
+        if (typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+        try {
+          localStorage.setItem(`unlocked_${article.slug}`, "true");
+        } catch {}
+      } else if (res.status === 402) {
+        setErrorMsg("Insufficient wallet balance. Please fund your wallet via Paga.");
+      } else {
+        setErrorMsg(data.error || "Failed to unlock article.");
+      }
+    } catch (err) {
+      console.error("Unlock error:", err);
+      setErrorMsg("Network error trying to unlock article.");
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  return (
+    <article className="article-page" aria-labelledby="article-heading">
+      {/* Back to category navigation */}
+      <nav aria-label="Breadcrumb">
+        <Link
+          href={`/category/${article.categorySlug}`}
+          className="article-page__back"
+        >
+          <span>←</span>
+          <span>Back to {article.category} Hub</span>
+        </Link>
+      </nav>
+
+      {/* Header section */}
+      <header className="article-page__hero">
+        <div className="article-page__meta-strip">
+          <Link
+            href={`/category/${article.categorySlug}`}
+            className="article-page__category-badge"
+          >
+            {article.category}
+          </Link>
+          <span className="article-page__stat-chip">• {article.readTime}</span>
+          {article.totalReads && (
+            <span className="article-page__stat-chip">
+              • {article.totalReads.toLocaleString()} reads
+            </span>
+          )}
+          <span className="article-page__price-chip">{article.price}</span>
+        </div>
+
+        <h1 id="article-heading" className="article-page__title">
+          {article.title}
+        </h1>
+
+        <p className="article-page__desc">{article.description}</p>
+
+        {/* Teaser snippet box */}
+        <div className="article-page__teaser">
+          &ldquo;{article.contentSnippet}&rdquo;
+        </div>
+      </header>
+
+      {/* ACCESS CONTROL: Paid vs Unpaid */}
+      {!isUnlocked ? (
+        /* ================= LOCKED STATE: GIANT PADLOCK PAYWALL ================= */
+        <section
+          className="article-paywall"
+          aria-label="Paywall restricted article"
+        >
+          {/* Giant Padlock Crest */}
+          <div className="article-paywall__lock-crest" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2.5" ry="2.5" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              <circle cx="12" cy="16" r="1.3" fill="currentColor" />
+              <line x1="12" y1="17.3" x2="12" y2="19.2" stroke="currentColor" strokeWidth="2.2" />
+            </svg>
+          </div>
+
+          <span className="article-paywall__badge">
+            RESTRICTED CLASSIFIED TRADECRAFT
+          </span>
+
+          <h2 className="article-paywall__title">
+            Complete Field Guide Locked
+          </h2>
+
+          <p className="article-paywall__desc">
+            This actionable tactical playbook contains unlisted, practical tradecraft protocols. Unlock full access with a one-time micro-payment.
+          </p>
+
+          {/* What's Inside Checklist */}
+          <div className="article-paywall__checklist">
+            <h4>What You Get With This Guide:</h4>
+            <ul>
+              <li>
+                <span>✓</span>
+                <span>
+                  <strong>Full Tactical Modus Operandi Breakdown:</strong> Exact scripts and mechanisms used by adversaries.
+                </span>
+              </li>
+              <li>
+                <span>✓</span>
+                <span>
+                  <strong>Step-by-Step Countermeasure Protocols:</strong> Actionable steps to prevent compromise and reverse financial exposure.
+                </span>
+              </li>
+              <li>
+                <span>✓</span>
+                <span>
+                  <strong>Emergency Incident Matrix:</strong> Immediate phone scripts, bank callback sheets, and regulatory escalations.
+                </span>
+              </li>
+              <li>
+                <span>✓</span>
+                <span>
+                  <strong>Curated Operational Tools:</strong> Direct access to field verification utilities listed below.
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {errorMsg && (
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "420px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                background: "#FEE2E2",
+                border: "1px solid #FCA5A5",
+                color: "#991B1B",
+                fontSize: "12px",
+                fontWeight: 600,
+                marginBottom: "12px",
+              }}
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Buy & Unlock Actions */}
+          <div className="article-paywall__actions">
+            {/* Primary Buy Button */}
+            <Link
+              href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
+              className="article-paywall__buy-btn"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+              </svg>
+              <span>Unlock Full Guide for {article.price} via Paga</span>
+            </Link>
+
+            {/* Instant Unlock with Reader Wallet */}
+            <button
+              type="button"
+              onClick={handleWalletUnlock}
+              disabled={isUnlocking}
+              className="article-paywall__wallet-btn"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+              </svg>
+              <span>
+                {isUnlocking
+                  ? "Processing Unlock..."
+                  : `Unlock with Wallet (${formatNaira(walletBalance)})`}
+              </span>
+            </button>
+
+            <span className="article-paywall__security-note">
+              Instant access • Secured by Paga 256-bit gateway • No recurring subscription
+            </span>
+          </div>
+
+          {/* Blurred background preview */}
+          <div className="article-blurred-preview" aria-hidden="true">
+            <p>
+              Adversary deployment patterns initiate with high-velocity psychological grooming protocols designed to circumvent rational verification procedures. When confronting unauthorized requests, immediate containment requires...
+            </p>
+            <p>
+              Step 1: Execute immediate out-of-band callback using pre-established telecommunications records. Never utilize numbers embedded inside suspect invoices or digital contracts...
+            </p>
+            <p>
+              Step 2: Cross-reference metadata using ExifTool extraction matrices and coordinate mapping to identify jurisdictional divergence between claims and physical infrastructure...
+            </p>
+          </div>
+        </section>
+      ) : (
+        /* ================= UNLOCKED STATE: FULL OPERATIONAL PLAYBOOK ================= */
+        <section
+          className="article-unlocked-body"
+          aria-label="Full operational playbook content"
+        >
+          <div className="article-unlocked-body__clearance-strip">
+            <span>✓ OPERATIONAL CLEARANCE GRANTED · PLAYBOOK UNLOCKED</span>
+            <span>VERIFIED ACCESS</span>
+          </div>
+
+          <div className="article-unlocked-body__content">
+            <h2>1. Adversary Mechanics & Situational Modus Operandi</h2>
+            <p>
+              In high-stakes environments, adversaries rely on urgency, authority emulation, and targeted isolation to bypass conventional defenses. By creating synthetic crises (medical emergencies, customs holds, audit freezes, or regulatory compliance deadlines), perpetrators induce cognitive panic that sidelines standard verification.
+            </p>
+            <p>
+              Key telemetry reveals that 84% of financial diversions occur within 48 hours of initial credential priming. Recognizing these early signals before capital movement is the single most critical intervention point.
+            </p>
+
+            <h2>2. Step-by-Step Countermeasures & Tradecraft Protocols</h2>
+            <p>
+              Execute the following operational sequence immediately upon detecting suspicious indicators:
+            </p>
+            <ol>
+              <li>
+                <strong>Out-of-Band Physical Verification:</strong> Never rely on contact details, telephone numbers, or email threads provided within the suspicious correspondence. Always initiate a separate call via previously documented internal directories.
+              </li>
+              <li>
+                <strong>Dynamic Visual / Biometric Challenge:</strong> If interacting with an unverified individual claiming identity, require a real-time dynamic gesture (e.g. holding up three fingers beside the right ear on live video). Pre-recorded video loops and mid-tier deepfakes fail this test instantaneously.
+              </li>
+              <li>
+                <strong>Carrier & Domain Telemetry Audit:</strong> Validate whether phone numbers are routed through disposable VoIP trunks (Google Voice, TextNow) or registered domestic telecom SIM cards using the verification tools listed in the footer below.
+              </li>
+              <li>
+                <strong>Mandatory Dual-Signatory Escrow:</strong> For all capital transfers exceeding routine operational thresholds, mandate dual executive sign-off and routing value-dating verification with your designated financial institution.
+              </li>
+            </ol>
+
+            <div className="article-unlocked-body__callout">
+              <strong>FIELD RULE OF ENGAGEMENT:</strong> If an online acquaintance or vendor changes payment destination details or demands urgent wire transfers citing deployment, customs, or audit emergencies, immediately freeze all outgoing communication until independent voice verification has concluded.
+            </div>
+
+            <h2>3. Emergency Incident Containment Matrix</h2>
+            <p>
+              If an unauthorized wire or sensitive document transfer has already occurred, execute this containment checklist within the golden 2-hour window:
+            </p>
+            <ul>
+              <li>
+                <strong>Call Bank Fraud Desk Directly:</strong> Request an immediate SWIFT / NIBSS recall and ask for the transaction to be placed in administrative suspense.
+              </li>
+              <li>
+                <strong>Preserve Complete Digital Forensics:</strong> Export raw RFC 822 email headers, complete chat archives, and transaction references before accounts can be deleted by adversaries.
+              </li>
+              <li>
+                <strong>File Official Incident Reports:</strong> Log reference numbers with domestic cybersecurity authorities and report suspicious bank account numbers to the financial crimes registry.
+              </li>
+            </ul>
+
+            {article.keyTakeaways && article.keyTakeaways.length > 0 && (
+              <>
+                <h2>4. Summary Defense Checklist</h2>
+                <ul>
+                  {article.keyTakeaways.map((takeaway, idx) => (
+                    <li key={idx}>
+                      <strong>✓ {takeaway}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ================= LINKS TO TOOLS AT THE FOOTER ================= */}
+      <footer className="article-tools" aria-labelledby="footer-tools-heading">
+        <div className="article-tools__head">
+          <h2 id="footer-tools-heading" className="article-tools__title">
+            Operational Field Tools & Verification Resources
+          </h2>
+          <p className="article-tools__desc">
+            Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
+          </p>
+        </div>
+
+        <ul className="article-tools__grid">
+          {tools.map((tool) => (
+            <li key={tool.id} className="article-tools__card">
+              <div className="article-tools__card-top">
+                <h3 className="article-tools__tool-name">{tool.name}</h3>
+                <span className="article-tools__type-pill">{tool.type}</span>
+              </div>
+
+              <p className="article-tools__tool-desc">{tool.description}</p>
+
+              <div className="article-tools__card-footer">
+                <span className="article-tools__tool-category">
+                  {tool.category}
+                </span>
+
+                {tool.isExternal ? (
+                  <a
+                    href={tool.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="article-tools__tool-btn"
+                  >
+                    <span>Launch Tool</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                ) : (
+                  <Link href={tool.url} className="article-tools__tool-btn">
+                    <span>Open Resource</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </footer>
+    </article>
+  );
+}
+
+export default ArticleDetailView;

@@ -1,0 +1,118 @@
+// File: component/ui/loader.scss
+
+.app-loader {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 1rem);
+  text-align: center;
+
+  &--full-page {
+    min-height: 50vh;
+    width: 100%;
+    padding: var(--space-8, 2rem);
+  }
+
+  &__spinner-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Ring sizes
+  &--sm {
+    .app-loader__ring {
+      width: 24px;
+      height: 24px;
+      border-width: 2.5px;
+    }
+  }
+
+  &--md {
+    .app-loader__ring {
+      width: 44px;
+      height: 44px;
+      border-width: 3px;
+    }
+  }
+
+  &--lg {
+    .app-loader__ring {
+      width: 64px;
+      height: 64px;
+      border-width: 4px;
+    }
+  }
+
+  &__ring {
+    border-style: solid;
+    border-color: color-mix(in srgb, var(--brand-steel, #B9B9C3) 30%, transparent);
+    border-top-color: var(--brand-charcoal, #253238);
+    border-right-color: var(--brand-charcoal, #253238);
+    border-radius: 50%;
+    animation: loader-spin 0.8s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+  }
+
+  &__pulse-dot {
+    position: absolute;
+    width: 25%;
+    height: 25%;
+    border-radius: 50%;
+    background: var(--brand-charcoal, #253238);
+    opacity: 0.6;
+    animation: loader-pulse 1.6s ease-in-out infinite;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1, 0.25rem);
+  }
+
+  &__label {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: var(--font-weight-medium, 500);
+    letter-spacing: var(--tracking-caps, 0.08em);
+    text-transform: uppercase;
+    color: var(--color-text, #253238);
+  }
+
+  &__sublabel {
+    font-family: var(--font-sans, sans-serif);
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--color-text-muted, #7A7B83);
+  }
+}
+
+@keyframes loader-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-pulse {
+  0%, 100% {
+    transform: scale(0.7);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loader__ring {
+    animation-duration: 2s;
+  }
+  .app-loader__pulse-dot {
+    animation: none;
+  }
+}

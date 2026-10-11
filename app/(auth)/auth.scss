@@ -1,0 +1,101 @@
+// File: app/(auth)/auth.scss
+// .auth-shell — charcoal backdrop + white card shared by every auth page
+
+.auth-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: calc(var(--header-height, 64px) + var(--space-8)) var(--space-4) var(--space-12);
+  background: var(--brand-charcoal);
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  &__arc {
+    position: absolute;
+    top: 0;
+    right: 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.035);
+    transform: translate(40%, -45%);
+
+    &--1 { width: max(1400px, 130vw); }
+    &--2 { width: max(1000px, 90vw); }
+    &--3 { width: max(640px, 55vw); }
+  }
+
+  &__card {
+    width: 100%;
+    max-width: 420px;
+    padding: var(--space-10) var(--space-6) var(--space-8);
+    border-radius: var(--radius-xl);
+    background: var(--color-neutral-0);
+    color: var(--color-charcoal-800);
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
+
+    @media (min-width: 480px) {
+      padding-inline: var(--space-10);
+    }
+  }
+
+  &__logo {
+    display: block;
+    width: 112px;
+    min-width: 0;
+    margin: 0 0 var(--space-8);
+    padding: 0;
+
+    :where(svg) { display: block; width: 100%; height: auto; }
+    .logo__street { fill: var(--brand-steel); }
+    .logo__io { fill: var(--brand-charcoal); }
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-black);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display);
+
+    span { color: var(--color-steel-600); }
+  }
+
+  &__lead {
+    margin: var(--space-3) 0 var(--space-6);
+    color: var(--color-text-muted);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+  }
+
+  &__error {
+    margin: 0 0 var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-danger) 9%, white);
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__legal {
+    margin: var(--space-6) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+
+    a {
+      color: var(--color-charcoal-800);
+      font-weight: var(--font-weight-semibold);
+      text-underline-offset: 0.2em;
+    }
+  }
+}

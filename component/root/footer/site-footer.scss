@@ -1,0 +1,218 @@
+$bp-tablet: 768px;
+$bp-desktop: 1024px;
+
+.site-footer {
+  --sf-bg: var(--color-charcoal-950);
+  --sf-fg: var(--color-neutral-0);
+  --sf-fg-muted: var(--color-steel-400);
+  --sf-fg-subtle: var(--color-steel-600);
+  --sf-border: rgb(255 255 255 / 0.08);
+
+  background: var(--sf-bg);
+  color: var(--sf-fg);
+  font-size: var(--text-sm);
+
+  &__inner {
+    max-width: var(--container-max, 1200px);
+    margin-inline: auto;
+    padding: var(--space-16) var(--space-4) var(--space-8);
+
+    @media (min-width: $bp-tablet) {
+      padding-inline: var(--space-6);
+    }
+  }
+
+  // ---- Notice (One-liner strip) -------------------------------------------
+  &__notice {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--sf-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-charcoal-900) 80%, transparent);
+
+    @media (min-width: $bp-tablet) {
+      padding: var(--space-2) var(--space-4);
+    }
+  }
+
+  &__notice-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: var(--radius-xs);
+    background: var(--brand-steel);
+    color: var(--color-charcoal-900);
+  }
+
+  &__notice-text {
+    margin: 0;
+    color: var(--sf-fg-muted);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+
+  &__notice-title {
+    color: var(--sf-fg);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-heading);
+  }
+
+  // ---- Main ---------------------------------------------------------------
+  &__main {
+    display: grid;
+    gap: var(--space-12);
+    padding-block: 0 var(--space-12);
+
+    @media (min-width: $bp-desktop) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+      gap: var(--space-16);
+    }
+  }
+
+  &__logo {
+    // compact override of the global .logo clearspace
+    display: block;
+    padding: 0;
+    margin: 0;
+    width: 132px;
+    min-width: 0;
+    border-radius: var(--radius-xs);
+
+    :where(svg) { display: block; width: 100%; height: auto; }
+
+    .logo__street { fill: var(--brand-steel); }
+    .logo__io { fill: var(--brand-white); }
+  }
+
+  &__tagline {
+    max-width: 36ch;
+    margin: var(--space-5) 0 var(--space-6);
+    color: var(--sf-fg-muted);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+  }
+
+  &__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__social-link {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--sf-border);
+    border-radius: var(--radius-full);
+    color: var(--sf-fg);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+
+    &:hover {
+      background: rgb(255 255 255 / 0.06);
+      border-color: rgb(255 255 255 / 0.16);
+    }
+  }
+
+  &__nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-10) var(--space-6);
+
+    @media (min-width: $bp-tablet) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  &__heading {
+    margin: 0 0 var(--space-4);
+    color: var(--sf-fg-subtle);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  &__list {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__link {
+    color: var(--sf-fg-muted);
+    font-size: var(--text-base);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+
+    &:hover {
+      color: var(--sf-fg);
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+    }
+  }
+
+  // ---- Bottom bar ---------------------------------------------------------
+  &__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--sf-border);
+    color: var(--sf-fg-subtle);
+  }
+
+  &__copyright {
+    margin: 0;
+  }
+
+  &__motto {
+    order: -1;
+    width: 100%;
+    margin: 0;
+    color: var(--sf-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-black);
+    letter-spacing: var(--tracking-display);
+
+    span { margin-left: 0.2em; color: var(--brand-steel); }
+
+    @media (min-width: $bp-tablet) {
+      order: 0;
+      width: auto;
+    }
+  }
+
+  &__top {
+    color: var(--sf-fg-muted);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+
+    &:hover { color: var(--sf-fg); }
+  }
+
+  // ---- Focus --------------------------------------------------------------
+  a:focus-visible {
+    outline: 2px solid var(--sf-fg);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+}

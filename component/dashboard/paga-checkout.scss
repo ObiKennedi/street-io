@@ -1,0 +1,470 @@
+// File: component/dashboard/paga-checkout.scss
+// Official Paga Checkout Gateway styling for Street IO
+
+$color-paga: #EC6608;
+$color-paga-hover: #D85500;
+$color-paga-light: #FFF5EE;
+$color-paga-dark: #1E293B;
+
+.paga-checkout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  padding-bottom: var(--space-10);
+
+  // Top cancel/back link
+  &__cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-steel-700);
+    text-decoration: none;
+    transition: color var(--duration-fast);
+
+    &:hover {
+      color: var(--brand-charcoal);
+    }
+  }
+
+  // The Paga Checkout card frame
+  &__card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--color-neutral-0);
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 12px 36px rgb(0 0 0 / 0.08);
+  }
+
+  // Paga Brand Top Bar
+  &__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-6);
+    background: $color-paga;
+    color: #fff;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  &__logo {
+    display: grid;
+    place-items: center;
+    padding: 3px 10px;
+    background: #fff;
+    color: $color-paga;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: var(--font-weight-black);
+    letter-spacing: -0.03em;
+    border-radius: var(--radius-sm);
+  }
+
+  &__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    span:first-child {
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.02em;
+    }
+
+    span:last-child {
+      font-size: 10px;
+      opacity: 0.85;
+    }
+  }
+
+  &__secure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgb(255 255 255 / 0.18);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  // Merchant & Order Summary
+  &__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-5) var(--space-6);
+    background: $color-paga-light;
+    border-bottom: 1px solid color-mix(in srgb, $color-paga 20%, var(--color-steel-300));
+  }
+
+  &__merchant-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__merchant-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: #923B00;
+  }
+
+  &__merchant-name {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-charcoal-900);
+  }
+
+  &__item-desc {
+    font-size: 11.5px;
+    color: var(--color-steel-800);
+  }
+
+  &__amount-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  &__amount-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-steel-700);
+  }
+
+  &__amount-val {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-black);
+    color: var(--color-charcoal-900);
+    letter-spacing: -0.02em;
+  }
+
+  // Quick Amount Changer if funding wallet
+  &__amount-changer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-6);
+    background: var(--color-steel-100);
+    border-bottom: 1px solid var(--color-steel-200);
+    overflow-x: auto;
+  }
+
+  &__amount-pill {
+    padding: 4px 10px;
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-full);
+    background: #fff;
+    color: var(--color-charcoal-800);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      border-color var(--duration-fast),
+      background-color var(--duration-fast);
+
+    &:hover {
+      border-color: $color-paga;
+      background: $color-paga-light;
+    }
+
+    &--active {
+      border-color: $color-paga !important;
+      background: $color-paga !important;
+      color: #fff !important;
+    }
+  }
+
+  // Payment Channels Navigation
+  &__channels {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--color-steel-300);
+    background: var(--color-steel-50);
+
+    @media (max-width: 440px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &__channel-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-3) var(--space-2);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--color-steel-700);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition:
+      color var(--duration-fast),
+      border-color var(--duration-fast),
+      background-color var(--duration-fast);
+
+    &:hover {
+      color: $color-paga;
+      background: #fff;
+    }
+
+    &--active {
+      color: $color-paga;
+      border-bottom-color: $color-paga;
+      background: #fff;
+    }
+  }
+
+  // Channel Body
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-6);
+
+    @media (max-width: 480px) {
+      padding: var(--space-4);
+    }
+  }
+
+  // Paga Account channel inputs
+  &__field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  &__field-label {
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-charcoal-800);
+  }
+
+  &__field-input {
+    height: 48px;
+    padding: 0 var(--space-4);
+    background: var(--color-neutral-0);
+    border: 1.5px solid var(--color-steel-300);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-charcoal-900);
+    outline: none;
+    transition:
+      border-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+
+    &:focus {
+      border-color: $color-paga;
+      box-shadow: 0 0 0 3px color-mix(in srgb, $color-paga 25%, transparent);
+    }
+  }
+
+  // Bank Transfer Virtual Account card
+  &__transfer-box {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-steel-100);
+    border: 1.5px dashed var(--color-steel-400);
+    border-radius: var(--radius-xl);
+  }
+
+  &__account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: #fff;
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-lg);
+
+    strong {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      letter-spacing: 0.05em;
+      color: var(--color-charcoal-900);
+    }
+  }
+
+  &__copy-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--color-steel-400);
+    border-radius: var(--radius-md);
+    background: var(--color-steel-100);
+    color: var(--color-charcoal-800);
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: background-color var(--duration-fast);
+
+    &:hover {
+      background: var(--color-steel-200);
+    }
+  }
+
+  &__timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--color-steel-800);
+  }
+
+  // Card inputs row
+  &__card-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  // USSD instructions
+  &__ussd-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-4);
+    background: $color-paga-light;
+    border: 1px solid color-mix(in srgb, $color-paga 25%, transparent);
+    border-radius: var(--radius-xl);
+  }
+
+  &__ussd-code {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-black);
+    color: $color-paga;
+    letter-spacing: 0.04em;
+  }
+
+  // Paga Pay Submit Button
+  &__pay-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: $color-paga;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-heading);
+    cursor: pointer;
+    box-shadow: 0 6px 18px color-mix(in srgb, $color-paga 35%, transparent);
+    transition:
+      background-color var(--duration-fast),
+      transform var(--duration-fast);
+
+    &:hover:not(:disabled) {
+      background: $color-paga-hover;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  // Footer secure notes
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-steel-200);
+    background: var(--color-steel-50);
+    font-size: 11px;
+    color: var(--color-steel-700);
+  }
+
+  // Success Confirmation Card
+  &__success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-6);
+  }
+
+  &__success-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #10B981;
+    color: #fff;
+    font-size: 32px;
+    box-shadow: 0 8px 20px rgb(16 185 129 / 0.3);
+  }
+
+  &__receipt {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-4);
+    background: var(--color-steel-100);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-xs);
+    text-align: left;
+  }
+
+  &__receipt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--color-steel-800);
+
+    &--bold {
+      font-weight: var(--font-weight-bold);
+      color: var(--color-charcoal-900);
+      padding-top: var(--space-2);
+      border-top: 1px dashed var(--color-steel-300);
+    }
+  }
+}
