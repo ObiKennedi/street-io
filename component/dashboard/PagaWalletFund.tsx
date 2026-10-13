@@ -71,21 +71,18 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
 
       const data = await res.json();
 
-      if (data.success) {
-        setCurrentBalance(data.balance);
-        setFormattedBalance(data.formattedBalance);
-        setSuccessReceipt({
-          reference: data.reference,
-          amount: data.amount,
-          newBalance: data.balance,
-        });
-        router.refresh();
-      } else {
-        alert(data.error || "Failed to process Paga transaction");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to process Paga transaction");
       }
-    } catch (err) {
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        router.push(`/checkout/paga?amount=${effectiveAmount}`);
+      }
+    } catch (err: any) {
       console.error("Payment error:", err);
-      alert("Network error processing payment. Please try again.");
+      alert(err?.message || "Network error processing payment. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -417,14 +414,30 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
                   )}
 
                   {/* Complete Payment Button */}
-                  <button
-                    type="button"
-                    onClick={handleExecutePayment}
-                    disabled={isProcessing}
-                    className="wallet-fund__modal-action-btn"
-                  >
-                    {isProcessing ? "Processing with Paga..." : `Authorize Payment of ${formatNaira(effectiveAmount)}`}
-                  </button>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
+                    <button
+                      type="button"
+                      onClick={handleExecutePayment}
+                      disabled={isProcessing}
+                      className="wallet-fund__modal-action-btn"
+                    >
+                      {isProcessing ? "Redirecting to Paga Gateway..." : `Launch Live Paga Checkout (${formatNaira(effectiveAmount)}) →`}
+                    </button>
+                    <Link
+                      href={`/checkout/paga?amount=${effectiveAmount}${targetArticle ? `&article=${targetArticle.slug}` : ""}`}
+                      className="wallet-fund__modal-action-btn"
+                      style={{
+                        background: "var(--color-steel-200)",
+                        color: "var(--color-charcoal-900)",
+                        textDecoration: "none",
+                        display: "grid",
+                        placeItems: "center",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Launch Full Hosted Paga Checkout ↗
+                    </Link>
+                  </div>
                 </>
               )}
             </div>

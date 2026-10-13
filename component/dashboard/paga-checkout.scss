@@ -467,4 +467,72 @@ $color-paga-dark: #1E293B;
       border-top: 1px dashed var(--color-steel-300);
     }
   }
+
+  // Active Paga Session Callout
+  &__active-session {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: $color-paga-light;
+    border: 1.5px solid color-mix(in srgb, $color-paga 35%, transparent);
+    border-radius: var(--radius-xl);
+  }
+
+  &__active-session-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    color: #923B00;
+  }
+
+  &__active-session-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  &__secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border: 1.5px solid var(--color-steel-300);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    color: var(--color-charcoal-800);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--duration-fast), border-color var(--duration-fast);
+
+    &:hover {
+      background: var(--color-steel-100);
+      border-color: var(--color-steel-400);
+    }
+  }
+
+  &__status-banner {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+
+    &--error {
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      color: #991B1B;
+    }
+
+    &--info {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E40AF;
+    }
+  }
 }
+

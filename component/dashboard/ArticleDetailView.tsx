@@ -212,62 +212,122 @@ export function ArticleDetailView({
           )}
 
           {/* Buy & Unlock Actions */}
-          <div className="article-paywall__actions">
-            {/* Primary Buy Button */}
-            <Link
-              href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
-              className="article-paywall__buy-btn"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-              </svg>
-              <span>Unlock Full Guide for {article.price} via Paga</span>
-            </Link>
+          {(() => {
+            const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+            const hasSufficientBalance = walletBalance >= numericPrice;
 
-            {/* Instant Unlock with Reader Wallet */}
-            <button
-              type="button"
-              onClick={handleWalletUnlock}
-              disabled={isUnlocking}
-              className="article-paywall__wallet-btn"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-              </svg>
-              <span>
-                {isUnlocking
-                  ? "Processing Unlock..."
-                  : `Unlock with Wallet (${formatNaira(walletBalance)})`}
-              </span>
-            </button>
+            return (
+              <div className="article-paywall__actions">
+                {hasSufficientBalance ? (
+                  /* User has sufficient reader wallet balance -> Buy directly from wallet */
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleWalletUnlock}
+                      disabled={isUnlocking}
+                      className="article-paywall__buy-btn"
+                      style={{ background: "#10B981" }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                      </svg>
+                      <span>
+                        {isUnlocking
+                          ? "Unlocking Playbook..."
+                          : `Unlock Full Guide with Wallet (${article.price})`}
+                      </span>
+                    </button>
 
-            <span className="article-paywall__security-note">
-              Instant access • Secured by Paga 256-bit gateway • No recurring subscription
-            </span>
-          </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        fontSize: "12px",
+                        color: "var(--color-steel-800)",
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      <span>Wallet Balance: <strong>{formatNaira(walletBalance)}</strong></span>
+                      <span>•</span>
+                      <span>Remaining: <strong>{formatNaira(walletBalance - numericPrice)}</strong></span>
+                    </div>
+
+                    <span className="article-paywall__security-note">
+                      Paid directly from your Reader Wallet • Instant access granted
+                    </span>
+                  </>
+                ) : (
+                  /* User wallet is empty or insufficient -> Fund via Paga */
+                  <>
+                    <div
+                      style={{
+                        width: "100%",
+                        maxWidth: "420px",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        background: "var(--color-steel-100)",
+                        border: "1px solid var(--color-steel-300)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "12px",
+                        color: "var(--color-charcoal-800)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <span>Reader Wallet Balance:</span>
+                      <strong
+                        style={{
+                          color: walletBalance <= 0 ? "#DC2626" : "#D97706",
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        {formatNaira(walletBalance)} {walletBalance <= 0 ? "(Empty)" : "(Insufficient)"}
+                      </strong>
+                    </div>
+
+                    <Link
+                      href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
+                      className="article-paywall__buy-btn"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                      </svg>
+                      <span>Fund Wallet & Unlock for {article.price} via Paga</span>
+                    </Link>
+
+                    <span className="article-paywall__security-note">
+                      Wallet balance empty/insufficient • Funds reader wallet & unlocks guide via Paga
+                    </span>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Blurred background preview */}
           <div className="article-blurred-preview" aria-hidden="true">

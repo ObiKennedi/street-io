@@ -12,12 +12,29 @@ export const metadata: Metadata = {
 export const instant = false;
 
 type Props = {
-  searchParams: Promise<{ article?: string; amount?: string }>;
+  searchParams: Promise<{
+    article?: string;
+    amount?: string;
+    reference?: string;
+    charge_reference?: string;
+    status_code?: string;
+    status_message?: string;
+  }>;
 };
+
+import { getUserWalletBalance } from "@/lib/paga";
 
 export default async function PagaCheckoutPage({ searchParams }: Props) {
   const session = await requireSession("/checkout/paga");
-  const { article: articleSlug, amount: amountParam } = await searchParams;
+  const params = await searchParams;
+  const {
+    article: articleSlug,
+    amount: amountParam,
+    reference,
+    charge_reference,
+    status_code: statusCode,
+    status_message: statusMessage,
+  } = params;
 
   const targetArticle = articleSlug
     ? ARTICLES_DATABASE.find((a) => a.slug === articleSlug) ?? null
@@ -33,12 +50,19 @@ export default async function PagaCheckoutPage({ searchParams }: Props) {
     if (!isNaN(parsed) && parsed > 0) initialAmount = parsed;
   }
 
+  const returnReference = charge_reference || reference || null;
+  const walletBalance = getUserWalletBalance(session.user.id);
+
   return (
     <PagaCheckoutView
       initialAmount={initialAmount}
       targetArticle={targetArticle}
       customerName={session.user.name}
       customerEmail={session.user.email}
+      userWalletBalance={walletBalance}
+      returnReference={returnReference}
+      returnStatusCode={statusCode}
+      returnStatusMessage={statusMessage}
     />
   );
 }
