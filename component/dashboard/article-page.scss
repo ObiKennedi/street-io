@@ -526,6 +526,36 @@ $bp-desktop: 1024px;
     color: var(--color-steel-500);
     margin-top: var(--space-2);
   }
+
+  &__test-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1.5px dashed #F59E0B;
+    border-radius: var(--radius-xl);
+    background: #FFFBEB;
+    color: #92400E;
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: all var(--duration-fast);
+    margin-top: var(--space-2);
+
+    &:hover:not(:disabled) {
+      background: #FEF3C7;
+      border-color: #D97706;
+      color: #78350F;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 }
 
 // Blurry ghost preview indicating hidden classified content
