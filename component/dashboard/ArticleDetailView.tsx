@@ -213,42 +213,6 @@ export function ArticleDetailView({
     }
   };
 
-  const handleTestUnlockOnArticle = async () => {
-    if (!isAmountValid) return;
-    setIsUnlocking(true);
-    setErrorMsg(null);
-    const testRef = "TEST-ART-" + Date.now().toString(36).toUpperCase();
-    try {
-      const res = await fetch("/api/paga/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reference: testRef,
-          amount: effectivePayAmount,
-          articleSlug: article.slug,
-          allowSandboxSimulation: true,
-          isTestMode: true,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsUnlocked(true);
-        if (typeof data.balance === "number") {
-          setWalletBalance(data.balance);
-        }
-        try {
-          localStorage.setItem(`unlocked_${article.slug}`, "true");
-        } catch {}
-      } else {
-        setErrorMsg(data.error || "Failed to process test unlock.");
-      }
-    } catch {
-      setErrorMsg("Network error during test unlock.");
-    } finally {
-      setIsUnlocking(false);
-    }
-  };
-
   return (
     <article className="article-page" aria-labelledby="article-heading">
       {/* Back to category navigation */}
@@ -574,16 +538,6 @@ export function ArticleDetailView({
                       </span>
                     </button>
 
-                    {/* Instant Test Top-Up & Unlock */}
-                    <button
-                      type="button"
-                      onClick={handleTestUnlockOnArticle}
-                      disabled={!isAmountValid || isUnlocking}
-                      className="article-paywall__test-btn"
-                    >
-                      <span>⚡ Instant Test Top-Up &amp; Unlock ({formatNaira(effectivePayAmount)})</span>
-                    </button>
-
                     <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", marginTop: "4px" }}>
                       <span className="article-paywall__security-note" style={{ margin: 0 }}>
                         Funds reader wallet &amp; unlocks guide via live Paga
@@ -793,20 +747,6 @@ export function ArticleDetailView({
               </div>
             </div>
 
-            {/* Notice for Paga KYC/Organization error */}
-            <div className="paga-inline-modal__notice">
-              <div className="paga-inline-modal__notice-text">
-                <strong>Notice:</strong> If Paga alerts <em>&ldquo;Failed to get fee details&rdquo;</em>, your merchant Organization profile on Paga is currently being verified.
-              </div>
-              <button
-                type="button"
-                onClick={() => handleVerifyArticlePayment(inlineSession.reference, true)}
-                className="paga-inline-modal__bypass-btn"
-              >
-                ⚡ Complete Test Unlock
-              </button>
-            </div>
-
             {/* Modal Body / Iframe */}
             <div className="paga-inline-modal__body">
               {isIframeLoading && (
@@ -831,24 +771,14 @@ export function ArticleDetailView({
                 <span className="paga-inline-modal__pulse" />
                 <span>Auto-unlocking once payment is received...</span>
               </div>
-              <div className="paga-inline-modal__footer-btns">
-                <button
-                  type="button"
-                  onClick={() => handleVerifyArticlePayment(inlineSession.reference, true)}
-                  disabled={isUnlocking}
-                  className="paga-inline-modal__test-complete-btn"
-                >
-                  ⚡ Test Credit &amp; Unlock
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleVerifyArticlePayment(inlineSession.reference, false)}
-                  disabled={isUnlocking}
-                  className="paga-inline-modal__verify-btn"
-                >
-                  {isUnlocking ? "Verifying..." : "I've Completed Payment"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleVerifyArticlePayment(inlineSession.reference)}
+                disabled={isUnlocking}
+                className="paga-inline-modal__verify-btn"
+              >
+                {isUnlocking ? "Verifying..." : "I've Completed Payment"}
+              </button>
             </div>
           </div>
         </div>

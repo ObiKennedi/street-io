@@ -213,14 +213,6 @@ export function PagaCheckoutView({
     }
   };
 
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  const handleCopy = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2500);
-  };
-
   /**
    * Verifies payment reference directly against Paga verification endpoint
    */
@@ -264,30 +256,6 @@ export function PagaCheckoutView({
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  /**
-   * Direct test mode wallet funding
-   */
-  const handleTestFundWallet = async () => {
-    if (!isAmountValid) {
-      setErrorMessage(`Please enter an amount of at least ${formatNaira(minAmount)}.`);
-      return;
-    }
-    const testRef = "TEST-" + Date.now().toString(36).toUpperCase();
-    await handleVerifyReference(testRef, true);
-  };
-
-  /**
-   * Confirms a direct Paga transfer to Streetio's account
-   */
-  const handleDirectBankTransferConfirm = async () => {
-    if (!isAmountValid) {
-      setErrorMessage(`Please enter an amount of at least ${formatNaira(minAmount)}.`);
-      return;
-    }
-    const transferRef = "PAGA-DIRECT-" + Date.now().toString(36).toUpperCase();
-    await handleVerifyReference(transferRef, true);
   };
 
   const hasSufficientWalletBalance = targetArticle && walletBalance >= articlePrice;
@@ -708,85 +676,10 @@ export function PagaCheckoutView({
                       ? "Opening Paga Checkout..."
                       : !isAmountValid
                       ? `Enter at least ${formatNaira(minAmount)} to Pay`
-                      : `Pay ${formatNaira(amount)} with Paga Checkout`}
+                      : `Pay ${formatNaira(amount)} with Paga`}
                   </span>
                   <span aria-hidden="true">→</span>
                 </button>
-
-                {/* Test Mode / Fast Simulation Top-Up Action */}
-                <div className="paga-checkout__test-action-card">
-                  <div className="paga-checkout__test-action-header">
-                    <span className="paga-checkout__test-tag">🧪 Test Mode</span>
-                    <span className="paga-checkout__test-title">Instant Wallet Top-Up</span>
-                  </div>
-                  <p className="paga-checkout__test-desc">
-                    Since wallet funding is currently in test mode, you can test-credit your reader wallet with {formatNaira(amount)} instantly.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleTestFundWallet}
-                    disabled={!isAmountValid || isProcessing}
-                    className="paga-checkout__test-fund-btn"
-                  >
-                    <span>⚡ Instant Top-Up {formatNaira(amount)} (Test Mode)</span>
-                  </button>
-                </div>
-
-                {/* Direct Paga Transfer Details */}
-                <div className="paga-checkout__direct-transfer-card">
-                  <div className="paga-checkout__direct-transfer-title">
-                    <span>🏦 Direct Paga Account Transfer</span>
-                    <span className="paga-checkout__direct-transfer-badge">Street IO Account</span>
-                  </div>
-                  <div className="paga-checkout__direct-transfer-details">
-                    <div className="paga-checkout__transfer-row">
-                      <span className="paga-checkout__transfer-label">Bank:</span>
-                      <span className="paga-checkout__transfer-val">{PAGA_MERCHANT_DETAILS.bankName}</span>
-                    </div>
-                    <div className="paga-checkout__transfer-row">
-                      <span className="paga-checkout__transfer-label">Account Number:</span>
-                      <div className="paga-checkout__transfer-copyable">
-                        <span className="paga-checkout__transfer-val paga-checkout__transfer-val--mono">
-                          {PAGA_MERCHANT_DETAILS.accountNumber}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(PAGA_MERCHANT_DETAILS.accountNumber, "account")}
-                          className="paga-checkout__copy-mini-btn"
-                        >
-                          {copiedField === "account" ? "✓ Copied" : "Copy"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="paga-checkout__transfer-row">
-                      <span className="paga-checkout__transfer-label">Paga Tag:</span>
-                      <div className="paga-checkout__transfer-copyable">
-                        <span className="paga-checkout__transfer-val paga-checkout__transfer-val--mono">
-                          {PAGA_MERCHANT_DETAILS.pagaTag}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(PAGA_MERCHANT_DETAILS.pagaTag, "tag")}
-                          className="paga-checkout__copy-mini-btn"
-                        >
-                          {copiedField === "tag" ? "✓ Copied" : "Copy"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="paga-checkout__transfer-row">
-                      <span className="paga-checkout__transfer-label">Account Name:</span>
-                      <span className="paga-checkout__transfer-val">{PAGA_MERCHANT_DETAILS.accountName}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleDirectBankTransferConfirm}
-                    disabled={!isAmountValid || isProcessing}
-                    className="paga-checkout__confirm-transfer-btn"
-                  >
-                    ✓ I&apos;ve Sent {formatNaira(amount)} — Credit My Wallet
-                  </button>
-                </div>
               </div>
             )}
 
@@ -850,20 +743,6 @@ export function PagaCheckoutView({
               </div>
             </div>
 
-            {/* Notice for Paga KYC/Organization error */}
-            <div className="paga-inline-modal__notice">
-              <div className="paga-inline-modal__notice-text">
-                <strong>Notice:</strong> If Paga alerts <em>&ldquo;Failed to get fee details&rdquo;</em>, your merchant Organization profile on Paga is currently being verified.
-              </div>
-              <button
-                type="button"
-                onClick={() => handleVerifyReference(activeSession.reference, true)}
-                className="paga-inline-modal__bypass-btn"
-              >
-                ⚡ Complete Test Credit
-              </button>
-            </div>
-
             {/* Modal Body / Iframe */}
             <div className="paga-inline-modal__body">
               {isIframeLoading && (
@@ -888,24 +767,14 @@ export function PagaCheckoutView({
                 <span className="paga-inline-modal__pulse" />
                 <span>Auto-confirming once payment is received...</span>
               </div>
-              <div className="paga-inline-modal__footer-btns">
-                <button
-                  type="button"
-                  onClick={() => handleVerifyReference(activeSession.reference, true)}
-                  disabled={isProcessing}
-                  className="paga-inline-modal__test-complete-btn"
-                >
-                  ⚡ Test Credit Now
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleVerifyReference(activeSession.reference, false)}
-                  disabled={isProcessing}
-                  className="paga-inline-modal__verify-btn"
-                >
-                  {isProcessing ? "Verifying..." : "I've Completed Payment"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleVerifyReference(activeSession.reference)}
+                disabled={isProcessing}
+                className="paga-inline-modal__verify-btn"
+              >
+                {isProcessing ? "Verifying..." : "I've Completed Payment"}
+              </button>
             </div>
           </div>
         </div>
