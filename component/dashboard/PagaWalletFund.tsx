@@ -31,14 +31,12 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
   const [currentBalance, setCurrentBalance] = useState<number>(wallet.balance);
   const [formattedBalance, setFormattedBalance] = useState<string>(wallet.formattedBalance);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [checkoutTab, setCheckoutTab] = useState<"paga_account" | "bank_transfer" | "ussd">("paga_account");
   const [isProcessing, setIsProcessing] = useState(false);
   const [successReceipt, setSuccessReceipt] = useState<{
     reference: string;
     amount: number;
     newBalance: number;
   } | null>(null);
-  const [copiedAccount, setCopiedAccount] = useState(false);
   const [inlineSession, setInlineSession] = useState<{
     reference: string;
     checkoutUrl: string;
@@ -104,12 +102,6 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, "");
     setCustomAmount(val);
-  };
-
-  const handleOpenCheckout = () => {
-    if (!effectiveAmount || effectiveAmount < 100) return;
-    setIsModalOpen(true);
-    setSuccessReceipt(null);
   };
 
   const handleVerifyReference = async (refToVerify: string) => {
@@ -185,12 +177,6 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleCopyAccount = () => {
-    navigator.clipboard.writeText(PAGA_MERCHANT_DETAILS.accountNumber);
-    setCopiedAccount(true);
-    setTimeout(() => setCopiedAccount(false), 2000);
   };
 
   return (
@@ -316,17 +302,21 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
         {/* Action Button */}
         <button
           type="button"
-          onClick={handleOpenCheckout}
-          disabled={!effectiveAmount || effectiveAmount < 100}
+          onClick={handleExecutePayment}
+          disabled={!effectiveAmount || effectiveAmount < 100 || isProcessing}
           className="wallet-fund__submit-btn"
         >
-          <span>Pay {formatNaira(effectiveAmount || 0)} with Paga</span>
+          <span>
+            {isProcessing
+              ? "Connecting to Paga..."
+              : `Pay ${formatNaira(effectiveAmount || 0)} with Paga`}
+          </span>
           <span aria-hidden="true">→</span>
         </button>
       </section>
 
-      {/* Paga Interactive Checkout Modal */}
-      {isModalOpen && (
+      {/* Success Receipt Modal */}
+      {isModalOpen && successReceipt && (
         <div className="wallet-fund__modal-backdrop" role="dialog" aria-modal="true">
           <div className="wallet-fund__modal">
             <div className="wallet-fund__modal-header">
@@ -334,211 +324,66 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
                 <span className="wallet-fund__paga-badge" style={{ background: "#fff", color: "#EC6608" }}>
                   Paga
                 </span>
-                <span>Paga Secure Checkout</span>
+                <span>Payment Confirmed</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="wallet-fund__modal-close"
-                aria-label="Close checkout"
+                aria-label="Close receipt"
               >
                 ✕
               </button>
             </div>
 
             <div className="wallet-fund__modal-body">
-              {successReceipt ? (
-                /* Success View */
-                <div className="wallet-fund__success-box">
-                  <div className="wallet-fund__success-icon">✓</div>
-                  <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--color-charcoal-900)" }}>
-                    Wallet Funded Successfully!
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-steel-800)" }}>
-                    Credited <strong>{formatNaira(successReceipt.amount)}</strong> to your reader wallet via Paga.
-                  </p>
-                  <div
-                    style={{
-                      padding: "var(--space-3)",
-                      background: "var(--color-steel-100)",
-                      borderRadius: "var(--radius-md)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "11px",
-                      width: "100%",
-                      textAlign: "left",
-                    }}
-                  >
-                    <div><strong>Reference:</strong> {successReceipt.reference}</div>
-                    <div><strong>New Balance:</strong> {formatNaira(successReceipt.newBalance)}</div>
-                    <div><strong>Channel:</strong> Paga Collect (NGN)</div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: "var(--space-2)", width: "100%", marginTop: "var(--space-2)" }}>
-                    {targetArticle ? (
-                      <Link
-                        href={`/dashboard/wallet/fund?article=${targetArticle.slug}`}
-                        className="wallet-fund__modal-action-btn"
-                        style={{ display: "grid", placeItems: "center", textDecoration: "none" }}
-                      >
-                        Unlock {targetArticle.title.slice(0, 20)}... →
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          router.push("/dashboard");
-                        }}
-                        className="wallet-fund__modal-action-btn"
-                      >
-                        Return to Dashboard
-                      </button>
-                    )}
-                  </div>
+              <div className="wallet-fund__success-box">
+                <div className="wallet-fund__success-icon">✓</div>
+                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--color-charcoal-900)" }}>
+                  Wallet Funded Successfully!
+                </h3>
+                <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-steel-800)" }}>
+                  Credited <strong>{formatNaira(successReceipt.amount)}</strong> to your reader wallet via Paga.
+                </p>
+                <div
+                  style={{
+                    padding: "var(--space-3)",
+                    background: "var(--color-steel-100)",
+                    borderRadius: "var(--radius-md)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    width: "100%",
+                    textAlign: "left",
+                  }}
+                >
+                  <div><strong>Reference:</strong> {successReceipt.reference}</div>
+                  <div><strong>New Balance:</strong> {formatNaira(successReceipt.newBalance)}</div>
+                  <div><strong>Gateway:</strong> Paga Live (NGN)</div>
                 </div>
-              ) : (
-                /* Payment Options View */
-                <>
-                  <div className="wallet-fund__modal-amount-box">
-                    <span>Deposit Amount</span>
-                    <strong>{formatNaira(effectiveAmount)}</strong>
-                  </div>
 
-                  {/* Channel Switcher */}
-                  <div className="wallet-fund__tabs" role="tablist">
-                    <button
-                      type="button"
-                      className={`wallet-fund__tab-btn${
-                        checkoutTab === "paga_account" ? " wallet-fund__tab-btn--active" : ""
-                      }`}
-                      onClick={() => setCheckoutTab("paga_account")}
-                    >
-                      Paga Account
-                    </button>
-                    <button
-                      type="button"
-                      className={`wallet-fund__tab-btn${
-                        checkoutTab === "bank_transfer" ? " wallet-fund__tab-btn--active" : ""
-                      }`}
-                      onClick={() => setCheckoutTab("bank_transfer")}
-                    >
-                      Bank Transfer
-                    </button>
-                    <button
-                      type="button"
-                      className={`wallet-fund__tab-btn${
-                        checkoutTab === "ussd" ? " wallet-fund__tab-btn--active" : ""
-                      }`}
-                      onClick={() => setCheckoutTab("ussd")}
-                    >
-                      USSD (*242#)
-                    </button>
-                  </div>
-
-                  {/* Content per channel */}
-                  {checkoutTab === "paga_account" && (
-                    <div className="wallet-fund__transfer-box">
-                      <p style={{ margin: 0, fontWeight: "bold" }}>
-                        Pay directly from your Paga Wallet
-                      </p>
-                      <p style={{ margin: 0, color: "var(--color-steel-800)" }}>
-                        Enter your registered Paga phone number or email to authorize debit.
-                      </p>
-                      <div style={{
-                        padding: "8px 12px",
-                        background: "var(--color-steel-100)",
-                        border: "1px solid var(--color-steel-300)",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        color: "var(--color-charcoal-800)",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}>
-                        <span>Merchant $paga Tag:</span>
-                        <strong style={{ fontFamily: "var(--font-mono)", color: "#EC6608" }}>{PAGA_MERCHANT_DETAILS.pagaTag}</strong>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="08012345678 or paga@email.com"
-                        defaultValue="08023456789"
-                        style={{
-                          height: "40px",
-                          padding: "0 12px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--color-steel-300)",
-                          fontFamily: "var(--font-mono)",
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {checkoutTab === "bank_transfer" && (
-                    <div className="wallet-fund__transfer-box">
-                      <p style={{ margin: 0, fontWeight: "bold" }}>
-                        Pay to Dedicated Paga Account
-                      </p>
-                      <div className="wallet-fund__copy-row">
-                        <div>
-                          <div style={{ fontSize: "10.5px", color: "var(--color-steel-700)" }}>
-                            Bank: <strong>{PAGA_MERCHANT_DETAILS.bankName}</strong> · Tag: <strong>{PAGA_MERCHANT_DETAILS.pagaTag}</strong>
-                          </div>
-                          <strong style={{ fontSize: "1.1rem", letterSpacing: "0.03em" }}>{PAGA_MERCHANT_DETAILS.accountNumber}</strong>
-                        </div>
-                        <button type="button" onClick={handleCopyAccount}>
-                          {copiedAccount ? "Copied!" : "Copy"}
-                        </button>
-                      </div>
-                      <p style={{ margin: 0, fontSize: "11px", color: "var(--color-steel-700)" }}>
-                        Account Name: <strong>{PAGA_MERCHANT_DETAILS.accountName}</strong> · Transfer exact amount: {formatNaira(effectiveAmount)}.
-                      </p>
-                    </div>
-                  )}
-
-                  {checkoutTab === "ussd" && (
-                    <div className="wallet-fund__transfer-box">
-                      <p style={{ margin: 0, fontWeight: "bold" }}>
-                        Paga USSD Quick Dial
-                      </p>
-                      <div className="wallet-fund__copy-row">
-                        <strong>*242*{effectiveAmount}#</strong>
-                        <span style={{ fontSize: "10px", color: "var(--color-steel-700)" }}>
-                          All Networks
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: "11px", color: "var(--color-steel-700)" }}>
-                        Dial on your registered SIM and enter your 4-digit Paga PIN.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Complete Payment Button */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
-                    <button
-                      type="button"
-                      onClick={handleExecutePayment}
-                      disabled={isProcessing}
-                      className="wallet-fund__modal-action-btn"
-                    >
-                      {isProcessing ? "Connecting to Paga..." : `Pay ${formatNaira(effectiveAmount)} via Paga Modal →`}
-                    </button>
+                <div style={{ display: "flex", gap: "var(--space-2)", width: "100%", marginTop: "var(--space-2)" }}>
+                  {targetArticle ? (
                     <Link
-                      href={`/checkout/paga?amount=${effectiveAmount}${targetArticle ? `&article=${targetArticle.slug}` : ""}`}
+                      href={`/article/${targetArticle.slug}?unlocked=true`}
                       className="wallet-fund__modal-action-btn"
-                      style={{
-                        background: "var(--color-steel-200)",
-                        color: "var(--color-charcoal-900)",
-                        textDecoration: "none",
-                        display: "grid",
-                        placeItems: "center",
-                        fontSize: "12px",
-                      }}
+                      style={{ display: "grid", placeItems: "center", textDecoration: "none" }}
                     >
-                      Launch Full Hosted Paga Checkout ↗
+                      Read &ldquo;{targetArticle.title.slice(0, 20)}...&rdquo; →
                     </Link>
-                  </div>
-                </>
-              )}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        router.push("/dashboard");
+                      }}
+                      className="wallet-fund__modal-action-btn"
+                    >
+                      Return to Dashboard
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

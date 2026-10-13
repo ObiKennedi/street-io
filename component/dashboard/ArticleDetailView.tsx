@@ -9,6 +9,7 @@ import { type ArticleTool } from "@/lib/article-tools";
 import { formatNaira } from "@/lib/paga";
 import { CategoryIcon } from "./CategoryIcon";
 import "./article-page.scss";
+import "./paga-checkout.scss";
 
 type ArticleDetailViewProps = {
   article: Article;
@@ -30,6 +31,63 @@ export function ArticleDetailView({
   const [walletBalance, setWalletBalance] = useState(userWalletBalance);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Paga inline checkout modal states
+  const [inlineSession, setInlineSession] = useState<{
+    reference: string;
+    checkoutUrl: string;
+  } | null>(null);
+  const [isInlineModalOpen, setIsInlineModalOpen] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
+
+  // Listen for Paga close-iframe postMessage
+  useEffect(() => {
+    const handleWindowMessage = (event: MessageEvent) => {
+      if (event.data === "close-iframe") {
+        setIsInlineModalOpen(false);
+      }
+    };
+
+    window.addEventListener("message", handleWindowMessage);
+    return () => window.removeEventListener("message", handleWindowMessage);
+  }, []);
+
+  // Auto-poll verification while inline modal is active
+  useEffect(() => {
+    if (!isInlineModalOpen || !inlineSession?.reference) return;
+
+    const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch("/api/paga/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reference: inlineSession.reference,
+            amount: numericPrice,
+            articleSlug: article.slug,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setIsInlineModalOpen(false);
+          setIsUnlocked(true);
+          try {
+            localStorage.setItem(`unlocked_${article.slug}`, "true");
+          } catch {}
+          if (typeof data.balance === "number") {
+            setWalletBalance(data.balance);
+          }
+          setInlineSession(null);
+        }
+      } catch {
+        // silent polling retry
+      }
+    }, 3500);
+
+    return () => clearInterval(intervalId);
+  }, [isInlineModalOpen, inlineSession, article.price, article.slug]);
 
   // Check client-side storage / query params
   useEffect(() => {
@@ -77,6 +135,74 @@ export function ArticleDetailView({
     } catch (err) {
       console.error("Unlock error:", err);
       setErrorMsg("Network error trying to unlock article.");
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const handleLaunchPagaOnArticle = async () => {
+    setErrorMsg(null);
+    setIsUnlocking(true);
+
+    try {
+      const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+      const res = await fetch("/api/paga/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: numericPrice,
+          articleSlug: article.slug,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to initialize Paga checkout");
+      }
+
+      setInlineSession({
+        reference: data.reference,
+        checkoutUrl: data.checkoutUrl,
+      });
+      setIsIframeLoading(true);
+      setIsInlineModalOpen(true);
+    } catch (err: any) {
+      console.error("Paga launch error:", err);
+      setErrorMsg(err?.message || "Could not connect to Paga Gateway.");
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const handleVerifyArticlePayment = async (ref: string) => {
+    setIsUnlocking(true);
+    try {
+      const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+      const res = await fetch("/api/paga/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference: ref,
+          amount: numericPrice,
+          articleSlug: article.slug,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsInlineModalOpen(false);
+        setIsUnlocked(true);
+        try {
+          localStorage.setItem(`unlocked_${article.slug}`, "true");
+        } catch {}
+        if (typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+        setInlineSession(null);
+      } else {
+        alert(data.error || "Payment verification failed or still pending on Paga.");
+      }
+    } catch {
+      alert("Network error verifying payment.");
     } finally {
       setIsUnlocking(false);
     }
@@ -299,8 +425,10 @@ export function ArticleDetailView({
                       </strong>
                     </div>
 
-                    <Link
-                      href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
+                    <button
+                      type="button"
+                      onClick={handleLaunchPagaOnArticle}
+                      disabled={isUnlocking}
                       className="article-paywall__buy-btn"
                     >
                       <svg
@@ -317,11 +445,15 @@ export function ArticleDetailView({
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                         <path d="M7 11V7a5 5 0 0 1 9.9-1" />
                       </svg>
-                      <span>Fund Wallet & Unlock for {article.price} via Paga</span>
-                    </Link>
+                      <span>
+                        {isUnlocking
+                          ? "Connecting to Paga..."
+                          : `Fund Wallet & Unlock for ${article.price} via Paga`}
+                      </span>
+                    </button>
 
                     <span className="article-paywall__security-note">
-                      Wallet balance empty/insufficient • Funds reader wallet & unlocks guide via Paga
+                      Wallet balance empty/insufficient • Funds reader wallet &amp; unlocks guide via live Paga
                     </span>
                   </>
                 )}
@@ -464,6 +596,93 @@ export function ArticleDetailView({
           ))}
         </ul>
       </footer>
+
+      {/* Official Paga Checkout Inline Modal */}
+      {isInlineModalOpen && inlineSession && (
+        <div
+          className="paga-inline-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paga-article-modal-title"
+        >
+          <div
+            className="paga-inline-modal__backdrop"
+            onClick={() => setIsInlineModalOpen(false)}
+          />
+          <div className="paga-inline-modal__dialog">
+            {/* Modal Header */}
+            <div className="paga-inline-modal__header">
+              <div className="paga-inline-modal__header-left">
+                <span className="paga-inline-modal__badge">paga</span>
+                <div>
+                  <h3 id="paga-article-modal-title" className="paga-inline-modal__title">
+                    Unlock Guide via Paga
+                  </h3>
+                  <span className="paga-inline-modal__subtitle">
+                    {article.title.slice(0, 32)}... · Ref: {inlineSession.reference}
+                  </span>
+                </div>
+              </div>
+              <div className="paga-inline-modal__header-right">
+                <span className="paga-inline-modal__amount">
+                  {article.price}
+                </span>
+                <a
+                  href={inlineSession.checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="paga-inline-modal__external-link"
+                  title="Open checkout in new window if preferred"
+                >
+                  ↗ New Tab
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsInlineModalOpen(false)}
+                  className="paga-inline-modal__close-btn"
+                  aria-label="Close payment modal"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Iframe */}
+            <div className="paga-inline-modal__body">
+              {isIframeLoading && (
+                <div className="paga-inline-modal__loader">
+                  <div className="paga-inline-modal__spinner" />
+                  <p>Connecting securely to Paga Gateway...</p>
+                  <span>Cards, Bank Transfers, USSD, and Wallets accepted</span>
+                </div>
+              )}
+              <iframe
+                src={inlineSession.checkoutUrl}
+                title="Paga Payment Checkout"
+                className="paga-inline-modal__iframe"
+                allow="payment"
+                onLoad={() => setIsIframeLoading(false)}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="paga-inline-modal__footer">
+              <div className="paga-inline-modal__status-info">
+                <span className="paga-inline-modal__pulse" />
+                <span>Auto-unlocking once payment is received...</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleVerifyArticlePayment(inlineSession.reference)}
+                disabled={isUnlocking}
+                className="paga-inline-modal__verify-btn"
+              >
+                {isUnlocking ? "Verifying..." : "I've Completed Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
