@@ -38,6 +38,8 @@ export function PagaCheckoutView({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isInlineModalOpen, setIsInlineModalOpen] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
 
   // Active Paga checkout session initialized with official API
   const [activeSession, setActiveSession] = useState<{
@@ -62,6 +64,53 @@ export function PagaCheckoutView({
       handleVerifyReference(returnReference);
     }
   }, [returnReference, returnStatusCode]);
+
+  // Listen for Paga close-iframe postMessage
+  useEffect(() => {
+    const handleWindowMessage = (event: MessageEvent) => {
+      if (event.data === "close-iframe") {
+        setIsInlineModalOpen(false);
+      }
+    };
+
+    window.addEventListener("message", handleWindowMessage);
+    return () => window.removeEventListener("message", handleWindowMessage);
+  }, []);
+
+  // Auto-poll verification while inline modal is active
+  useEffect(() => {
+    if (!isInlineModalOpen || !activeSession?.reference) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch("/api/paga/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reference: activeSession.reference,
+            amount,
+            articleSlug: targetArticle?.slug,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setIsInlineModalOpen(false);
+          setSuccessReceipt({
+            reference: data.reference,
+            amount: data.amount,
+            newBalance: data.balance,
+          });
+          setActiveSession(null);
+          router.refresh();
+        }
+      } catch {
+        // silent polling retry
+      }
+    }, 3500);
+
+    return () => clearInterval(intervalId);
+  }, [isInlineModalOpen, activeSession, amount, targetArticle, router]);
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText(PAGA_MERCHANT_DETAILS.accountNumber);
@@ -137,8 +186,9 @@ export function PagaCheckoutView({
         checkoutUrl: data.checkoutUrl,
       });
 
-      // Redirect directly to official live Paga Checkout
-      window.location.href = data.checkoutUrl;
+      // Launch official Paga Checkout Inline Modal
+      setIsIframeLoading(true);
+      setIsInlineModalOpen(true);
     } catch (err: any) {
       console.error("Paga launch error:", err);
       setErrorMessage(err?.message || "Could not connect to Paga Gateway. Please retry.");
@@ -585,7 +635,7 @@ export function PagaCheckoutView({
               >
                 <span>
                   {isProcessing
-                    ? "Redirecting to Paga..."
+                    ? "Opening Paga Checkout..."
                     : `Pay ${formatNaira(amount)} via Live Paga Gateway`}
                 </span>
                 <span aria-hidden="true">→</span>
@@ -601,6 +651,93 @@ export function PagaCheckoutView({
           </>
         )}
       </div>
+
+      {/* Official Paga Checkout Inline Modal */}
+      {isInlineModalOpen && activeSession && (
+        <div
+          className="paga-inline-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="paga-modal-title"
+        >
+          <div
+            className="paga-inline-modal__backdrop"
+            onClick={() => setIsInlineModalOpen(false)}
+          />
+          <div className="paga-inline-modal__dialog">
+            {/* Modal Header */}
+            <div className="paga-inline-modal__header">
+              <div className="paga-inline-modal__header-left">
+                <span className="paga-inline-modal__badge">paga</span>
+                <div>
+                  <h3 id="paga-modal-title" className="paga-inline-modal__title">
+                    Paga Secure Checkout
+                  </h3>
+                  <span className="paga-inline-modal__subtitle">
+                    Street IO · Ref: {activeSession.reference}
+                  </span>
+                </div>
+              </div>
+              <div className="paga-inline-modal__header-right">
+                <span className="paga-inline-modal__amount">
+                  {formatNaira(amount)}
+                </span>
+                <a
+                  href={activeSession.checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="paga-inline-modal__external-link"
+                  title="Open checkout in new window if preferred"
+                >
+                  ↗ New Tab
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsInlineModalOpen(false)}
+                  className="paga-inline-modal__close-btn"
+                  aria-label="Close payment modal"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Iframe */}
+            <div className="paga-inline-modal__body">
+              {isIframeLoading && (
+                <div className="paga-inline-modal__loader">
+                  <div className="paga-inline-modal__spinner" />
+                  <p>Connecting securely to Paga Gateway...</p>
+                  <span>Cards, Bank Transfers, USSD, and Wallets accepted</span>
+                </div>
+              )}
+              <iframe
+                src={activeSession.checkoutUrl}
+                title="Paga Payment Checkout"
+                className="paga-inline-modal__iframe"
+                allow="payment"
+                onLoad={() => setIsIframeLoading(false)}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="paga-inline-modal__footer">
+              <div className="paga-inline-modal__status-info">
+                <span className="paga-inline-modal__pulse" />
+                <span>Auto-confirming once payment is received...</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleVerifyReference(activeSession.reference)}
+                disabled={isProcessing}
+                className="paga-inline-modal__verify-btn"
+              >
+                {isProcessing ? "Verifying..." : "I've Completed Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
