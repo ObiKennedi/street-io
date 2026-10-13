@@ -25,14 +25,39 @@ export function PagaCheckoutView({
   initialAmount = 5000,
   targetArticle,
   customerName = "Reader",
-  customerEmail = "reader@streetio.org",
+  customerEmail = "reader@reader.streetio.org",
   userWalletBalance = 0,
   returnReference,
   returnStatusCode,
   returnStatusMessage,
 }: PagaCheckoutViewProps) {
   const router = useRouter();
-  const [amount, setAmount] = useState<number>(initialAmount);
+
+  const articlePrice = targetArticle
+    ? parseInt(targetArticle.price.replace(/[^0-9]/g, ""), 10) || 3500
+    : 0;
+  const minAmount = targetArticle ? articlePrice : 100;
+
+  const [amountInput, setAmountInput] = useState<string>(
+    initialAmount ? String(initialAmount) : String(minAmount || 5000)
+  );
+
+  const numericAmount = parseInt(amountInput.replace(/[^0-9]/g, ""), 10) || 0;
+  const amount = numericAmount;
+  const isAmountValid = amount >= minAmount;
+
+  const presetAmounts = targetArticle
+    ? Array.from(
+        new Set([
+          articlePrice,
+          ...(articlePrice < 5000 ? [5000] : []),
+          ...(articlePrice < 10000 ? [10000] : []),
+          ...(articlePrice < 20000 ? [20000] : []),
+          ...(articlePrice < 50000 ? [50000] : []),
+        ])
+      )
+    : [2000, 5000, 10000, 20000, 50000];
+
   const [walletBalance, setWalletBalance] = useState<number>(userWalletBalance);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -127,7 +152,7 @@ export function PagaCheckoutView({
       if (res.ok && data.success) {
         setSuccessReceipt({
           reference: "WALLET-DEBIT-" + Date.now().toString(36).toUpperCase(),
-          amount,
+          amount: articlePrice || amount,
           newBalance: data.balance,
           isWalletDebit: true,
         });
@@ -149,6 +174,10 @@ export function PagaCheckoutView({
    * Leverages Paga Public Key f9511100-a474-49d7-9045-4410ccf2e084
    */
   const handleLaunchPagaCheckout = async () => {
+    if (!isAmountValid) {
+      setErrorMessage(`Please enter an amount of at least ${formatNaira(minAmount)}.`);
+      return;
+    }
     setIsProcessing(true);
     setErrorMessage(null);
 
@@ -225,7 +254,7 @@ export function PagaCheckoutView({
     }
   };
 
-  const hasSufficientWalletBalance = targetArticle && walletBalance >= amount;
+  const hasSufficientWalletBalance = targetArticle && walletBalance >= articlePrice;
 
   return (
     <div className="paga-checkout">
@@ -304,7 +333,7 @@ export function PagaCheckoutView({
               >
                 {isProcessing
                   ? "Unlocking with Wallet..."
-                  : `Unlock Now with Reader Wallet (${formatNaira(amount)})`}
+                  : `Unlock Now with Reader Wallet (${formatNaira(articlePrice || amount)})`}
               </button>
             </div>
           </div>
@@ -383,26 +412,101 @@ export function PagaCheckoutView({
               </div>
             </div>
 
-            {/* Quick Amount Selector (only if funding wallet directly) */}
-            {!targetArticle && (
-              <div className="paga-checkout__amount-changer" role="toolbar" aria-label="Quick deposit amounts">
-                <span style={{ fontSize: "11px", fontWeight: "bold", color: "var(--color-steel-700)" }}>
-                  Amount:
+            {/* Dedicated Custom Amount Input & Presets */}
+            <div className="paga-checkout__amount-section">
+              <div className="paga-checkout__amount-header">
+                <label
+                  htmlFor="paga-amount-input"
+                  className="paga-checkout__amount-title"
+                >
+                  {targetArticle
+                    ? "Enter Payment / Top-Up Amount (₦)"
+                    : "Enter How Much You Want to Pay (₦)"}
+                </label>
+                <span className="paga-checkout__amount-badge">
+                  Min: {formatNaira(minAmount)}
                 </span>
-                {PRESET_AMOUNTS.map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    className={`paga-checkout__amount-pill${
-                      amount === amt ? " paga-checkout__amount-pill--active" : ""
-                    }`}
-                    onClick={() => setAmount(amt)}
-                  >
-                    ₦{amt.toLocaleString()}
-                  </button>
-                ))}
               </div>
-            )}
+
+              {/* Input field with currency prefix and clear button */}
+              <div className="paga-checkout__amount-input-box">
+                <span className="paga-checkout__amount-currency" aria-hidden="true">
+                  ₦
+                </span>
+                <input
+                  id="paga-amount-input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={amountInput}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/[^0-9]/g, "");
+                    setAmountInput(cleaned);
+                  }}
+                  placeholder={`e.g. ${minAmount.toLocaleString()}`}
+                  className="paga-checkout__amount-input"
+                  aria-label="Enter payment amount in Naira"
+                />
+                {amountInput && (
+                  <button
+                    type="button"
+                    onClick={() => setAmountInput("")}
+                    className="paga-checkout__amount-clear"
+                    title="Clear amount"
+                    aria-label="Clear amount"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Select Presets */}
+              <div className="paga-checkout__presets-row">
+                <span className="paga-checkout__presets-label">Quick select:</span>
+                <div
+                  className="paga-checkout__preset-list"
+                  role="toolbar"
+                  aria-label="Quick preset payment amounts"
+                >
+                  {presetAmounts.map((amt) => {
+                    const isSelected = amount === amt;
+                    return (
+                      <button
+                        key={amt}
+                        type="button"
+                        className={`paga-checkout__preset-btn${
+                          isSelected ? " paga-checkout__preset-btn--active" : ""
+                        }`}
+                        onClick={() => setAmountInput(String(amt))}
+                      >
+                        {targetArticle && amt === articlePrice
+                          ? `Exact: ₦${amt.toLocaleString()}`
+                          : `₦${amt.toLocaleString()}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Real-time feedback / surplus notes */}
+              {amount > 0 && amount < minAmount && (
+                <div className="paga-checkout__amount-feedback paga-checkout__amount-feedback--warning">
+                  ⚠️ Minimum required amount is {formatNaira(minAmount)}.
+                </div>
+              )}
+
+              {targetArticle && amount > articlePrice && (
+                <div className="paga-checkout__amount-feedback paga-checkout__amount-feedback--info">
+                  ✓ <strong>{formatNaira(articlePrice)}</strong> unlocks this guide · <strong>{formatNaira(amount - articlePrice)}</strong> surplus will be added to your Reader Wallet.
+                </div>
+              )}
+
+              {!targetArticle && amount >= minAmount && (
+                <div className="paga-checkout__amount-feedback paga-checkout__amount-feedback--info">
+                  ✓ <strong>{formatNaira(amount)}</strong> will be credited directly to your Reader Wallet.
+                </div>
+              )}
+            </div>
 
             {/* If target article and wallet is empty/insufficient, show callout */}
             {targetArticle && !hasSufficientWalletBalance && (
@@ -428,7 +532,6 @@ export function PagaCheckoutView({
               </div>
             )}
 
-            {/* Active Paga Session in progress notification */}
             {activeSession && (
               <div style={{ margin: "var(--space-4) var(--space-6) 0" }}>
                 <div className="paga-checkout__active-session">
@@ -492,7 +595,7 @@ export function PagaCheckoutView({
                   style={{ background: "#10B981" }}
                 >
                   <span>
-                    {isProcessing ? "Unlocking Guide..." : `Unlock with Wallet (${formatNaira(amount)})`}
+                    {isProcessing ? "Unlocking Guide..." : `Unlock with Wallet (${formatNaira(articlePrice)})`}
                   </span>
                   <span aria-hidden="true">✓</span>
                 </button>
@@ -520,6 +623,28 @@ export function PagaCheckoutView({
                       {formatNaira(walletBalance)}
                     </span>
                   </div>
+                  {targetArticle && (
+                    <div className="paga-checkout__order-row">
+                      <span className="paga-checkout__order-label">Guide Cost</span>
+                      <span className="paga-checkout__order-value">
+                        {formatNaira(articlePrice)}
+                      </span>
+                    </div>
+                  )}
+                  {targetArticle && amount > articlePrice && (
+                    <div className="paga-checkout__order-row">
+                      <span className="paga-checkout__order-label">Surplus to Wallet</span>
+                      <span className="paga-checkout__order-value" style={{ color: "#059669", fontWeight: "bold" }}>
+                        +{formatNaira(amount - articlePrice)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="paga-checkout__order-row paga-checkout__order-row--total">
+                    <span className="paga-checkout__order-label">Total to Pay</span>
+                    <strong className="paga-checkout__order-value" style={{ fontSize: "14px", color: "var(--color-charcoal-900)" }}>
+                      {formatNaira(amount > 0 ? amount : 0)}
+                    </strong>
+                  </div>
                 </div>
 
                 {/* Supported payment channels in Paga */}
@@ -539,12 +664,14 @@ export function PagaCheckoutView({
                 <button
                   type="button"
                   onClick={handleLaunchPagaCheckout}
-                  disabled={isProcessing}
+                  disabled={!isAmountValid || isProcessing}
                   className="paga-checkout__pay-btn"
                 >
                   <span>
                     {isProcessing
                       ? "Opening Paga Checkout..."
+                      : !isAmountValid
+                      ? `Enter at least ${formatNaira(minAmount)} to Pay`
                       : `Pay ${formatNaira(amount)} with Paga`}
                   </span>
                   <span aria-hidden="true">→</span>

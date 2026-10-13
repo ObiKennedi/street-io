@@ -282,7 +282,7 @@ $bp-desktop: 1024px;
     }
   }
 
-  // ---- Buy / Unlock CTA Buttons --------------------------------------------
+  // ---- Buy / Unlock CTA Buttons & Custom Amount Input -------------------
   &__actions {
     display: flex;
     flex-direction: column;
@@ -290,6 +290,164 @@ $bp-desktop: 1024px;
     gap: var(--space-3);
     width: 100%;
     max-width: 420px;
+  }
+
+  // Custom amount card on paywall
+  &__amount-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    max-width: 420px;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-steel-50);
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-xl);
+    box-sizing: border-box;
+    text-align: left;
+  }
+
+  &__amount-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  &__amount-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-steel-700);
+  }
+
+  &__min-tag {
+    padding: 2px 7px;
+    background: var(--color-steel-200);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-steel-800);
+  }
+
+  &__input-wrap {
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border: 1.5px solid var(--color-steel-300);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition:
+      border-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+
+    &:focus-within {
+      border-color: #EC6608;
+      box-shadow: 0 0 0 3px rgb(236 102 8 / 0.2);
+    }
+  }
+
+  &__currency-prefix {
+    display: grid;
+    place-items: center;
+    padding-left: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: var(--font-weight-black);
+    color: #EC6608;
+    user-select: none;
+  }
+
+  &__amount-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 var(--space-2);
+    border: none;
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-charcoal-900);
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-steel-400);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+
+  &__reset-btn {
+    padding: 4px 10px;
+    margin-right: 6px;
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-md);
+    background: var(--color-steel-100);
+    color: var(--color-steel-700);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: background-color var(--duration-fast);
+
+    &:hover {
+      background: var(--color-steel-200);
+      color: var(--color-charcoal-900);
+    }
+  }
+
+  &__presets {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  &__preset-btn {
+    padding: 3px 9px;
+    border: 1px solid var(--color-steel-300);
+    border-radius: var(--radius-full);
+    background: #FFFFFF;
+    color: var(--color-charcoal-800);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast),
+      background-color var(--duration-fast);
+
+    &:hover {
+      border-color: #EC6608;
+      background: #FFF5EE;
+    }
+
+    &--active {
+      border-color: #EC6608 !important;
+      background: #EC6608 !important;
+      color: #FFFFFF !important;
+    }
+  }
+
+  &__feedback {
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    line-height: 1.4;
+
+    &--warning {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      color: #92400E;
+    }
+
+    &--info {
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      color: #065F46;
+    }
   }
 
   &__buy-btn {

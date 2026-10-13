@@ -40,6 +40,12 @@ export function ArticleDetailView({
   const [isInlineModalOpen, setIsInlineModalOpen] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
 
+  const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+  const [payAmountInput, setPayAmountInput] = useState<string>(String(numericPrice));
+  const enteredAmount = parseInt(payAmountInput.replace(/[^0-9]/g, ""), 10) || 0;
+  const isAmountValid = enteredAmount >= numericPrice;
+  const effectivePayAmount = isAmountValid ? enteredAmount : numericPrice;
+
   // Listen for Paga close-iframe postMessage
   useEffect(() => {
     const handleWindowMessage = (event: MessageEvent) => {
@@ -56,7 +62,6 @@ export function ArticleDetailView({
   useEffect(() => {
     if (!isInlineModalOpen || !inlineSession?.reference) return;
 
-    const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
     const intervalId = setInterval(async () => {
       try {
         const res = await fetch("/api/paga/verify", {
@@ -64,7 +69,7 @@ export function ArticleDetailView({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             reference: inlineSession.reference,
-            amount: numericPrice,
+            amount: effectivePayAmount,
             articleSlug: article.slug,
           }),
         });
@@ -87,7 +92,7 @@ export function ArticleDetailView({
     }, 3500);
 
     return () => clearInterval(intervalId);
-  }, [isInlineModalOpen, inlineSession, article.price, article.slug]);
+  }, [isInlineModalOpen, inlineSession, effectivePayAmount, article.slug]);
 
   // Check client-side storage / query params
   useEffect(() => {
@@ -145,12 +150,11 @@ export function ArticleDetailView({
     setIsUnlocking(true);
 
     try {
-      const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
       const res = await fetch("/api/paga/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: numericPrice,
+          amount: effectivePayAmount,
           articleSlug: article.slug,
         }),
       });
@@ -177,13 +181,12 @@ export function ArticleDetailView({
   const handleVerifyArticlePayment = async (ref: string) => {
     setIsUnlocking(true);
     try {
-      const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
       const res = await fetch("/api/paga/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reference: ref,
-          amount: numericPrice,
+          amount: effectivePayAmount,
           articleSlug: article.slug,
         }),
       });
@@ -396,7 +399,7 @@ export function ArticleDetailView({
                     </span>
                   </>
                 ) : (
-                  /* User wallet is empty or insufficient -> Fund via Paga */
+                  /* User wallet is empty or insufficient -> Choose amount & Fund via Paga */
                   <>
                     <div
                       style={{
@@ -425,10 +428,89 @@ export function ArticleDetailView({
                       </strong>
                     </div>
 
+                    {/* How much do you want to pay? */}
+                    <div className="article-paywall__amount-card">
+                      <div className="article-paywall__amount-head">
+                        <label htmlFor="article-pay-amount-input" className="article-paywall__amount-label">
+                          Enter How Much You Want to Pay (₦)
+                        </label>
+                        <span className="article-paywall__min-tag">
+                          Min: {article.price}
+                        </span>
+                      </div>
+
+                      <div className="article-paywall__input-wrap">
+                        <span className="article-paywall__currency-prefix" aria-hidden="true">
+                          ₦
+                        </span>
+                        <input
+                          id="article-pay-amount-input"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={payAmountInput}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, "");
+                            setPayAmountInput(val);
+                          }}
+                          placeholder={String(numericPrice)}
+                          className="article-paywall__amount-input"
+                          aria-label="Payment amount in Naira"
+                        />
+                        {payAmountInput && (
+                          <button
+                            type="button"
+                            onClick={() => setPayAmountInput(String(numericPrice))}
+                            className="article-paywall__reset-btn"
+                            title="Reset to exact article price"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Quick Presets */}
+                      <div className="article-paywall__presets">
+                        {[
+                          numericPrice,
+                          ...(numericPrice < 5000 ? [5000] : []),
+                          ...(numericPrice < 10000 ? [10000] : []),
+                          ...(numericPrice < 20000 ? [20000] : []),
+                        ].map((amt) => {
+                          const isSelected = effectivePayAmount === amt;
+                          return (
+                            <button
+                              key={amt}
+                              type="button"
+                              className={`article-paywall__preset-btn${
+                                isSelected ? " article-paywall__preset-btn--active" : ""
+                              }`}
+                              onClick={() => setPayAmountInput(String(amt))}
+                            >
+                              {amt === numericPrice
+                                ? `Exact: ₦${amt.toLocaleString()}`
+                                : `₦${amt.toLocaleString()}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Feedback Note */}
+                      {enteredAmount > 0 && enteredAmount < numericPrice ? (
+                        <div className="article-paywall__feedback article-paywall__feedback--warning">
+                          ⚠️ Minimum payment to unlock this guide is {article.price}.
+                        </div>
+                      ) : enteredAmount > numericPrice ? (
+                        <div className="article-paywall__feedback article-paywall__feedback--info">
+                          ✓ {article.price} unlocks this guide · {formatNaira(enteredAmount - numericPrice)} added to your Reader Wallet.
+                        </div>
+                      ) : null}
+                    </div>
+
                     <button
                       type="button"
                       onClick={handleLaunchPagaOnArticle}
-                      disabled={isUnlocking}
+                      disabled={!isAmountValid || isUnlocking}
                       className="article-paywall__buy-btn"
                     >
                       <svg
@@ -448,13 +530,29 @@ export function ArticleDetailView({
                       <span>
                         {isUnlocking
                           ? "Connecting to Paga..."
-                          : `Fund Wallet & Unlock for ${article.price} via Paga`}
+                          : !isAmountValid
+                          ? `Enter at least ${article.price} to Pay`
+                          : `Pay ${formatNaira(effectivePayAmount)} via Paga & Unlock`}
                       </span>
                     </button>
 
-                    <span className="article-paywall__security-note">
-                      Wallet balance empty/insufficient • Funds reader wallet &amp; unlocks guide via live Paga
-                    </span>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", marginTop: "4px" }}>
+                      <span className="article-paywall__security-note" style={{ margin: 0 }}>
+                        Funds reader wallet &amp; unlocks guide via live Paga
+                      </span>
+                      <span>·</span>
+                      <Link
+                        href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&amount=${effectivePayAmount}`}
+                        style={{
+                          fontSize: "11px",
+                          fontFamily: "var(--font-mono)",
+                          color: "var(--brand-charcoal)",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Full Checkout Page →
+                      </Link>
+                    </div>
                   </>
                 )}
               </div>
@@ -625,7 +723,7 @@ export function ArticleDetailView({
               </div>
               <div className="paga-inline-modal__header-right">
                 <span className="paga-inline-modal__amount">
-                  {article.price}
+                  {formatNaira(effectivePayAmount)}
                 </span>
                 <a
                   href={inlineSession.checkoutUrl}

@@ -18,9 +18,9 @@ export type PagaTransaction = {
 export const PAGA_CONFIG = {
   publicKey: process.env.PAGA_PUBLIC_KEY ?? "f9511100-a474-49d7-9045-4410ccf2e084",
   hmacKey: process.env.PAGA_HMAC_KEY ?? "",
-  environment: (process.env.PAGA_ENV ?? "live") as "live" | "beta",
+  environment: "live" as const,
   liveBaseUrl: "https://checkout.paga.com",
-  testBaseUrl: "https://beta-checkout.paga.com",
+  testBaseUrl: "https://checkout.paga.com",
 };
 
 export const PAGA_MERCHANT_DETAILS = {
@@ -32,9 +32,7 @@ export const PAGA_MERCHANT_DETAILS = {
 } as const;
 
 export function getPagaCheckoutBaseUrl(): string {
-  return PAGA_CONFIG.environment === "live"
-    ? PAGA_CONFIG.liveBaseUrl
-    : PAGA_CONFIG.testBaseUrl;
+  return "https://checkout.paga.com";
 }
 
 // In-memory wallet store with user balance tracking
@@ -208,7 +206,7 @@ export function buildPagaCheckoutUrl(params: BuildPagaCheckoutUrlParams): string
   const baseUrl = getPagaCheckoutBaseUrl();
   const searchParams = new URLSearchParams({
     public_key: PAGA_CONFIG.publicKey,
-    amount: params.amount.toFixed(2),
+    amount: Math.round(params.amount).toString(),
     currency: "NGN",
     payment_reference: params.paymentReference,
     email: params.email,
@@ -227,7 +225,7 @@ export function buildPagaCheckoutUrl(params: BuildPagaCheckoutUrlParams): string
     searchParams.set("funding_sources", params.fundingSources);
   }
 
-  return `${baseUrl}/checkout/params?${searchParams.toString()}`;
+  return `${baseUrl}/?${searchParams.toString()}`;
 }
 
 export type PagaVerifyResponse = {
