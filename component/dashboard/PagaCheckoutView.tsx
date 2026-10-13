@@ -34,9 +34,7 @@ export function PagaCheckoutView({
   const router = useRouter();
   const [amount, setAmount] = useState<number>(initialAmount);
   const [walletBalance, setWalletBalance] = useState<number>(userWalletBalance);
-  const [activeChannel, setActiveChannel] = useState<"paga" | "transfer" | "card" | "ussd">("paga");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInlineModalOpen, setIsInlineModalOpen] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
@@ -53,10 +51,6 @@ export function PagaCheckoutView({
     newBalance: number;
     isWalletDebit?: boolean;
   } | null>(null);
-
-  // Form states
-  const [pagaPhone, setPagaPhone] = useState("08034567890");
-  const [pagaPin, setPagaPin] = useState("••••");
 
   // Auto-verify if returning from Paga redirect (charge_url callback)
   useEffect(() => {
@@ -112,12 +106,6 @@ export function PagaCheckoutView({
     return () => clearInterval(intervalId);
   }, [isInlineModalOpen, activeSession, amount, targetArticle, router]);
 
-  const handleCopyAccount = () => {
-    navigator.clipboard.writeText(PAGA_MERCHANT_DETAILS.accountNumber);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
   /**
    * Unlock target article directly using the reader's wallet balance
    * (Used whenever wallet balance is sufficient)
@@ -171,7 +159,6 @@ export function PagaCheckoutView({
         body: JSON.stringify({
           amount,
           articleSlug: targetArticle?.slug,
-          phoneNumber: pagaPhone,
         }),
       });
 
@@ -477,170 +464,93 @@ export function PagaCheckoutView({
               </div>
             )}
 
-            {/* Paga Payment Channels Navigation */}
-            <div className="paga-checkout__channels" role="tablist">
-              <button
-                type="button"
-                className={`paga-checkout__channel-tab${
-                  activeChannel === "paga" ? " paga-checkout__channel-tab--active" : ""
-                }`}
-                onClick={() => setActiveChannel("paga")}
-              >
-                <span>🟠 Paga Live Checkout</span>
-              </button>
-              <button
-                type="button"
-                className={`paga-checkout__channel-tab${
-                  activeChannel === "transfer" ? " paga-checkout__channel-tab--active" : ""
-                }`}
-                onClick={() => setActiveChannel("transfer")}
-              >
-                <span>🏦 Bank Transfer</span>
-              </button>
-              <button
-                type="button"
-                className={`paga-checkout__channel-tab${
-                  activeChannel === "card" ? " paga-checkout__channel-tab--active" : ""
-                }`}
-                onClick={() => setActiveChannel("card")}
-              >
-                <span>💳 Card Gateway</span>
-              </button>
-              <button
-                type="button"
-                className={`paga-checkout__channel-tab${
-                  activeChannel === "ussd" ? " paga-checkout__channel-tab--active" : ""
-                }`}
-                onClick={() => setActiveChannel("ussd")}
-              >
-                <span>📱 USSD (*242#)</span>
-              </button>
-            </div>
-
-            {/* Active Channel Details */}
-            <div className="paga-checkout__body">
-              {activeChannel === "paga" && (
-                <>
-                  <div className="paga-checkout__field-group">
-                    <label className="paga-checkout__field-label">
-                      Paga Phone Number or Account ID
-                    </label>
-                    <input
-                      type="text"
-                      value={pagaPhone}
-                      onChange={(e) => setPagaPhone(e.target.value)}
-                      placeholder="080XXXXXXXX or username"
-                      className="paga-checkout__field-input"
-                    />
-                  </div>
-
-                  <div className="paga-checkout__field-group">
-                    <label className="paga-checkout__field-label">
-                      Paga Account PIN
-                    </label>
-                    <input
-                      type="password"
-                      value={pagaPin}
-                      onChange={(e) => setPagaPin(e.target.value)}
-                      maxLength={4}
-                      className="paga-checkout__field-input"
-                    />
-                  </div>
-
-                  <div style={{
-                    padding: "8px 12px",
-                    background: "var(--color-steel-50)",
-                    border: "1px solid var(--color-steel-300)",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    color: "var(--color-charcoal-800)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}>
-                    <span>Recipient $paga Tag:</span>
-                    <strong style={{ fontFamily: "var(--font-mono)", color: "#EC6608" }}>{PAGA_MERCHANT_DETAILS.pagaTag}</strong>
-                  </div>
-
-                  <p style={{ margin: 0, fontSize: "11px", color: "var(--color-steel-700)" }}>
-                    You will be seamlessly connected to Paga&apos;s live gateway to authorize debit from your wallet.
-                  </p>
-                </>
-              )}
-
-              {activeChannel === "transfer" && (
-                <div className="paga-checkout__transfer-box">
-                  <p style={{ margin: 0, fontSize: "var(--text-xs)", fontWeight: "bold" }}>
-                    Transfer to Dedicated Paga Account:
-                  </p>
-
-                  <div className="paga-checkout__account-row">
-                    <div>
-                      <div style={{ fontSize: "10.5px", color: "var(--color-steel-700)" }}>
-                        Bank: <strong>{PAGA_MERCHANT_DETAILS.bankName}</strong> · Tag: <strong>{PAGA_MERCHANT_DETAILS.pagaTag}</strong>
-                      </div>
-                      <strong style={{ fontSize: "1.1rem", letterSpacing: "0.03em" }}>{PAGA_MERCHANT_DETAILS.accountNumber}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyAccount}
-                      className="paga-checkout__copy-btn"
-                    >
-                      {isCopied ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-
-                  <div className="paga-checkout__timer-row">
-                    <span>Account Name: <strong>{PAGA_MERCHANT_DETAILS.accountName}</strong></span>
-                    <span>Amount: <strong>{formatNaira(amount)}</strong></span>
-                  </div>
-                </div>
-              )}
-
-              {activeChannel === "card" && (
-                <>
-                  <div style={{
-                    padding: "12px",
-                    background: "var(--color-steel-100)",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                    color: "var(--color-steel-900)",
-                    lineHeight: 1.5,
-                  }}>
-                    💳 <strong>Paga Hosted Card Gateway:</strong> Clicking below launches Paga&apos;s PCI-DSS Level 1 compliant card checkout window supporting Mastercard, Visa, and Verve cards.
-                  </div>
-                </>
-              )}
-
-              {activeChannel === "ussd" && (
-                <div className="paga-checkout__ussd-box">
-                  <p style={{ margin: 0, fontSize: "var(--text-xs)" }}>
-                    Dial this code from your registered phone:
-                  </p>
-                  <div className="paga-checkout__ussd-code">
-                    *242*{amount}#
-                  </div>
-                  <p style={{ margin: 0, fontSize: "11px", color: "var(--color-steel-800)" }}>
-                    Works across MTN, Airtel, Glo, and 9mobile. Enter PIN when prompted.
+            {hasSufficientWalletBalance ? (
+              /* User has enough reader wallet balance -> Unlock directly with wallet */
+              <div className="paga-checkout__body">
+                <div style={{
+                  padding: "var(--space-4)",
+                  background: "#ECFDF5",
+                  border: "1px solid #A7F3D0",
+                  borderRadius: "var(--radius-lg)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-2)",
+                }}>
+                  <span style={{ fontSize: "var(--text-xs)", fontWeight: "bold", color: "#065F46" }}>
+                    ✓ Sufficient Wallet Balance Available
+                  </span>
+                  <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "#047857" }}>
+                    You have <strong>{formatNaira(walletBalance)}</strong> in your reader wallet. Unlock this guide instantly without making a new payment.
                   </p>
                 </div>
-              )}
 
-              {/* Authorize & Pay Action Button */}
-              <button
-                type="button"
-                onClick={handleLaunchPagaCheckout}
-                disabled={isProcessing}
-                className="paga-checkout__pay-btn"
-              >
-                <span>
-                  {isProcessing
-                    ? "Opening Paga Checkout..."
-                    : `Pay ${formatNaira(amount)} via Live Paga Gateway`}
-                </span>
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleDirectWalletUnlock}
+                  disabled={isProcessing}
+                  className="paga-checkout__pay-btn"
+                  style={{ background: "#10B981" }}
+                >
+                  <span>
+                    {isProcessing ? "Unlocking Guide..." : `Unlock with Wallet (${formatNaira(amount)})`}
+                  </span>
+                  <span aria-hidden="true">✓</span>
+                </button>
+              </div>
+            ) : (
+              /* User needs to fund/pay via official Paga Gateway */
+              <div className="paga-checkout__body">
+                {/* Order Summary Box */}
+                <div className="paga-checkout__order-card">
+                  <div className="paga-checkout__order-row">
+                    <span className="paga-checkout__order-label">Item</span>
+                    <strong className="paga-checkout__order-value">
+                      {targetArticle ? targetArticle.title : "Street IO Reader Wallet Funding"}
+                    </strong>
+                  </div>
+                  <div className="paga-checkout__order-row">
+                    <span className="paga-checkout__order-label">Reader Account</span>
+                    <span className="paga-checkout__order-value">
+                      {customerName} ({customerEmail})
+                    </span>
+                  </div>
+                  <div className="paga-checkout__order-row">
+                    <span className="paga-checkout__order-label">Current Balance</span>
+                    <span className="paga-checkout__order-value" style={{ fontFamily: "var(--font-mono)" }}>
+                      {formatNaira(walletBalance)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Supported payment channels in Paga */}
+                <div className="paga-checkout__supported-channels">
+                  <span className="paga-checkout__channels-title">
+                    Instant payment options available in Paga checkout:
+                  </span>
+                  <div className="paga-checkout__channel-chips">
+                    <span className="paga-checkout__channel-chip">💳 Card (Mastercard, Visa, Verve)</span>
+                    <span className="paga-checkout__channel-chip">🏦 Bank Transfer</span>
+                    <span className="paga-checkout__channel-chip">📱 USSD (*242#)</span>
+                    <span className="paga-checkout__channel-chip">🟠 Paga Wallet</span>
+                  </div>
+                </div>
+
+                {/* Primary Launch Action */}
+                <button
+                  type="button"
+                  onClick={handleLaunchPagaCheckout}
+                  disabled={isProcessing}
+                  className="paga-checkout__pay-btn"
+                >
+                  <span>
+                    {isProcessing
+                      ? "Opening Paga Checkout..."
+                      : `Pay ${formatNaira(amount)} with Paga`}
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            )}
 
             {/* Paga Trust Footer */}
             <div className="paga-checkout__footer">
