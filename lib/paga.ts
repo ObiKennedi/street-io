@@ -206,7 +206,7 @@ export function buildPagaCheckoutUrl(params: BuildPagaCheckoutUrlParams): string
   const baseUrl = getPagaCheckoutBaseUrl();
   const searchParams = new URLSearchParams({
     public_key: PAGA_CONFIG.publicKey,
-    amount: Math.round(params.amount).toString(),
+    amount: params.amount.toFixed(2),
     currency: "NGN",
     payment_reference: params.paymentReference,
     email: params.email,
@@ -225,7 +225,7 @@ export function buildPagaCheckoutUrl(params: BuildPagaCheckoutUrlParams): string
     searchParams.set("funding_sources", params.fundingSources);
   }
 
-  return `${baseUrl}/?${searchParams.toString()}`;
+  return `${baseUrl}/checkout/params?${searchParams.toString()}`;
 }
 
 export type PagaVerifyResponse = {
