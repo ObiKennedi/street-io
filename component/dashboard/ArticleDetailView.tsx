@@ -18,6 +18,90 @@ type ArticleDetailViewProps = {
   userWalletBalance?: number;
 };
 
+function renderArticleContent(content: string) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let inBulletList = false;
+  let currentBulletItems: string[] = [];
+  let inNumberedList = false;
+  let currentNumberedItems: string[] = [];
+
+  const flushLists = (keyPrefix: number) => {
+    if (inBulletList && currentBulletItems.length > 0) {
+      elements.push(
+        <ul key={`ul-${keyPrefix}`}>
+          {currentBulletItems.map((item, i) => (
+            <li key={i}>{formatInlineText(item)}</li>
+          ))}
+        </ul>
+      );
+      currentBulletItems = [];
+      inBulletList = false;
+    }
+    if (inNumberedList && currentNumberedItems.length > 0) {
+      elements.push(
+        <ol key={`ol-${keyPrefix}`}>
+          {currentNumberedItems.map((item, i) => (
+            <li key={i}>{formatInlineText(item)}</li>
+          ))}
+        </ol>
+      );
+      currentNumberedItems = [];
+      inNumberedList = false;
+    }
+  };
+
+  const formatInlineText = (text: string): React.ReactNode => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={idx}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      flushLists(i);
+      continue;
+    }
+
+    if (trimmed.startsWith("### ")) {
+      flushLists(i);
+      elements.push(<h3 key={i}>{trimmed.slice(4)}</h3>);
+    } else if (trimmed.startsWith("## ")) {
+      flushLists(i);
+      elements.push(<h2 key={i}>{trimmed.slice(3)}</h2>);
+    } else if (trimmed.startsWith("# ")) {
+      flushLists(i);
+      elements.push(<h2 key={i}>{trimmed.slice(2)}</h2>);
+    } else if (trimmed.startsWith("> ")) {
+      flushLists(i);
+      elements.push(
+        <div key={i} className="article-unlocked-body__callout">
+          {formatInlineText(trimmed.slice(2))}
+        </div>
+      );
+    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      inBulletList = true;
+      currentBulletItems.push(trimmed.slice(2));
+    } else if (/^\d+\.\s+/.test(trimmed)) {
+      inNumberedList = true;
+      currentNumberedItems.push(trimmed.replace(/^\d+\.\s+/, ""));
+    } else {
+      flushLists(i);
+      elements.push(<p key={i}>{formatInlineText(trimmed)}</p>);
+    }
+  }
+
+  flushLists(lines.length);
+  return elements;
+}
+
 export function ArticleDetailView({
   article,
   tools,
@@ -597,52 +681,58 @@ export function ArticleDetailView({
           </div>
 
           <div className="article-unlocked-body__content">
-            <h2>1. Adversary Mechanics & Situational Modus Operandi</h2>
-            <p>
-              In high-stakes environments, adversaries rely on urgency, authority emulation, and targeted isolation to bypass conventional defenses. By creating synthetic crises (medical emergencies, customs holds, audit freezes, or regulatory compliance deadlines), perpetrators induce cognitive panic that sidelines standard verification.
-            </p>
-            <p>
-              Key telemetry reveals that 84% of financial diversions occur within 48 hours of initial credential priming. Recognizing these early signals before capital movement is the single most critical intervention point.
-            </p>
+            {article.content && article.content.trim() ? (
+              renderArticleContent(article.content)
+            ) : (
+              <>
+                <h2>1. Adversary Mechanics & Situational Modus Operandi</h2>
+                <p>
+                  In high-stakes environments, adversaries rely on urgency, authority emulation, and targeted isolation to bypass conventional defenses. By creating synthetic crises (medical emergencies, customs holds, audit freezes, or regulatory compliance deadlines), perpetrators induce cognitive panic that sidelines standard verification.
+                </p>
+                <p>
+                  Key telemetry reveals that 84% of financial diversions occur within 48 hours of initial credential priming. Recognizing these early signals before capital movement is the single most critical intervention point.
+                </p>
 
-            <h2>2. Step-by-Step Countermeasures & Tradecraft Protocols</h2>
-            <p>
-              Execute the following operational sequence immediately upon detecting suspicious indicators:
-            </p>
-            <ol>
-              <li>
-                <strong>Out-of-Band Physical Verification:</strong> Never rely on contact details, telephone numbers, or email threads provided within the suspicious correspondence. Always initiate a separate call via previously documented internal directories.
-              </li>
-              <li>
-                <strong>Dynamic Visual / Biometric Challenge:</strong> If interacting with an unverified individual claiming identity, require a real-time dynamic gesture (e.g. holding up three fingers beside the right ear on live video). Pre-recorded video loops and mid-tier deepfakes fail this test instantaneously.
-              </li>
-              <li>
-                <strong>Carrier & Domain Telemetry Audit:</strong> Validate whether phone numbers are routed through disposable VoIP trunks (Google Voice, TextNow) or registered domestic telecom SIM cards using the verification tools listed in the footer below.
-              </li>
-              <li>
-                <strong>Mandatory Dual-Signatory Escrow:</strong> For all capital transfers exceeding routine operational thresholds, mandate dual executive sign-off and routing value-dating verification with your designated financial institution.
-              </li>
-            </ol>
+                <h2>2. Step-by-Step Countermeasures & Tradecraft Protocols</h2>
+                <p>
+                  Execute the following operational sequence immediately upon detecting suspicious indicators:
+                </p>
+                <ol>
+                  <li>
+                    <strong>Out-of-Band Physical Verification:</strong> Never rely on contact details, telephone numbers, or email threads provided within the suspicious correspondence. Always initiate a separate call via previously documented internal directories.
+                  </li>
+                  <li>
+                    <strong>Dynamic Visual / Biometric Challenge:</strong> If interacting with an unverified individual claiming identity, require a real-time dynamic gesture (e.g. holding up three fingers beside the right ear on live video). Pre-recorded video loops and mid-tier deepfakes fail this test instantaneously.
+                  </li>
+                  <li>
+                    <strong>Carrier & Domain Telemetry Audit:</strong> Validate whether phone numbers are routed through disposable VoIP trunks (Google Voice, TextNow) or registered domestic telecom SIM cards using the verification tools listed in the footer below.
+                  </li>
+                  <li>
+                    <strong>Mandatory Dual-Signatory Escrow:</strong> For all capital transfers exceeding routine operational thresholds, mandate dual executive sign-off and routing value-dating verification with your designated financial institution.
+                  </li>
+                </ol>
 
-            <div className="article-unlocked-body__callout">
-              <strong>FIELD RULE OF ENGAGEMENT:</strong> If an online acquaintance or vendor changes payment destination details or demands urgent wire transfers citing deployment, customs, or audit emergencies, immediately freeze all outgoing communication until independent voice verification has concluded.
-            </div>
+                <div className="article-unlocked-body__callout">
+                  <strong>FIELD RULE OF ENGAGEMENT:</strong> If an online acquaintance or vendor changes payment destination details or demands urgent wire transfers citing deployment, customs, or audit emergencies, immediately freeze all outgoing communication until independent voice verification has concluded.
+                </div>
 
-            <h2>3. Emergency Incident Containment Matrix</h2>
-            <p>
-              If an unauthorized wire or sensitive document transfer has already occurred, execute this containment checklist within the golden 2-hour window:
-            </p>
-            <ul>
-              <li>
-                <strong>Call Bank Fraud Desk Directly:</strong> Request an immediate SWIFT / NIBSS recall and ask for the transaction to be placed in administrative suspense.
-              </li>
-              <li>
-                <strong>Preserve Complete Digital Forensics:</strong> Export raw RFC 822 email headers, complete chat archives, and transaction references before accounts can be deleted by adversaries.
-              </li>
-              <li>
-                <strong>File Official Incident Reports:</strong> Log reference numbers with domestic cybersecurity authorities and report suspicious bank account numbers to the financial crimes registry.
-              </li>
-            </ul>
+                <h2>3. Emergency Incident Containment Matrix</h2>
+                <p>
+                  If an unauthorized wire or sensitive document transfer has already occurred, execute this containment checklist within the golden 2-hour window:
+                </p>
+                <ul>
+                  <li>
+                    <strong>Call Bank Fraud Desk Directly:</strong> Request an immediate SWIFT / NIBSS recall and ask for the transaction to be placed in administrative suspense.
+                  </li>
+                  <li>
+                    <strong>Preserve Complete Digital Forensics:</strong> Export raw RFC 822 email headers, complete chat archives, and transaction references before accounts can be deleted by adversaries.
+                  </li>
+                  <li>
+                    <strong>File Official Incident Reports:</strong> Log reference numbers with domestic cybersecurity authorities and report suspicious bank account numbers to the financial crimes registry.
+                  </li>
+                </ul>
+              </>
+            )}
 
             {article.keyTakeaways && article.keyTakeaways.length > 0 && (
               <>

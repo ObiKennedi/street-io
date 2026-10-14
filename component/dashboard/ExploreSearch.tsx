@@ -11,7 +11,7 @@ import {
   streetInfoCategories,
   type DashboardCategory,
 } from "./categories.config";
-import { searchArticles, type Article } from "@/lib/articles";
+import { searchArticles, addArticle, type Article } from "@/lib/articles";
 import { Loader } from "@/component/ui/Loader";
 import "./explore.scss";
 
@@ -33,6 +33,20 @@ export function ExploreSearch() {
   const [aiSource, setAiSource] = useState<string>("gemini-2.0-flash");
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    // Sync live articles from PostgreSQL to in-memory search index
+    fetch("/api/article/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.articles && Array.isArray(data.articles)) {
+          for (const a of data.articles) {
+            addArticle(a);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const initialQuery = searchParams.get("q");

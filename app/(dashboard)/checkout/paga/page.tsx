@@ -36,9 +36,39 @@ export default async function PagaCheckoutPage({ searchParams }: Props) {
     status_message: statusMessage,
   } = params;
 
-  const targetArticle = articleSlug
+  let targetArticle = articleSlug
     ? ARTICLES_DATABASE.find((a) => a.slug === articleSlug) ?? null
     : null;
+
+  if (!targetArticle && articleSlug) {
+    try {
+      const { prisma } = await import("@/lib/prisma");
+      const dbArticle = await prisma.article.findFirst({
+        where: { OR: [{ slug: articleSlug }, { id: articleSlug }] },
+      });
+      if (dbArticle) {
+        targetArticle = {
+          id: dbArticle.id,
+          slug: dbArticle.slug,
+          title: dbArticle.title,
+          category: dbArticle.categorySlug || "GENERAL",
+          categorySlug: dbArticle.categorySlug || "general",
+          price: `₦${dbArticle.price.toLocaleString()}`,
+          readTime: dbArticle.readTime || "7 min read",
+          description: dbArticle.description,
+          content: dbArticle.content,
+          contentSnippet: dbArticle.contentSnippet || dbArticle.description,
+          keyTakeaways: dbArticle.keyTakeaways || [],
+          tags: dbArticle.tags || [],
+          weeklyReads: dbArticle.weeklyReads || 0,
+          monthlyReads: dbArticle.monthlyReads || 0,
+          totalReads: dbArticle.totalReads || 0,
+          trendingDelta: dbArticle.trendingDelta || "+100%",
+          thumbnailUrl: dbArticle.coverImage || undefined,
+        };
+      }
+    } catch {}
+  }
 
   // If target article found, parse its price e.g. "₦3,500" -> 3500
   let initialAmount = 5000;

@@ -2,9 +2,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
-import { getCategoryBySlug, getArticlesByCategory } from "@/lib/articles";
+import { getCategoryBySlug, getArticlesByCategory, addArticle, type Article } from "@/lib/articles";
 import { exploreCategories } from "@/component/dashboard/categories.config";
 import { CategoryDetailView } from "@/component/dashboard/CategoryDetailView";
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -37,7 +38,47 @@ export default async function CategoryPage({ params }: Props) {
     notFound();
   }
 
-  const articles = getArticlesByCategory(slug);
+  let articles: Article[] = getArticlesByCategory(slug);
+
+  if (articles.length === 0) {
+    try {
+      const records = await prisma.article.findMany({
+        where: {
+          categorySlug: { equals: slug, mode: "insensitive" },
+          published: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (records.length > 0) {
+        articles = records.map((a) => ({
+          id: a.id,
+          slug: a.slug,
+          title: a.title,
+          category: category.label,
+          categorySlug: a.categorySlug || slug,
+          price: `₦${a.price.toLocaleString()}`,
+          readTime: a.readTime || "7 min read",
+          description: a.description,
+          content: a.content,
+          contentSnippet: a.contentSnippet || a.description,
+          keyTakeaways: a.keyTakeaways || [],
+          tags: a.tags || [],
+          weeklyReads: a.weeklyReads,
+          monthlyReads: a.monthlyReads,
+          totalReads: a.totalReads,
+          trendingDelta: a.trendingDelta || "+100%",
+          thumbnailUrl: a.coverImage || undefined,
+        }));
+
+        for (const art of articles) {
+          addArticle(art);
+        }
+      }
+    } catch (err) {
+      console.error("Prisma error in CategoryPage:", err);
+    }
+  }
 
   // Pick 3 related categories (excluding current)
   const relatedCategories = exploreCategories

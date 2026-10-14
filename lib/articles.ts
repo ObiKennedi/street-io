@@ -12,6 +12,7 @@ export type Article = {
   isUnlocked?: boolean;
   readTime: string;
   description: string;
+  content?: string;
   contentSnippet: string;
   keyTakeaways: string[];
   tags: string[];

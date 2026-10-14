@@ -1,14 +1,41 @@
-// File: component/dashboard/TrendingFeed.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getTrendingArticles, type TrendingTimeframe } from "@/lib/articles";
+import { getTrendingArticles, addArticle, type TrendingTimeframe, type Article } from "@/lib/articles";
 import { CategoryIcon } from "./CategoryIcon";
 import "./trending.scss";
 
 export function TrendingFeed() {
   const [timeframe, setTimeframe] = useState<TrendingTimeframe>("weekly");
+  const [, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    // 1. Check localStorage for instantly published articles
+    try {
+      const local = localStorage.getItem("streetio_custom_articles");
+      if (local) {
+        const parsed: Article[] = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          for (const a of parsed) addArticle(a);
+          setRefreshKey((k) => k + 1);
+        }
+      }
+    } catch {}
+
+    // 2. Fetch live articles from PostgreSQL via /api/article/list
+    fetch("/api/article/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.articles && Array.isArray(data.articles) && data.articles.length > 0) {
+          for (const a of data.articles) {
+            addArticle(a);
+          }
+          setRefreshKey((k) => k + 1);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const articles = useMemo(() => {
     return getTrendingArticles(timeframe);

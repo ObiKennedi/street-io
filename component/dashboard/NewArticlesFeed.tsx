@@ -1,18 +1,73 @@
-// File: component/dashboard/NewArticlesFeed.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getLatestArticles } from "@/lib/articles";
+import { getLatestArticles, addArticle, type Article } from "@/lib/articles";
 import { CategoryIcon } from "./CategoryIcon";
 import "./new-articles.scss";
 
-export function NewArticlesFeed() {
+type NewArticlesFeedProps = {
+  initialArticles?: Article[];
+};
+
+export function NewArticlesFeed({ initialArticles }: NewArticlesFeedProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [rawArticles, setRawArticles] = useState<Article[]>(() => {
+    if (initialArticles && initialArticles.length > 0) return initialArticles;
+    return getLatestArticles();
+  });
+
+  useEffect(() => {
+    // 1. Check local session storage for instant preview
+    try {
+      const local = localStorage.getItem("streetio_custom_articles");
+      if (local) {
+        const parsed: Article[] = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRawArticles((prev) => {
+            const combined = [...parsed, ...prev];
+            const seen = new Set();
+            return combined.filter((a) => {
+              const key = a.slug || a.id;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+          });
+        }
+      }
+    } catch {}
+
+    // 2. Fetch live articles from PostgreSQL via /api/article/list
+    fetch("/api/article/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.articles && Array.isArray(data.articles) && data.articles.length > 0) {
+          setRawArticles(data.articles);
+          for (const a of data.articles) {
+            addArticle(a);
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching articles for /new:", err));
+  }, []);
 
   const allLatestArticles = useMemo(() => {
-    return getLatestArticles();
-  }, []);
+    const timestamps = [
+      "Uploaded just now",
+      "Uploaded 2 hours ago",
+      "Uploaded today",
+      "Uploaded yesterday",
+      "Uploaded 2 days ago",
+      "Uploaded 3 days ago",
+      "Uploaded this week",
+    ];
+
+    return rawArticles.map((article, idx) => ({
+      ...article,
+      uploadTag: (article as any).uploadTag || timestamps[idx % timestamps.length],
+    }));
+  }, [rawArticles]);
 
   const categories = useMemo(() => {
     const set = new Set(allLatestArticles.map((a) => a.category));

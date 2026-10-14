@@ -20,11 +20,17 @@ export function AdminArticleUpload({
   const [priceNaira, setPriceNaira] = useState("4500");
   const [readTime, setReadTime] = useState("8 min read");
   const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
   const [contentSnippet, setContentSnippet] = useState("");
   const [keyTakeawaysText, setKeyTakeawaysText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const [contentTab, setContentTab] = useState<"edit" | "preview">("edit");
+  const [fileUploadNotice, setFileUploadNotice] = useState<string | null>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Cloudinary image upload states
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -48,6 +54,56 @@ export function AdminArticleUpload({
   const [newToolDesc, setNewToolDesc] = useState("");
   const [toolSuccessNotice, setToolSuccessNotice] = useState<string | null>(null);
   const toolNameInputRef = useRef<HTMLInputElement>(null);
+
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const autoReadTime = Math.max(1, Math.ceil(wordCount / 200));
+
+  const handleDocumentFile = (file: File) => {
+    if (
+      !file.name.endsWith(".md") &&
+      !file.name.endsWith(".txt") &&
+      file.type !== "text/plain" &&
+      file.type !== "text/markdown"
+    ) {
+      setUploadError("Please upload a text or Markdown file (.md, .txt).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = (e.target?.result as string) || "";
+      if (text) {
+        setContent(text);
+        if (!title.trim()) {
+          const headingMatch = text.match(/^#\s+(.+)$/m) || text.match(/^##\s+(.+)$/m);
+          if (headingMatch) setTitle(headingMatch[1].trim());
+        }
+        const words = text.trim().split(/\s+/).length;
+        const mins = Math.max(1, Math.ceil(words / 200));
+        setReadTime(`${mins} min read`);
+        setFileUploadNotice(`✓ Imported "${file.name}" (${words} words, ~${mins} min read).`);
+        setTimeout(() => setFileUploadNotice(null), 5000);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const insertTemplate = (snippet: string) => {
+    const textarea = contentTextareaRef.current;
+    if (!textarea) {
+      setContent((prev) => prev + snippet);
+      return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const prev = content;
+    const next = prev.substring(0, start) + snippet + prev.substring(end);
+    setContent(next);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + snippet.length, start + snippet.length);
+    }, 20);
+  };
 
   const handleAddTool = () => {
     if (!newToolName.trim() || !newToolUrl.trim()) return;
@@ -185,20 +241,26 @@ export function AdminArticleUpload({
       badge: "Curated",
     }));
 
-    const newArticle: AdminArticle = {
+    const fullArticleContent =
+      content.trim() ||
+      contentSnippet.trim() ||
+      description.trim();
+
+    const articlePayload = {
       id: `art-custom-${Date.now()}`,
       slug: slug || `article-${Date.now()}`,
       title: title.trim(),
       category: categoryObj.label,
       categorySlug: categoryObj.slug,
-      price: formattedPrice,
-      readTime: readTime.trim() || "7 min read",
+      price: numericPrice,
+      readTime: readTime.trim() || `${autoReadTime} min read`,
       description: description.trim(),
-      thumbnailUrl: thumbnailUrl.trim() || undefined,
-      tools: compiledTools.length > 0 ? compiledTools : undefined,
+      content: fullArticleContent,
       contentSnippet:
         contentSnippet.trim() ||
         "Confidential operational brief detailing tradecraft protocols and countermeasures.",
+      thumbnailUrl: thumbnailUrl.trim() || undefined,
+      tools: compiledTools.length > 0 ? compiledTools : undefined,
       keyTakeaways:
         takeaways.length > 0
           ? takeaways
@@ -208,35 +270,82 @@ export function AdminArticleUpload({
               "Immediate containment steps in case of credential leak.",
             ],
       tags: tags.length > 0 ? tags : [categoryObj.slug, "operational guide", "tradecraft"],
-      weeklyReads: 140,
-      monthlyReads: 620,
-      totalReads: 850,
-      trendingDelta: "+100%",
-      soldCopies: 0,
-      revenueGenerated: 0,
-      status: "published",
-      createdAt: new Date().toISOString().split("T")[0],
     };
 
-    setTimeout(() => {
-      onArticleCreated(newArticle);
-      setIsSubmitting(false);
-      setSuccessMessage(`"${newArticle.title}" published successfully at ${formattedPrice}!`);
+    (async () => {
+      try {
+        const res = await fetch("/api/article/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(articlePayload),
+        });
 
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setContentSnippet("");
-      setKeyTakeawaysText("");
-      setTagsText("");
-      setPriceNaira("4500");
-      setThumbnailUrl("");
-      setUploadError(null);
-      setToolsList([]);
-      setNewToolName("");
-      setNewToolUrl("");
-      setNewToolDesc("");
-    }, 400);
+        const data = await res.json();
+        const createdArticle: AdminArticle = (data && data.article) || {
+          ...articlePayload,
+          price: formattedPrice,
+          weeklyReads: 140,
+          monthlyReads: 620,
+          totalReads: 850,
+          trendingDelta: "+100%",
+          soldCopies: 0,
+          revenueGenerated: 0,
+          status: "published",
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+
+        try {
+          const stored = JSON.parse(localStorage.getItem("streetio_custom_articles") || "[]");
+          const updated = [createdArticle, ...stored.filter((x: any) => x.slug !== createdArticle.slug)];
+          localStorage.setItem("streetio_custom_articles", JSON.stringify(updated));
+        } catch {}
+
+        onArticleCreated(createdArticle);
+        setIsSubmitting(false);
+        setCreatedSlug(createdArticle.slug);
+        setSuccessMessage(`"${createdArticle.title}" published successfully at ${formattedPrice}!`);
+
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setContent("");
+        setContentSnippet("");
+        setKeyTakeawaysText("");
+        setTagsText("");
+        setPriceNaira("4500");
+        setThumbnailUrl("");
+        setUploadError(null);
+        setToolsList([]);
+        setNewToolName("");
+        setNewToolUrl("");
+        setNewToolDesc("");
+      } catch (err) {
+        console.error("Publish error:", err);
+        const fallbackArticle: AdminArticle = {
+          ...articlePayload,
+          price: formattedPrice,
+          weeklyReads: 140,
+          monthlyReads: 620,
+          totalReads: 850,
+          trendingDelta: "+100%",
+          soldCopies: 0,
+          revenueGenerated: 0,
+          status: "published",
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+
+        try {
+          const stored = JSON.parse(localStorage.getItem("streetio_custom_articles") || "[]");
+          const updated = [fallbackArticle, ...stored.filter((x: any) => x.slug !== fallbackArticle.slug)];
+          localStorage.setItem("streetio_custom_articles", JSON.stringify(updated));
+        } catch {}
+
+        onArticleCreated(fallbackArticle);
+        setIsSubmitting(false);
+        setCreatedSlug(fallbackArticle.slug);
+        setSuccessMessage(`"${fallbackArticle.title}" published to current session at ${formattedPrice}!`);
+      }
+    })();
   };
 
   return (
@@ -253,16 +362,18 @@ export function AdminArticleUpload({
       </div>
 
       {successMessage && (
-        <div style={{
-          padding: "12px 16px",
-          borderRadius: "8px",
-          background: "#ECFDF5",
-          border: "1px solid #A7F3D0",
-          color: "#065F46",
-          fontSize: "13px",
-          fontWeight: 600,
-        }}>
-          ✓ {successMessage}
+        <div className="admin-upload-success-card" role="status">
+          <span>✓ {successMessage}</span>
+          {createdSlug && (
+            <a
+              href={`/article/${createdSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-upload-success-link"
+            >
+              Open Article Micro Page ↗
+            </a>
+          )}
         </div>
       )}
 
@@ -528,6 +639,212 @@ export function AdminArticleUpload({
               onChange={(e) => setDescription(e.target.value)}
               className="admin-form__textarea"
             />
+          </div>
+
+          {/* Full Article Content / Field Playbook Guide (Dedicated Upload & Editor Space) */}
+          <div className="admin-form__field admin-form__field--full">
+            <div className="admin-article-editor">
+              <div className="admin-article-editor__header">
+                <div className="admin-article-editor__title-group">
+                  <span className="admin-article-editor__title">
+                    📖 Full Article Content &amp; Playbook Guide *
+                  </span>
+                  <p className="admin-article-editor__desc">
+                    This is the full comprehensive operational guide unlocked by readers after paywall payment. Supports Markdown, headings, lists, and callout blocks.
+                  </p>
+                </div>
+
+                <div className="admin-article-editor__header-actions">
+                  <button
+                    type="button"
+                    onClick={() => docInputRef.current?.click()}
+                    className="admin-article-editor__file-import-btn"
+                    title="Upload markdown (.md) or text (.txt) file"
+                  >
+                    <span>📄</span>
+                    <span>Upload .md / .txt File</span>
+                  </button>
+                  <input
+                    ref={docInputRef}
+                    type="file"
+                    accept=".md,.txt,text/plain,text/markdown"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleDocumentFile(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              </div>
+
+              {fileUploadNotice && (
+                <div style={{
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  background: "#ECFDF5",
+                  border: "1px solid #A7F3D0",
+                  color: "#065F46",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                }}>
+                  {fileUploadNotice}
+                </div>
+              )}
+
+              {/* Formatting Toolbar & View Mode Tabs */}
+              <div className="admin-article-editor__toolbar">
+                <div className="admin-article-editor__toolbar-group">
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("\n\n## Section Heading\n")}
+                    className="admin-article-editor__tool-btn"
+                    title="Insert Heading 2"
+                  >
+                    H2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("\n\n### Sub-heading\n")}
+                    className="admin-article-editor__tool-btn"
+                    title="Insert Heading 3"
+                  >
+                    H3
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("**Bold Text**")}
+                    className="admin-article-editor__tool-btn"
+                    title="Bold"
+                  >
+                    <strong>B</strong>
+                  </button>
+                </div>
+
+                <div className="admin-article-editor__toolbar-divider" />
+
+                <div className="admin-article-editor__toolbar-group">
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("\n- Operational action item\n- Verification requirement\n")}
+                    className="admin-article-editor__tool-btn"
+                    title="Bullet List"
+                  >
+                    • List
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("\n1. Step 1: Initial Containment\n2. Step 2: Verification Challenge\n")}
+                    className="admin-article-editor__tool-btn"
+                    title="Numbered Steps"
+                  >
+                    1. Steps
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTemplate("\n> FIELD MANDATE: Verify all routing codes before transferring value.\n")}
+                    className="admin-article-editor__tool-btn"
+                    title="Callout Box"
+                  >
+                    &gt; Callout
+                  </button>
+                </div>
+
+                <div className="admin-article-editor__tabs">
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("edit")}
+                    className={`admin-article-editor__tab ${contentTab === "edit" ? "admin-article-editor__tab--active" : ""}`}
+                  >
+                    Edit Content
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("preview")}
+                    className={`admin-article-editor__tab ${contentTab === "preview" ? "admin-article-editor__tab--active" : ""}`}
+                  >
+                    Live Reader Preview
+                  </button>
+                </div>
+              </div>
+
+              {contentTab === "edit" ? (
+                <textarea
+                  ref={contentTextareaRef}
+                  id="art-content"
+                  rows={14}
+                  required
+                  placeholder={`Write or paste your full playbook guide here...\n\n## 1. Adversary Mechanics & Situational Modus Operandi\nDetailed operational analysis of the compromise vectors...\n\n## 2. Step-by-Step Countermeasures\n1. Initiate out-of-band callback protocol.\n2. Execute live visual biometric challenge.\n\n> FIELD RULE: Mandatory verification before releasing value.`}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="admin-article-editor__textarea"
+                />
+              ) : (
+                <div className="admin-article-editor__preview-box">
+                  <div className="article-unlocked-body__content">
+                    {content.trim() ? (
+                      content.split("\n\n").map((block, idx) => {
+                        const trimmed = block.trim();
+                        if (trimmed.startsWith("### ")) {
+                          return <h3 key={idx}>{trimmed.slice(4)}</h3>;
+                        } else if (trimmed.startsWith("## ")) {
+                          return <h2 key={idx}>{trimmed.slice(3)}</h2>;
+                        } else if (trimmed.startsWith("# ")) {
+                          return <h2 key={idx}>{trimmed.slice(2)}</h2>;
+                        } else if (trimmed.startsWith("> ")) {
+                          return (
+                            <div key={idx} className="article-unlocked-body__callout">
+                              {trimmed.slice(2)}
+                            </div>
+                          );
+                        } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+                          const items = trimmed.split("\n").map((l) => l.replace(/^[-*]\s*/, ""));
+                          return (
+                            <ul key={idx}>
+                              {items.map((it, i) => (
+                                <li key={i}>{it}</li>
+                              ))}
+                            </ul>
+                          );
+                        } else if (/^\d+\.\s+/.test(trimmed)) {
+                          const items = trimmed.split("\n").map((l) => l.replace(/^\d+\.\s*/, ""));
+                          return (
+                            <ol key={idx}>
+                              {items.map((it, i) => (
+                                <li key={i}>{it}</li>
+                              ))}
+                            </ol>
+                          );
+                        }
+                        return <p key={idx}>{trimmed}</p>;
+                      })
+                    ) : (
+                      <p style={{ color: "var(--color-steel-500)", fontStyle: "italic" }}>
+                        No content entered yet. Switch back to &ldquo;Edit Content&rdquo; or upload a document (.md/.txt).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="admin-article-editor__footer">
+                <div className="admin-article-editor__stats">
+                  <span>{wordCount} words</span>
+                  <span>•</span>
+                  <span>Estimated {autoReadTime} min read</span>
+                </div>
+
+                {wordCount > 0 && readTime !== `${autoReadTime} min read` && (
+                  <button
+                    type="button"
+                    onClick={() => setReadTime(`${autoReadTime} min read`)}
+                    className="admin-article-editor__apply-btn"
+                  >
+                    Apply &ldquo;{autoReadTime} min read&rdquo; to article specs
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Paywall Preview Snippet */}

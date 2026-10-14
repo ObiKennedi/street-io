@@ -1,7 +1,7 @@
 // File: component/admin/AdminDashboardView.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   INITIAL_ADMIN_ARTICLES,
   INITIAL_ADMIN_USERS,
@@ -30,6 +30,17 @@ export function AdminDashboardView() {
   const [users, setUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS);
   const [reports, setReports] = useState<ArticleReport[]>(INITIAL_ARTICLE_REPORTS);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/article/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.articles) && data.articles.length > 0) {
+          setArticles(data.articles);
+        }
+      })
+      .catch((err) => console.error("Error loading articles:", err));
+  }, []);
 
   const summary = useMemo(() => {
     return calculateRevenueSummary(articles);
