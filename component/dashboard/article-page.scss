@@ -50,6 +50,26 @@ $bp-desktop: 1024px;
     }
   }
 
+  &__cover-wrap {
+    width: 100%;
+    max-height: 420px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-top: var(--space-2);
+    box-shadow: 0 4px 20px rgb(0 0 0 / 0.08);
+    border: 1px solid var(--dash-border);
+    background: #0f172a;
+  }
+
+  &__cover-image {
+    width: 100%;
+    height: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+  }
+
+
   &__meta-strip {
     display: flex;
     align-items: center;

@@ -98,19 +98,62 @@ export function AdminArticlesList({
             </tr>
           </thead>
           <tbody>
-            {filteredArticles.map((art) => {
-              const isEditing = editingId === art.id;
+            {filteredArticles.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
+                  No articles in inventory yet. Use the <strong>Upload</strong> tab above to publish operational guides.
+                </td>
+              </tr>
+            ) : (
+              filteredArticles.map((art) => {
+                const isEditing = editingId === art.id;
 
-              return (
-                <tr key={art.id}>
-                  <td className="admin-table__title-cell">
-                    <span className="admin-table__article-title" title={art.title}>
-                      {art.title}
-                    </span>
-                    <span className="admin-table__article-meta">
-                      {art.readTime} • {art.weeklyReads.toLocaleString()} reads this wk
-                    </span>
+                return (
+                  <tr key={art.id}>
+                    <td className="admin-table__title-cell">
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {art.thumbnailUrl ? (
+                        <img
+                          src={art.thumbnailUrl}
+                          alt={art.title}
+                          style={{
+                            width: "42px",
+                            height: "42px",
+                            borderRadius: "6px",
+                            objectFit: "cover",
+                            flexShrink: 0,
+                            border: "1px solid var(--color-steel-300)",
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "42px",
+                            height: "42px",
+                            borderRadius: "6px",
+                            background: "var(--color-steel-100)",
+                            border: "1px solid var(--color-steel-200)",
+                            display: "grid",
+                            placeItems: "center",
+                            fontSize: "15px",
+                            flexShrink: 0,
+                            color: "var(--color-steel-600)",
+                          }}
+                        >
+                          📄
+                        </div>
+                      )}
+                      <div>
+                        <span className="admin-table__article-title" title={art.title}>
+                          {art.title}
+                        </span>
+                        <span className="admin-table__article-meta">
+                          {art.readTime} • {art.weeklyReads.toLocaleString()} reads this wk
+                        </span>
+                      </div>
+                    </div>
                   </td>
+
 
                   <td>
                     <span style={{
@@ -265,8 +308,9 @@ export function AdminArticlesList({
                   </td>
                 </tr>
               );
-            })}
-          </tbody>
+            })
+          )}
+        </tbody>
         </table>
       </div>
 
@@ -282,6 +326,13 @@ export function AdminArticlesList({
 
             return (
               <div key={art.id} className="admin-article-card">
+                {/* Thumbnail Cover (displayed above article card) */}
+                {art.thumbnailUrl && (
+                  <div style={{ width: "100%", height: "150px", borderRadius: "8px", overflow: "hidden", marginBottom: "10px", background: "#111827" }}>
+                    <img src={art.thumbnailUrl} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </div>
+                )}
+
                 {/* Top Badges */}
                 <div className="admin-article-card__top">
                   <span className="admin-article-card__cat-badge">{art.category}</span>
@@ -298,6 +349,7 @@ export function AdminArticlesList({
                     {art.readTime} • {art.weeklyReads.toLocaleString()} reads this week
                   </p>
                 </div>
+
 
                 {/* Performance Stats Column */}
                 <div className="admin-article-card__stats">

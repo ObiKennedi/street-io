@@ -63,6 +63,12 @@ $bp-desktop: 1024px;
     letter-spacing: var(--tracking-heading);
   }
 
+  &__notice-adage {
+    color: var(--sf-fg);
+    font-weight: var(--font-weight-bold);
+    font-style: italic;
+  }
+
   // ---- Main ---------------------------------------------------------------
   &__main {
     display: grid;

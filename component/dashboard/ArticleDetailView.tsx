@@ -228,7 +228,18 @@ export function ArticleDetailView({
 
       {/* Header section */}
       <header className="article-page__hero">
+        {article.thumbnailUrl && (
+          <div className="article-page__cover-wrap">
+            <img
+              src={article.thumbnailUrl}
+              alt={article.title}
+              className="article-page__cover-image"
+            />
+          </div>
+        )}
+
         <div className="article-page__meta-strip">
+
           <Link
             href={`/category/${article.categorySlug}`}
             className="article-page__category-badge"
@@ -650,52 +661,54 @@ export function ArticleDetailView({
       )}
 
       {/* ================= LINKS TO TOOLS AT THE FOOTER ================= */}
-      <footer className="article-tools" aria-labelledby="footer-tools-heading">
-        <div className="article-tools__head">
-          <h2 id="footer-tools-heading" className="article-tools__title">
-            Operational Field Tools & Verification Resources
-          </h2>
-          <p className="article-tools__desc">
-            Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
-          </p>
-        </div>
+      {tools && tools.length > 0 && (
+        <footer className="article-tools" aria-labelledby="footer-tools-heading">
+          <div className="article-tools__head">
+            <h2 id="footer-tools-heading" className="article-tools__title">
+              Operational Field Tools &amp; Verification Resources
+            </h2>
+            <p className="article-tools__desc">
+              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
+            </p>
+          </div>
 
-        <ul className="article-tools__grid">
-          {tools.map((tool) => (
-            <li key={tool.id} className="article-tools__card">
-              <div className="article-tools__card-top">
-                <h3 className="article-tools__tool-name">{tool.name}</h3>
-                <span className="article-tools__type-pill">{tool.type}</span>
-              </div>
+          <ul className="article-tools__grid">
+            {tools.map((tool) => (
+              <li key={tool.id} className="article-tools__card">
+                <div className="article-tools__card-top">
+                  <h3 className="article-tools__tool-name">{tool.name}</h3>
+                  <span className="article-tools__type-pill">{tool.type}</span>
+                </div>
 
-              <p className="article-tools__tool-desc">{tool.description}</p>
+                <p className="article-tools__tool-desc">{tool.description}</p>
 
-              <div className="article-tools__card-footer">
-                <span className="article-tools__tool-category">
-                  {tool.category}
-                </span>
+                <div className="article-tools__card-footer">
+                  <span className="article-tools__tool-category">
+                    {tool.category}
+                  </span>
 
-                {tool.isExternal ? (
-                  <a
-                    href={tool.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="article-tools__tool-btn"
-                  >
-                    <span>Launch Tool</span>
-                    <span aria-hidden="true">↗</span>
-                  </a>
-                ) : (
-                  <Link href={tool.url} className="article-tools__tool-btn">
-                    <span>Open Resource</span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </footer>
+                  {tool.isExternal ? (
+                    <a
+                      href={tool.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="article-tools__tool-btn"
+                    >
+                      <span>Launch Tool</span>
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    <Link href={tool.url} className="article-tools__tool-btn">
+                      <span>Open Resource</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </footer>
+      )}
 
       {/* Official Paga Checkout Inline Modal */}
       {isInlineModalOpen && inlineSession && (

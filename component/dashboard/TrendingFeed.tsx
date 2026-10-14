@@ -88,8 +88,30 @@ export function TrendingFeed() {
 
       {/* Ranked Articles Leaderboard */}
       <section aria-label={`Most read articles ${timeframe}`}>
-        <ol className="trending-list">
-          {articles.map((article) => {
+        {articles.length === 0 ? (
+          <div
+            style={{
+              padding: "54px 24px",
+              textAlign: "center",
+              background: "var(--color-neutral-0)",
+              border: "1px dashed var(--color-steel-300)",
+              borderRadius: "var(--radius-lg)",
+              marginTop: "20px",
+            }}
+          >
+            <div style={{ display: "inline-flex", padding: "12px", background: "var(--color-steel-100)", borderRadius: "var(--radius-full)", marginBottom: "12px", color: "var(--color-steel-600)" }}>
+              <CategoryIcon name="trending" size={32} />
+            </div>
+            <h3 style={{ margin: "0 0 6px", fontSize: "16px", color: "var(--color-steel-900)" }}>
+              No Trending Intelligence Yet
+            </h3>
+            <p style={{ margin: 0, fontSize: "13px", color: "var(--color-steel-600)", maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
+              Rankings and readership leaderboards will automatically populate as new educational playbooks are uploaded and accessed.
+            </p>
+          </div>
+        ) : (
+          <ol className="trending-list">
+            {articles.map((article) => {
             const rankFormatted = String(article.rank).padStart(2, "0");
             const isTop3 = article.rank <= 3;
 
@@ -110,6 +132,23 @@ export function TrendingFeed() {
 
                   {/* Content Column */}
                   <div className="trending-card__content">
+                    {article.thumbnailUrl && (
+                      <div className="trending-card__cover-wrap">
+                        <Link
+                          href={`/article/${article.slug}`}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="trending-card__cover-link"
+                        >
+                          <img
+                            src={article.thumbnailUrl}
+                            alt={article.title}
+                            className="trending-card__cover-img"
+                          />
+                        </Link>
+                      </div>
+                    )}
+
                     <div className="trending-card__meta">
                       <div className="trending-card__meta-left">
                         <span className="trending-card__category">{article.category}</span>
@@ -163,6 +202,7 @@ export function TrendingFeed() {
             );
           })}
         </ol>
+        )}
       </section>
     </div>
   );

@@ -53,7 +53,8 @@ export function SiteFooter() {
           </div>
           <p className="site-footer__notice-text">
             <strong className="site-footer__notice-title">{disclaimer.title}</strong>{" "}
-            {disclaimer.text}
+            <span className="site-footer__notice-adage">&ldquo;{disclaimer.adage}&rdquo;</span>{" "}
+            — {disclaimer.text}
           </p>
         </aside>
 

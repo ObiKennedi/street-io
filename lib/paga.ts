@@ -42,28 +42,40 @@ declare global {
   var __streetio_wallets: Map<string, number> | undefined;
   // eslint-disable-next-line no-var
   var __streetio_transactions: PagaTransaction[] | undefined;
-}
-
-if (!globalThis.__streetio_wallets) {
-  globalThis.__streetio_wallets = new Map<string, number>();
-}
-
-if (!globalThis.__streetio_transactions) {
-  globalThis.__streetio_transactions = [];
-}
-
-declare global {
   // eslint-disable-next-line no-var
   var __streetio_unlocked_articles: Map<string, Set<string>> | undefined;
 }
 
+if (!globalThis.__streetio_wallets) {
+  globalThis.__streetio_wallets = new Map<string, number>();
+} else {
+  globalThis.__streetio_wallets.clear();
+}
+
+if (!globalThis.__streetio_transactions) {
+  globalThis.__streetio_transactions = [];
+} else {
+  globalThis.__streetio_transactions.length = 0;
+}
+
 if (!globalThis.__streetio_unlocked_articles) {
   globalThis.__streetio_unlocked_articles = new Map<string, Set<string>>();
+} else {
+  globalThis.__streetio_unlocked_articles.clear();
 }
 
 const wallets = globalThis.__streetio_wallets;
 const transactions = globalThis.__streetio_transactions;
 const unlockedArticles = globalThis.__streetio_unlocked_articles;
+
+export function clearAllTransactionsAndWallets(): void {
+  globalThis.__streetio_wallets?.clear();
+  if (globalThis.__streetio_transactions) {
+    globalThis.__streetio_transactions.length = 0;
+  }
+  globalThis.__streetio_unlocked_articles?.clear();
+}
+
 
 export function isArticleUnlockedForUser(userId: string, articleSlug: string): boolean {
   return unlockedArticles.get(userId)?.has(articleSlug.toLowerCase()) ?? false;

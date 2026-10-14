@@ -425,6 +425,40 @@ $bp-desktop: 1024px;
     transform: translateY(-2px);
   }
 
+  // Cover image displayed prominently above article header
+  &__cover-wrap {
+    width: 100%;
+    height: 180px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+    background: #0f172a;
+    border: 1px solid var(--dash-border);
+    flex-shrink: 0;
+
+    @media (min-width: $bp-tablet) {
+      height: 200px;
+    }
+  }
+
+  &__cover-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--duration-base) var(--ease-out);
+
+    .new-card:hover & {
+      transform: scale(1.025);
+    }
+  }
+
   // Top header section: Column on mobile, row on tablet+
   &__top {
     display: flex;

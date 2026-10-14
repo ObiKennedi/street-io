@@ -176,10 +176,12 @@ export function CategoryDetailView({
           >
             <CategoryIcon name="file" size={32} />
             <h3 style={{ margin: "var(--space-2) 0 4px", fontSize: "var(--text-base)" }}>
-              No guides match &ldquo;{filterQuery}&rdquo;
+              {filterQuery ? `No guides match "${filterQuery}"` : `No operational guides published in ${category.label} yet`}
             </h3>
             <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-steel-800)" }}>
-              Clear your filter to view all guides in {category.label}.
+              {filterQuery
+                ? `Clear your filter to view all guides in ${category.label}.`
+                : `New verified playbooks and resources for ${category.label} will appear here once published.`}
             </p>
           </div>
         ) : (
@@ -187,6 +189,23 @@ export function CategoryDetailView({
             {filteredArticles.map((article) => (
               <li key={article.id}>
                 <article className="category-page__card">
+                  {article.thumbnailUrl && (
+                    <div className="category-page__card-cover-wrap">
+                      <Link
+                        href={`/article/${article.slug}`}
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        className="category-page__card-cover-link"
+                      >
+                        <img
+                          src={article.thumbnailUrl}
+                          alt={article.title}
+                          className="category-page__card-cover-img"
+                        />
+                      </Link>
+                    </div>
+                  )}
+
                   <div className="category-page__card-meta">
                     <span className="category-page__card-tag">{article.category}</span>
                     <span className="category-page__card-price">{article.price}</span>

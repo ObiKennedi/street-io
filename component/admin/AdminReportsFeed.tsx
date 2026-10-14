@@ -60,8 +60,13 @@ export function AdminReportsFeed({
         </div>
       </div>
 
-      <ul className="admin-reports-list">
-        {filteredReports.map((report) => (
+      {filteredReports.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
+          No policy incident reports logged. Platform running cleanly with 0 disputes.
+        </div>
+      ) : (
+        <ul className="admin-reports-list">
+          {filteredReports.map((report) => (
           <li key={report.id} className="admin-report-card">
             <div className="admin-report-card__top">
               <div className="admin-report-card__badges">
@@ -135,6 +140,7 @@ export function AdminReportsFeed({
           </li>
         ))}
       </ul>
+      )}
     </section>
   );
 }

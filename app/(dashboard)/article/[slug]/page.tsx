@@ -51,7 +51,10 @@ export default async function ArticleMicroPage({ params }: Props) {
     notFound();
   }
 
-  const tools = getToolsForArticle(article.categorySlug);
+  const tools =
+    article.tools && article.tools.length > 0
+      ? article.tools
+      : getToolsForArticle(article.categorySlug);
   const isUnlocked = session?.user?.id
     ? isArticleUnlockedForUser(session.user.id, article.slug)
     : false;

@@ -95,76 +95,116 @@ export function NewArticlesFeed() {
       </div>
 
       {/* Articles Feed */}
-      <ul className="new-feed">
-        {filteredArticles.map((article) => (
-          <li key={article.id} className="new-card">
-            <div className="new-card__top">
-              <div className="new-card__tags">
-                <span className="new-card__recency-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  <span>{article.uploadTag}</span>
-                </span>
-                <Link
-                  href={`/category/${article.categorySlug}`}
-                  className="new-card__category-badge"
-                >
-                  {article.category}
-                </Link>
+      {filteredArticles.length === 0 ? (
+        <div
+          style={{
+            padding: "54px 24px",
+            textAlign: "center",
+            background: "var(--color-neutral-0)",
+            border: "1px dashed var(--color-steel-300)",
+            borderRadius: "var(--radius-lg)",
+            marginTop: "20px",
+          }}
+        >
+          <div style={{ display: "inline-flex", padding: "12px", background: "var(--color-steel-100)", borderRadius: "var(--radius-full)", marginBottom: "12px", color: "var(--color-steel-600)" }}>
+            <CategoryIcon name="file" size={32} />
+          </div>
+          <h3 style={{ margin: "0 0 6px", fontSize: "16px", color: "var(--color-steel-900)" }}>
+            No Articles Published Yet
+          </h3>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--color-steel-600)", maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
+            Fresh educational articles and practical playbooks will appear here immediately once uploaded.
+          </p>
+        </div>
+      ) : (
+        <ul className="new-feed">
+          {filteredArticles.map((article) => (
+            <li key={article.id} className="new-card">
+              {article.thumbnailUrl && (
+                <div className="new-card__cover-wrap">
+                  <Link
+                    href={`/article/${encodeURIComponent(article.slug)}`}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="new-card__cover-link"
+                  >
+                    <img
+                      src={article.thumbnailUrl}
+                      alt={article.title}
+                      className="new-card__cover-img"
+                    />
+                  </Link>
+                </div>
+              )}
+
+              <div className="new-card__top">
+                <div className="new-card__tags">
+                  <span className="new-card__recency-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>{article.uploadTag}</span>
+                  </span>
+                  <Link
+                    href={`/category/${article.categorySlug}`}
+                    className="new-card__category-badge"
+                  >
+                    {article.category}
+                  </Link>
+                </div>
+                <span className="new-card__read-time">{article.readTime}</span>
               </div>
-              <span className="new-card__read-time">{article.readTime}</span>
-            </div>
 
-            <h2 className="new-card__title">
-              <Link href={`/article/${encodeURIComponent(article.slug)}`}>
-                {article.title}
-              </Link>
-            </h2>
+              <h2 className="new-card__title">
+                <Link href={`/article/${encodeURIComponent(article.slug)}`}>
+                  {article.title}
+                </Link>
+              </h2>
 
-            <p className="new-card__description">{article.description}</p>
+              <p className="new-card__description">{article.description}</p>
 
-            <div className="new-card__snippet-box">
-              &ldquo;{article.contentSnippet}&rdquo;
-            </div>
-
-            {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-              <ul className="new-card__takeaways" aria-label="Key operational takeaways">
-                {article.keyTakeaways.map((takeaway, idx) => (
-                  <li key={idx}>{takeaway}</li>
-                ))}
-              </ul>
-            )}
-
-            <div className="new-card__footer">
-              <div className="new-card__pricing">
-                <span className="new-card__price-label">Unlock Fee</span>
-                <span className="new-card__price-amount">{article.price}</span>
+              <div className="new-card__snippet-box">
+                &ldquo;{article.contentSnippet}&rdquo;
               </div>
 
-              <div className="new-card__actions">
-                <Link
-                  href={`/article/${encodeURIComponent(article.slug)}`}
-                  className="new-card__preview-btn"
-                >
-                  Read & Tools
-                </Link>
-                <Link
-                  href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
-                  className="new-card__unlock-btn"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  <span>Unlock via Paga</span>
-                </Link>
+              {article.keyTakeaways && article.keyTakeaways.length > 0 && (
+                <ul className="new-card__takeaways" aria-label="Key operational takeaways">
+                  {article.keyTakeaways.map((takeaway, idx) => (
+                    <li key={idx}>{takeaway}</li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="new-card__footer">
+                <div className="new-card__pricing">
+                  <span className="new-card__price-label">Unlock Fee</span>
+                  <span className="new-card__price-amount">{article.price}</span>
+                </div>
+
+                <div className="new-card__actions">
+                  <Link
+                    href={`/article/${encodeURIComponent(article.slug)}`}
+                    className="new-card__preview-btn"
+                  >
+                    Read & Tools
+                  </Link>
+                  <Link
+                    href={`/checkout/paga?article=${encodeURIComponent(article.slug)}&title=${encodeURIComponent(article.title)}&price=${encodeURIComponent(article.price)}`}
+                    className="new-card__unlock-btn"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Unlock via Paga</span>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

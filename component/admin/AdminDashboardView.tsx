@@ -8,11 +8,12 @@ import {
   INITIAL_ARTICLE_REPORTS,
   calculateRevenueSummary,
   deleteAdminArticle,
+  addAdminArticle,
   type AdminArticle,
   type AdminUser,
   type ArticleReport,
 } from "@/lib/admin-data";
-import { deleteArticle } from "@/lib/articles";
+import { deleteArticle, addArticle } from "@/lib/articles";
 import { AdminHeader } from "./AdminHeader";
 import { AdminStatsOverview } from "./AdminStatsOverview";
 import { AdminArticleUpload } from "./AdminArticleUpload";
@@ -45,6 +46,8 @@ export function AdminDashboardView() {
   // Handlers
   const handleArticleCreated = (newArticle: AdminArticle) => {
     setArticles((prev) => [newArticle, ...prev]);
+    addAdminArticle(newArticle);
+    addArticle(newArticle);
     setActiveTab("articles");
   };
 

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { Mail, Phone, Send, CheckCircle2, AlertCircle } from "lucide-react";
-import { FaXTwitter, FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa6";
+import { FaTiktok, FaWhatsapp } from "react-icons/fa6";
 import "./contact.scss";
 
 const socialLinks = [
-  { label: "X (Twitter)", href: "https://x.com/streetio", icon: FaXTwitter },
-  { label: "Facebook", href: "https://facebook.com/streetio", icon: FaFacebookF },
-  { label: "Instagram", href: "https://instagram.com/streetio", icon: FaInstagram },
-  { label: "TikTok", href: "https://tiktok.com/@streetio", icon: FaTiktok },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@streetio_org?_r=1&_t=ZS-9AW10IC9Rf2",
+    icon: FaTiktok,
+  },
 ];
 
 const subjectLabels: Record<string, string> = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap, BookOpen, KeyRound } from "lucide-react";
+import { GraduationCap, BookOpen, KeyRound, Quote, ShieldAlert } from "lucide-react";
 import "./about.scss";
 
 const pillars = [
@@ -50,6 +50,20 @@ export default function AboutSection() {
               to perform a specific task, provides the steps to execute it, and shows you where to source the tools you
               need. You pay for membership to unlock lessons you can actually use.
             </p>
+
+            {/* About Core Adage Box */}
+            <div className="about-sec__adage-box">
+              <div className="about-sec__adage-header">
+                <Quote size={15} className="about-sec__adage-icon" aria-hidden="true" />
+                <span className="about-sec__adage-label">CORE ADAGE</span>
+              </div>
+              <blockquote className="about-sec__adage-quote">
+                &ldquo;If it&rsquo;s not on the syllabus, it&rsquo;s because someone profits from you not knowing it.&rdquo;
+              </blockquote>
+              <p className="about-sec__adage-subtext">
+                See the game before it gets played on you.
+              </p>
+            </div>
           </div>
 
           {/* Highlights Column */}
@@ -68,6 +82,24 @@ export default function AboutSection() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* ---- Disclaimer Adage Strip ---- */}
+        <div className="about-sec__disclaimer-strip" data-aos="fade-up" data-aos-delay="150">
+          <div className="about-sec__disclaimer-icon-wrap" aria-hidden="true">
+            <ShieldAlert size={20} />
+          </div>
+          <div className="about-sec__disclaimer-content">
+            <div className="about-sec__disclaimer-heading-row">
+              <span className="about-sec__disclaimer-pill">LEGAL & DEFENSIVE ADAGE</span>
+              <strong className="about-sec__disclaimer-adage">
+                &ldquo;Learn it. Don&rsquo;t do it.&rdquo;
+              </strong>
+            </div>
+            <p className="about-sec__disclaimer-desc">
+              All guides and breakdowns on Street IO are published strictly for defensive literacy, threat awareness, and real-world comprehension. We never assist, condone, or permit illicit execution. Understanding the mechanics is your defense.
+            </p>
           </div>
         </div>
       </div>

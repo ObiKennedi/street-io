@@ -32,13 +32,15 @@ export const footerColumns: FooterColumn[] = [
 ];
 
 export const socialLinks: FooterLink[] = [
-  { label: "X", href: "https://x.com/streetio", external: true },
-  { label: "Facebook", href: "https://facebook.com/streetio", external: true },
-  { label: "Instagram", href: "https://instagram.com/streetio", external: true },
-  { label: "TikTok", href: "https://tiktok.com/@streetio", external: true },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@streetio_org?_r=1&_t=ZS-9AW10IC9Rf2",
+    external: true,
+  },
 ];
 
 export const disclaimer = {
-  title: "Educational use only:",
+  title: "Educational & Defensive Adage:",
+  adage: "Learn it. Don’t do it.",
   text: "Published strictly for educational, defensive, and research purposes. Street IO does not condone, assist, or permit illegal activity.",
 };

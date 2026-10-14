@@ -206,6 +206,23 @@ export function ExploreSearch() {
               <ul className="explore-results__list">
                 {searchResults.map((article) => (
                   <li key={article.id} className="explore-results__item">
+                    {article.thumbnailUrl && (
+                      <div className="explore-results__cover-wrap">
+                        <Link
+                          href={`/article/${article.slug}`}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="explore-results__cover-link"
+                        >
+                          <img
+                            src={article.thumbnailUrl}
+                            alt={article.title}
+                            className="explore-results__cover-img"
+                          />
+                        </Link>
+                      </div>
+                    )}
+
                     <div className="explore-results__meta">
                       <span className="explore-results__tag">{article.category}</span>
                       <span className="explore-results__price">{article.price}</span>
@@ -216,6 +233,7 @@ export function ExploreSearch() {
                         {article.title}
                       </Link>
                     </h3>
+
                     <p className="explore-results__desc">{article.description}</p>
 
                     {article.keyTakeaways.length > 0 && (
