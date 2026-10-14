@@ -644,6 +644,190 @@ export const ARTICLES_DATABASE: Article[] = [
     monthlyReads: 63900,
     totalReads: 158000,
     trendingDelta: "+33%"
+  },
+
+  // 26. Make Money Online
+  {
+    id: "art-26",
+    slug: "remote-service-arbitrage-b2b-blueprint",
+    title: "Make Money Online: B2B Service Arbitrage & Remote Retainer Engines",
+    category: "Make Money Online",
+    categorySlug: "make-money-online",
+    price: "₦4,500",
+    readTime: "11 min read",
+    description: "Packaging high-demand digital services, leveraging talent arbitrage, and setting up compliant cross-border payment rails for recurring dollar income.",
+    contentSnippet: "Online service arbitrage involves acquiring B2B clients in high-purchasing-power markets (US, UK, GCC) while deploying vetted technical specialists in emerging markets to fulfill deliverables. Learn how to structure milestone escrow agreements, package specialized offerings (cold email infrastructure, RevOps, video editing), and use multi-currency merchant accounts (Geegpay, Payoneer, Stripe Atlas) to retain earnings with minimal FX leakage.",
+    keyTakeaways: [
+      "Target specialized high-pain B2B bottlenecks rather than generic creative services.",
+      "Use upfront 50% deposits or bi-weekly retainers to guarantee operating margin.",
+      "Establish legal subcontractor NDAs with back-to-back delivery SLAs to protect client relationships."
+    ],
+    tags: ["make money online", "service arbitrage", "freelance", "b2b", "retainers", "monetization"],
+    weeklyReads: 29500,
+    monthlyReads: 118400,
+    totalReads: 290000,
+    trendingDelta: "+58%"
+  },
+
+  // 27. Business
+  {
+    id: "art-27",
+    slug: "cross-border-company-formation-and-ops",
+    title: "Business: Cross-Border Company Formation, Cashflow & CAC Compliance",
+    category: "Business",
+    categorySlug: "business",
+    price: "₦5,000",
+    readTime: "13 min read",
+    description: "The complete playbook for incorporating in Delaware or Nigeria, setting up corporate bank accounts (Mercury, Brex, Paga), and managing compliance.",
+    contentSnippet: "Building a resilient enterprise requires proper structural foundation from day one. Understand the differences between Delaware LLCs, Wyoming asset-protection entities, and Nigerian CAC Private Limited Companies. Learn corporate governance best practices, tax withholding compliance, vendor contract leverage, and how to prevent corporate veil piercing.",
+    keyTakeaways: [
+      "Segregate personal and corporate liabilities strictly to prevent piercing of the corporate veil.",
+      "Maintain a 6-month operational runway in secure treasury yields before expanding headcount.",
+      "Formalize shareholder agreements with vesting schedules and right-of-first-refusal clauses."
+    ],
+    tags: ["business", "incorporation", "delaware llc", "cac", "cashflow", "operations"],
+    weeklyReads: 22100,
+    monthlyReads: 89300,
+    totalReads: 210000,
+    trendingDelta: "+34%"
+  },
+
+  // 28. Sales and Getting Clients
+  {
+    id: "art-28",
+    slug: "high-ticket-client-acquisition-and-closing",
+    title: "Sales & Getting Clients: Cold Outreach Engines & High-Ticket Closing",
+    category: "Sales & Getting Clients",
+    categorySlug: "sales-and-getting-clients",
+    price: "₦4,800",
+    readTime: "12 min read",
+    description: "Setting up secondary domain cold email infrastructure, crafting compelling ICP offers, and closing 4-to-5-figure retainers on discovery calls.",
+    contentSnippet: "Cold outreach fails when sent from primary business domains or using generic templates. Learn how to configure 5 secondary domains with Google Workspace, warm them for 14 days, scrape verified B2B leads using Apollo and Clay, and pitch tailored solutions that solve verifiable business bottlenecks. Master the 4-phase discovery call script that leads prospective clients to close themselves.",
+    keyTakeaways: [
+      "Never send cold emails from your primary domain; isolate deliverability risk with dedicated burner domains.",
+      "Qualify prospects on budget and decision-making authority before preparing detailed scope documents.",
+      "Anchor price against cost-of-inaction rather than cost-of-delivery to command premium rates."
+    ],
+    tags: ["sales", "clients", "cold email", "closing", "b2b", "prospecting"],
+    weeklyReads: 26400,
+    monthlyReads: 104200,
+    totalReads: 265000,
+    trendingDelta: "+45%"
+  },
+
+  // 29. Jobs and Career
+  {
+    id: "art-29",
+    slug: "remote-global-tech-career-placement",
+    title: "Jobs & Career: Landing High-Compensation Global Remote Roles",
+    category: "Jobs & Career",
+    categorySlug: "jobs-and-career",
+    price: "₦4,200",
+    readTime: "10 min read",
+    description: "Executive positioning, ATS-bypassing resume architecture, backchannel interviews, and negotiating remote salaries with US and EU employers.",
+    contentSnippet: "Applying on generic job boards puts you into a pool of 2,000+ applicants. Discover the backchannel placement strategy: identifying engineering and operational managers on LinkedIn, creating personalized project briefs, and securing warm referrals. Learn how to benchmark global remote compensation bands and negotiate equity grants alongside base salary.",
+    keyTakeaways: [
+      "Bypass public portals by sending high-signal project audits directly to department heads.",
+      "Structure resumes with quantifiable business impact metrics rather than task descriptions.",
+      "Always negotiate compensation with competing leverage or third-party salary data benchmarks."
+    ],
+    tags: ["jobs", "career", "remote work", "salary negotiation", "tech careers", "interviews"],
+    weeklyReads: 24300,
+    monthlyReads: 96800,
+    totalReads: 230000,
+    trendingDelta: "+38%"
+  },
+
+  // 30. Digital Skills
+  {
+    id: "art-30",
+    slug: "high-income-digital-skills-mastery",
+    title: "Digital Skills: High-Income Fullstack, Cloud & Security Architectures",
+    category: "Digital Skills",
+    categorySlug: "digital-skills",
+    price: "₦5,000",
+    readTime: "14 min read",
+    description: "The core technical stack that commands $80+/hr: Next.js App Router, edge functions, Postgres optimization, and secure API gateways.",
+    contentSnippet: "In the modern digital economy, surface-level coding is commoditized; architectural mastery commands top dollar. This playbook outlines how to build scalable fullstack platforms: database indexing strategies, connection pooling with Neon and Prisma, stateless token authentication, and implementing automated continuous integration pipelines.",
+    keyTakeaways: [
+      "Focus on production resilience, zero-trust security headers, and query performance.",
+      "Build public, demonstrable production proof-of-work rather than tutorial clones.",
+      "Master edge compute paradigms and serverless database connection management."
+    ],
+    tags: ["digital skills", "programming", "fullstack", "nextjs", "cloud", "software engineering"],
+    weeklyReads: 20100,
+    monthlyReads: 82400,
+    totalReads: 195000,
+    trendingDelta: "+29%"
+  },
+
+  // 31. Content Creation
+  {
+    id: "art-31",
+    slug: "content-creation-audience-and-distribution-engine",
+    title: "Content Creation: Audience Distribution, Retention Hooks & Monetization",
+    category: "Content Creation",
+    categorySlug: "content-creation",
+    price: "₦3,800",
+    readTime: "9 min read",
+    description: "Engineering viral retention curves on YouTube, TikTok, and X, turning followers into newsletter subscribers, and negotiating five-figure brand deals.",
+    contentSnippet: "Attention is the new currency. Learn the psychological architecture of 3-second hooks, pacing algorithms, visual storytelling frameworks, and retention graphs. Discover how to build owned email list distribution that algorithms cannot de-platform, and calculate CPM sponsorship rates for podcast and video integrations.",
+    keyTakeaways: [
+      "The first 5 seconds dictate 80% of video distribution velocity on modern recommendation algorithms.",
+      "Convert platform followers into owned email subscribers with high-value lead magnets.",
+      "Price brand sponsorships based on dedicated conversions rather than raw impression counts."
+    ],
+    tags: ["content creation", "youtube", "tiktok", "audience", "monetization", "sponsorships"],
+    weeklyReads: 27800,
+    monthlyReads: 109300,
+    totalReads: 275000,
+    trendingDelta: "+51%"
+  },
+
+  // 32. AI and Technology
+  {
+    id: "art-32",
+    slug: "ai-workflow-automation-and-agentic-systems",
+    title: "AI & Technology: Deploying Autonomous LLM Agents & Internal Tooling",
+    category: "AI & Technology",
+    categorySlug: "ai-and-technology",
+    price: "₦5,500",
+    readTime: "13 min read",
+    description: "Building autonomous agentic workflows with Gemini, OpenAI function calling, vector embeddings, and LangChain for business automation.",
+    contentSnippet: "Generative AI is shifting from chat interfaces to autonomous background agents. Learn how to construct self-correcting agent loops with function calling, build cost-efficient Retrieval-Augmented Generation (RAG) pipelines with pgvector, and automate repetitive business operations like customer qualification, research reports, and code auditing.",
+    keyTakeaways: [
+      "Use structured outputs and schema validation (Zod) to ensure deterministic LLM responses.",
+      "Implement prompt evaluation harnesses to measure regression when upgrading model versions.",
+      "Cache embeddings and leverage hybrid keyword/vector search to slash API token expenses by 60%."
+    ],
+    tags: ["ai", "technology", "llm", "agents", "automation", "rag", "gemini"],
+    weeklyReads: 34200,
+    monthlyReads: 142000,
+    totalReads: 360000,
+    trendingDelta: "+92%"
+  },
+
+  // 33. Investing and Personal Finance
+  {
+    id: "art-33",
+    slug: "wealth-preservation-hedging-and-portfolio-tactics",
+    title: "Investing & Personal Finance: Wealth Preservation & Inflation Defense",
+    category: "Investing & Personal Finance",
+    categorySlug: "investing-and-personal-finance",
+    price: "₦4,500",
+    readTime: "11 min read",
+    description: "Protecting capital against currency devaluation, screening high-yield investment traps, allocating to global treasuries, and dividend indexing.",
+    contentSnippet: "High inflation and currency depreciation erode purchasing power rapidly. Discover asymmetric risk allocation models: balancing foreign currency sovereign bonds, diversified S&P 500 index funds, physical gold, and real estate cashflow. Learn how to screen out Ponzi-style high-yield investment schemes and calculate inflation-adjusted net returns.",
+    keyTakeaways: [
+      "Never concentrate capital in a single sovereign currency prone to chronic devaluation.",
+      "Promises of guaranteed monthly payouts above risk-free benchmark rates indicate severe structural hazard.",
+      "Automate dollar-cost averaging into low-expense index funds to capture long-term compounding."
+    ],
+    tags: ["investing", "personal finance", "wealth preservation", "inflation defense", "asset allocation"],
+    weeklyReads: 25700,
+    monthlyReads: 101500,
+    totalReads: 250000,
+    trendingDelta: "+41%"
   }
 ];
 
@@ -690,8 +874,20 @@ export function getArticleBySlug(slug: string): Article | undefined {
 
 export function getArticlesByCategory(categorySlug: string): Article[] {
   const clean = categorySlug.trim().toLowerCase();
-  return ARTICLES_DATABASE.filter(
-    (a) => a.categorySlug.toLowerCase() === clean
+  const aliasMap: Record<string, string[]> = {
+    "make-money-online": ["make-money-online", "e-commerce-info"],
+    "business": ["business", "e-commerce-info", "billing-strategy-scope"],
+    "sales-and-getting-clients": ["sales-and-getting-clients", "billing-strategy-scope"],
+    "jobs-and-career": ["jobs-and-career", "employment-info"],
+    "digital-skills": ["digital-skills", "web-development"],
+    "content-creation": ["content-creation", "tiktok-info"],
+    "ai-and-technology": ["ai-and-technology"],
+    "investing-and-personal-finance": ["investing-and-personal-finance", "investment-info"],
+  };
+
+  const allowedSlugs = aliasMap[clean] || [clean];
+  return ARTICLES_DATABASE.filter((a) =>
+    allowedSlugs.includes(a.categorySlug.toLowerCase())
   );
 }
 
@@ -709,7 +905,22 @@ export function deleteArticle(articleIdOrSlug: string): boolean {
 
 export function getCategoryBySlug(slug: string): DashboardCategory | undefined {
   const clean = slug.trim().toLowerCase();
-  return exploreCategories.find((c) => c.slug.toLowerCase() === clean);
+  const found = exploreCategories.find((c) => c.slug.toLowerCase() === clean);
+  if (found) return found;
+
+  const aliases: Record<string, string> = {
+    "billing-strategy-scope": "sales-and-getting-clients",
+    "investment-info": "investing-and-personal-finance",
+    "web-development": "digital-skills",
+    "employment-info": "jobs-and-career",
+    "e-commerce-info": "business",
+  };
+  const targetSlug = aliases[clean];
+  if (targetSlug) {
+    return exploreCategories.find((c) => c.slug.toLowerCase() === targetSlug);
+  }
+
+  return undefined;
 }
 
 export function searchArticles(query: string): Article[] {

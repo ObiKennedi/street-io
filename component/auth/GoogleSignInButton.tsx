@@ -11,17 +11,24 @@ type GoogleSignInButtonProps = {
   callbackURL?: string;
   label?: string;
   className?: string;
+  onPreClick?: () => boolean | void;
 };
 
 export function GoogleSignInButton({
   callbackURL,
   label = "Continue with Google",
   className = "",
+  onPreClick,
 }: GoogleSignInButtonProps) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
+    if (onPreClick) {
+      const allowed = onPreClick();
+      if (allowed === false) return;
+    }
+
     setIsPending(true);
     setError(null);
 
@@ -30,6 +37,7 @@ export function GoogleSignInButton({
       callbackURL: safePath(callbackURL),
       errorCallbackURL: "/login?error=google",
     });
+
 
     // On success the browser is redirected to Google, so we only get here on failure.
     if (error) {

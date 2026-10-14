@@ -762,3 +762,207 @@ $bp-wide: 1080px;
     }
   }
 }
+
+// ---- Categorized Hub (MONEY / INCOME vs STREET INFO) ------------------------
+.explore-categorized-hub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: $bp-tablet) {
+    gap: var(--space-10);
+  }
+}
+
+// Section Filter Tabs
+.explore-section-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: $bp-tablet) {
+    justify-content: center;
+    overflow-x: visible;
+  }
+}
+
+.explore-section-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-3);
+  background: var(--color-neutral-0);
+  border: 1.5px solid var(--color-steel-300);
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-steel-800);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+
+  @media (min-width: $bp-tablet) {
+    height: 42px;
+    padding: 0 var(--space-4);
+    font-size: var(--text-xs);
+  }
+
+  &:hover {
+    border-color: var(--color-steel-500);
+    color: var(--color-charcoal-900);
+  }
+
+  &--active {
+    background: var(--brand-charcoal);
+    border-color: var(--brand-charcoal);
+    color: var(--color-neutral-0);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+
+    &:hover {
+      background: var(--color-charcoal-800);
+      border-color: var(--color-charcoal-800);
+      color: var(--color-neutral-0);
+    }
+
+    .explore-section-tab__count {
+      background: rgba(255, 255, 255, 0.22);
+      color: var(--color-neutral-0);
+    }
+  }
+
+  &__icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  &__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 7px;
+    border-radius: var(--radius-full);
+    background: var(--color-steel-200);
+    color: var(--color-steel-800);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+// Group Sections (MONEY / INCOME & STREET INFO)
+.explore-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  box-sizing: border-box;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding-bottom: var(--space-2);
+    border-bottom: 1.5px solid var(--color-steel-300);
+  }
+
+  &__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  &__eyebrow-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-weight-black);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+
+    &--money {
+      background: #e6f4ea;
+      color: #137333;
+      border: 1px solid rgba(19, 115, 51, 0.25);
+    }
+
+    &--street {
+      background: var(--color-steel-200);
+      color: var(--brand-charcoal);
+      border: 1px solid var(--color-steel-400);
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 1rem + 0.8vw, 1.6rem);
+    font-weight: var(--font-weight-black);
+    letter-spacing: -0.02em;
+    color: var(--color-charcoal-900);
+  }
+
+  &__badge-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: var(--color-steel-100);
+    border: 1px solid var(--color-steel-300);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-steel-800);
+    align-self: center;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-steel-800);
+    line-height: 1.5;
+    max-width: 720px;
+  }
+}
+
+.explore-grid-section__card--money {
+  &:hover {
+    border-color: #137333;
+
+    .explore-grid-section__icon {
+      background: #137333;
+      color: #ffffff;
+    }
+  }
+}
+

@@ -4,9 +4,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { safePath, sendVerificationEmail, signUp } from "@/lib/auth-client";
+import { safePath, sendVerificationEmail, signIn, signUp } from "@/lib/auth-client";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 import { PasswordField } from "./PasswordField";
+import { DisclaimerModal } from "./DisclaimerModal";
 import "./auth-form.scss";
 
 type Status =
@@ -19,27 +20,64 @@ export function SignUpForm({ next }: { next?: string }) {
   const returnTo = next ? safePath(next, "/redirect") : "/redirect";
   const [status, setStatus] = useState<Status>({ type: "idle" });
   const [resent, setResent] = useState(false);
+  const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
+  const [pendingValues, setPendingValues] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
+  const [pendingGoogle, setPendingGoogle] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Triggered when clicking "Sign up" on the form
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const name = String(form.get("name")).trim();
-    const email = String(form.get("email")).trim().toLowerCase();
-    const password = String(form.get("password"));
+    const form = e.currentTarget;
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const name = String(formData.get("name")).trim();
+    const email = String(formData.get("email")).trim().toLowerCase();
+    const password = String(formData.get("password"));
+
+    setPendingValues({ name, email, password });
+    setPendingGoogle(false);
+    setIsDisclaimerOpen(true);
+  }
+
+  // Triggered when user confirms the disclaimer in the modal
+  async function handleConfirmDisclaimer() {
+    if (pendingGoogle) {
+      setIsDisclaimerOpen(false);
+      await signIn.social({
+        provider: "google",
+        callbackURL: returnTo,
+        errorCallbackURL: "/login?error=google",
+      });
+      return;
+    }
+
+    if (!pendingValues) return;
 
     setStatus({ type: "pending" });
     const { error } = await signUp.email({
-      name,
-      email,
-      password,
+      name: pendingValues.name,
+      email: pendingValues.email,
+      password: pendingValues.password,
       // Where the verification link lands (signed in, via autoSignInAfterVerification).
       callbackURL: returnTo,
     });
 
     if (!error) {
-      setStatus({ type: "sent", email });
+      setIsDisclaimerOpen(false);
+      setStatus({ type: "sent", email: pendingValues.email });
       return;
     }
+
+    setIsDisclaimerOpen(false);
 
     if (error.code === "USER_ALREADY_EXISTS" || error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
       setStatus({
@@ -100,13 +138,22 @@ export function SignUpForm({ next }: { next?: string }) {
 
   return (
     <div className="auth-form">
-      <GoogleSignInButton callbackURL={returnTo} label="Sign up with Google" />
+      <GoogleSignInButton
+        callbackURL={returnTo}
+        label="Sign up with Google"
+        onPreClick={() => {
+          setPendingValues(null);
+          setPendingGoogle(true);
+          setIsDisclaimerOpen(true);
+          return false;
+        }}
+      />
 
       <div className="auth-form__divider" role="separator">
         <span>or sign up with email</span>
       </div>
 
-      <form className="auth-form__form" onSubmit={handleSubmit}>
+      <form className="auth-form__form" onSubmit={handleFormSubmit}>
         {status.type === "error" && (
           <p className="auth-form__error" role="alert">
             {status.message}
@@ -151,23 +198,46 @@ export function SignUpForm({ next }: { next?: string }) {
           hint="At least 8 characters. A short phrase is easier to remember and harder to guess."
         />
 
-        <label className="auth-form__check auth-form__check--terms">
-          <input type="checkbox" name="terms" required />
-          <span>
-            I agree to the <Link href="/terms">Terms of use</Link> and{" "}
-            <Link href="/privacy">Privacy policy</Link>, and I&rsquo;ll use streetio for educational
-            purposes only &mdash; never to commit fraud.
-          </span>
-        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label className="auth-form__check auth-form__check--terms">
+            <input type="checkbox" name="terms" required />
+            <span>
+              I agree to the <Link href="/terms">Terms of use</Link> and{" "}
+              <Link href="/privacy">Privacy policy</Link>, and acknowledge the Mandatory Disclaimer.
+            </span>
+          </label>
+
+          <div>
+            <button
+              type="button"
+              className="auth-disclaimer-trigger"
+              onClick={() => {
+                setPendingValues(null);
+                setPendingGoogle(false);
+                setIsDisclaimerOpen(true);
+              }}
+            >
+              ⚠️ Read Mandatory Important Notice &amp; Disclaimer
+            </button>
+          </div>
+        </div>
 
         <button type="submit" className="auth-form__submit" disabled={isPending} aria-busy={isPending}>
-          {isPending ? "Creating account…" : "Create account"}
+          {isPending ? "Creating account…" : "Sign up"}
         </button>
       </form>
 
       <p className="auth-form__switch">
         Already have an account? <Link href="/login">Log in</Link>
       </p>
+
+      {/* Mandatory Disclaimer Modal */}
+      <DisclaimerModal
+        isOpen={isDisclaimerOpen}
+        onClose={() => setIsDisclaimerOpen(false)}
+        onConfirm={handleConfirmDisclaimer}
+        isPending={isPending}
+      />
     </div>
   );
-}
+}
