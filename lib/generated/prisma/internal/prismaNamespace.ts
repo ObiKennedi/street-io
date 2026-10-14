@@ -1133,11 +1133,23 @@ export const ArticleScalarFieldEnum = {
   slug: 'slug',
   description: 'description',
   content: 'content',
+  contentSnippet: 'contentSnippet',
   price: 'price',
+  readTime: 'readTime',
   coverImage: 'coverImage',
   published: 'published',
+  status: 'status',
   categoryId: 'categoryId',
+  categorySlug: 'categorySlug',
   authorId: 'authorId',
+  keyTakeaways: 'keyTakeaways',
+  tags: 'tags',
+  weeklyReads: 'weeklyReads',
+  monthlyReads: 'monthlyReads',
+  totalReads: 'totalReads',
+  trendingDelta: 'trendingDelta',
+  soldCopies: 'soldCopies',
+  revenueGenerated: 'revenueGenerated',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1216,6 +1228,20 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'Role'
+ */
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
+    
+
+
+/**
+ * Reference to a field of type 'Role[]'
+ */
+export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role[]'>
     
 
 

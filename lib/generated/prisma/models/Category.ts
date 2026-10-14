@@ -205,16 +205,16 @@ export type CategoryOrderByWithRelationInput = {
 
 export type CategoryWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  name?: string
   slug?: string
   AND?: Prisma.CategoryWhereInput | Prisma.CategoryWhereInput[]
   OR?: Prisma.CategoryWhereInput[]
   NOT?: Prisma.CategoryWhereInput | Prisma.CategoryWhereInput[]
+  name?: Prisma.StringFilter<"Category"> | string
   description?: Prisma.StringNullableFilter<"Category"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Category"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Category"> | Date | string
   articles?: Prisma.ArticleListRelationFilter
-}, "id" | "name" | "slug">
+}, "id" | "slug">
 
 export type CategoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -334,9 +334,9 @@ export type CategoryMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type CategoryScalarRelationFilter = {
-  is?: Prisma.CategoryWhereInput
-  isNot?: Prisma.CategoryWhereInput
+export type CategoryNullableScalarRelationFilter = {
+  is?: Prisma.CategoryWhereInput | null
+  isNot?: Prisma.CategoryWhereInput | null
 }
 
 export type CategoryCreateNestedOneWithoutArticlesInput = {
@@ -345,10 +345,12 @@ export type CategoryCreateNestedOneWithoutArticlesInput = {
   connect?: Prisma.CategoryWhereUniqueInput
 }
 
-export type CategoryUpdateOneRequiredWithoutArticlesNestedInput = {
+export type CategoryUpdateOneWithoutArticlesNestedInput = {
   create?: Prisma.XOR<Prisma.CategoryCreateWithoutArticlesInput, Prisma.CategoryUncheckedCreateWithoutArticlesInput>
   connectOrCreate?: Prisma.CategoryCreateOrConnectWithoutArticlesInput
   upsert?: Prisma.CategoryUpsertWithoutArticlesInput
+  disconnect?: Prisma.CategoryWhereInput | boolean
+  delete?: Prisma.CategoryWhereInput | boolean
   connect?: Prisma.CategoryWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.CategoryUpdateToOneWithWhereWithoutArticlesInput, Prisma.CategoryUpdateWithoutArticlesInput>, Prisma.CategoryUncheckedUpdateWithoutArticlesInput>
 }

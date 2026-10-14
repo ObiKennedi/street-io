@@ -282,7 +282,7 @@ export type WalletTransactionCreateInput = {
   type: string
   description?: string | null
   createdAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutTransactionsInput
+  user: Prisma.UserCreateNestedOneWithoutWalletTransactionsInput
 }
 
 export type WalletTransactionUncheckedCreateInput = {
@@ -300,7 +300,7 @@ export type WalletTransactionUpdateInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutTransactionsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutWalletTransactionsNestedInput
 }
 
 export type WalletTransactionUncheckedUpdateInput = {

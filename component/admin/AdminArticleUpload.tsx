@@ -46,6 +46,8 @@ export function AdminArticleUpload({
   const [newToolUrl, setNewToolUrl] = useState("");
   const [newToolType, setNewToolType] = useState<ToolDraft["type"]>("Verification");
   const [newToolDesc, setNewToolDesc] = useState("");
+  const [toolSuccessNotice, setToolSuccessNotice] = useState<string | null>(null);
+  const toolNameInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddTool = () => {
     if (!newToolName.trim() || !newToolUrl.trim()) return;
@@ -54,11 +56,13 @@ export function AdminArticleUpload({
         ? newToolUrl.trim()
         : `https://${newToolUrl.trim()}`;
 
+    const addedName = newToolName.trim();
+
     setToolsList((prev) => [
       ...prev,
       {
         id: `tool-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        name: newToolName.trim(),
+        name: addedName,
         url: formattedUrl,
         type: newToolType,
         description: newToolDesc.trim() || undefined,
@@ -67,6 +71,13 @@ export function AdminArticleUpload({
     setNewToolName("");
     setNewToolUrl("");
     setNewToolDesc("");
+    setToolSuccessNotice(`✓ Tool "${addedName}" added. Click "Add More" to attach another.`);
+    setTimeout(() => {
+      setToolSuccessNotice(null);
+    }, 4500);
+    setTimeout(() => {
+      toolNameInputRef.current?.focus();
+    }, 60);
   };
 
   const handleRemoveTool = (idToRemove: string) => {
@@ -557,12 +568,34 @@ export function AdminArticleUpload({
                   🛠️ Operational Field Tools &amp; Verification Links
                 </span>
                 <p className="admin-tools-manager__desc">
-                  Curate links to field verification utilities, forensic tools, lookup portals, or registries for this article. These links are prominently displayed in the reader&apos;s playbook footer.
+                  Curate links to field verification utilities, forensic tools, lookup portals, or registries for this task. These links are prominently displayed in the reader&apos;s playbook footer.
                 </p>
               </div>
 
+              {toolSuccessNotice && (
+                <div className="admin-tools-manager__added-pill" role="status">
+                  <span>{toolSuccessNotice}</span>
+                </div>
+              )}
+
               {toolsList.length > 0 && (
                 <div className="admin-tools-manager__list">
+                  <div className="admin-tools-manager__list-header">
+                    <span className="admin-tools-manager__list-count">
+                      Attached Task Tools ({toolsList.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toolNameInputRef.current?.focus();
+                        toolNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      className="admin-tools-manager__add-more-link-btn"
+                    >
+                      + Add More
+                    </button>
+                  </div>
+
                   {toolsList.map((tool) => (
                     <div key={tool.id} className="admin-tools-manager__item">
                       <div className="admin-tools-manager__item-left">
@@ -592,14 +625,39 @@ export function AdminArticleUpload({
                       </button>
                     </div>
                   ))}
+
+                  {/* Explicit Add More button right after adding links */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toolNameInputRef.current?.focus();
+                      toolNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
+                    className="admin-tools-manager__add-more-btn"
+                  >
+                    <span aria-hidden="true">+</span>
+                    <span>Add More Tools</span>
+                  </button>
                 </div>
               )}
 
               <div className="admin-tools-manager__add-box">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--dash-text)" }}>
+                    {toolsList.length > 0 ? "Attach Another Tool Link" : "Add Tool Link"}
+                  </span>
+                  {toolsList.length > 0 && (
+                    <span style={{ fontSize: "11px", color: "var(--color-steel-600)" }}>
+                      Step: Multi-tool task support
+                    </span>
+                  )}
+                </div>
+
                 <div className="admin-tools-manager__inputs-row">
                   <div>
                     <label className="admin-form__label" style={{ fontSize: "10px" }}>Tool Name</label>
                     <input
+                      ref={toolNameInputRef}
                       type="text"
                       placeholder="e.g. NumVerify, TinEye, ExifTool"
                       value={newToolName}
@@ -615,6 +673,12 @@ export function AdminArticleUpload({
                       placeholder="https://numverify.com"
                       value={newToolUrl}
                       onChange={(e) => setNewToolUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTool();
+                        }
+                      }}
                       className="admin-form__input"
                       style={{ height: "38px", fontSize: "13px" }}
                     />
@@ -644,20 +708,33 @@ export function AdminArticleUpload({
                     placeholder="Short description of what the user executes with this tool"
                     value={newToolDesc}
                     onChange={(e) => setNewToolDesc(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddTool();
+                      }
+                    }}
                     className="admin-form__input"
                     style={{ height: "38px", fontSize: "13px" }}
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleAddTool}
-                  disabled={!newToolName.trim() || !newToolUrl.trim()}
-                  className="admin-tools-manager__add-btn"
-                  style={{ opacity: !newToolName.trim() || !newToolUrl.trim() ? 0.5 : 1 }}
-                >
-                  + Add Tool Link
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={handleAddTool}
+                    disabled={!newToolName.trim() || !newToolUrl.trim()}
+                    className="admin-tools-manager__add-btn"
+                    style={{ opacity: !newToolName.trim() || !newToolUrl.trim() ? 0.5 : 1 }}
+                  >
+                    {toolsList.length > 0 ? "+ Add More Tool" : "+ Add Tool Link"}
+                  </button>
+                  {toolsList.length > 0 && (
+                    <span style={{ fontSize: "11px", color: "var(--color-steel-600)" }}>
+                      {toolsList.length} {toolsList.length === 1 ? "tool" : "tools"} attached to this task
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -28,10 +28,20 @@ export type AggregateArticle = {
 
 export type ArticleAvgAggregateOutputType = {
   price: number | null
+  weeklyReads: number | null
+  monthlyReads: number | null
+  totalReads: number | null
+  soldCopies: number | null
+  revenueGenerated: number | null
 }
 
 export type ArticleSumAggregateOutputType = {
   price: number | null
+  weeklyReads: number | null
+  monthlyReads: number | null
+  totalReads: number | null
+  soldCopies: number | null
+  revenueGenerated: number | null
 }
 
 export type ArticleMinAggregateOutputType = {
@@ -40,11 +50,21 @@ export type ArticleMinAggregateOutputType = {
   slug: string | null
   description: string | null
   content: string | null
+  contentSnippet: string | null
   price: number | null
+  readTime: string | null
   coverImage: string | null
   published: boolean | null
+  status: string | null
   categoryId: string | null
+  categorySlug: string | null
   authorId: string | null
+  weeklyReads: number | null
+  monthlyReads: number | null
+  totalReads: number | null
+  trendingDelta: string | null
+  soldCopies: number | null
+  revenueGenerated: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,11 +75,21 @@ export type ArticleMaxAggregateOutputType = {
   slug: string | null
   description: string | null
   content: string | null
+  contentSnippet: string | null
   price: number | null
+  readTime: string | null
   coverImage: string | null
   published: boolean | null
+  status: string | null
   categoryId: string | null
+  categorySlug: string | null
   authorId: string | null
+  weeklyReads: number | null
+  monthlyReads: number | null
+  totalReads: number | null
+  trendingDelta: string | null
+  soldCopies: number | null
+  revenueGenerated: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,11 +100,23 @@ export type ArticleCountAggregateOutputType = {
   slug: number
   description: number
   content: number
+  contentSnippet: number
   price: number
+  readTime: number
   coverImage: number
   published: number
+  status: number
   categoryId: number
+  categorySlug: number
   authorId: number
+  keyTakeaways: number
+  tags: number
+  weeklyReads: number
+  monthlyReads: number
+  totalReads: number
+  trendingDelta: number
+  soldCopies: number
+  revenueGenerated: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -83,10 +125,20 @@ export type ArticleCountAggregateOutputType = {
 
 export type ArticleAvgAggregateInputType = {
   price?: true
+  weeklyReads?: true
+  monthlyReads?: true
+  totalReads?: true
+  soldCopies?: true
+  revenueGenerated?: true
 }
 
 export type ArticleSumAggregateInputType = {
   price?: true
+  weeklyReads?: true
+  monthlyReads?: true
+  totalReads?: true
+  soldCopies?: true
+  revenueGenerated?: true
 }
 
 export type ArticleMinAggregateInputType = {
@@ -95,11 +147,21 @@ export type ArticleMinAggregateInputType = {
   slug?: true
   description?: true
   content?: true
+  contentSnippet?: true
   price?: true
+  readTime?: true
   coverImage?: true
   published?: true
+  status?: true
   categoryId?: true
+  categorySlug?: true
   authorId?: true
+  weeklyReads?: true
+  monthlyReads?: true
+  totalReads?: true
+  trendingDelta?: true
+  soldCopies?: true
+  revenueGenerated?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -110,11 +172,21 @@ export type ArticleMaxAggregateInputType = {
   slug?: true
   description?: true
   content?: true
+  contentSnippet?: true
   price?: true
+  readTime?: true
   coverImage?: true
   published?: true
+  status?: true
   categoryId?: true
+  categorySlug?: true
   authorId?: true
+  weeklyReads?: true
+  monthlyReads?: true
+  totalReads?: true
+  trendingDelta?: true
+  soldCopies?: true
+  revenueGenerated?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -125,11 +197,23 @@ export type ArticleCountAggregateInputType = {
   slug?: true
   description?: true
   content?: true
+  contentSnippet?: true
   price?: true
+  readTime?: true
   coverImage?: true
   published?: true
+  status?: true
   categoryId?: true
+  categorySlug?: true
   authorId?: true
+  keyTakeaways?: true
+  tags?: true
+  weeklyReads?: true
+  monthlyReads?: true
+  totalReads?: true
+  trendingDelta?: true
+  soldCopies?: true
+  revenueGenerated?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -227,11 +311,23 @@ export type ArticleGroupByOutputType = {
   slug: string
   description: string
   content: string
+  contentSnippet: string | null
   price: number
+  readTime: string | null
   coverImage: string | null
   published: boolean
-  categoryId: string
-  authorId: string
+  status: string
+  categoryId: string | null
+  categorySlug: string | null
+  authorId: string | null
+  keyTakeaways: string[]
+  tags: string[]
+  weeklyReads: number
+  monthlyReads: number
+  totalReads: number
+  trendingDelta: string | null
+  soldCopies: number
+  revenueGenerated: number
   createdAt: Date
   updatedAt: Date
   _count: ArticleCountAggregateOutputType | null
@@ -265,15 +361,26 @@ export type ArticleWhereInput = {
   slug?: Prisma.StringFilter<"Article"> | string
   description?: Prisma.StringFilter<"Article"> | string
   content?: Prisma.StringFilter<"Article"> | string
+  contentSnippet?: Prisma.StringNullableFilter<"Article"> | string | null
   price?: Prisma.FloatFilter<"Article"> | number
+  readTime?: Prisma.StringNullableFilter<"Article"> | string | null
   coverImage?: Prisma.StringNullableFilter<"Article"> | string | null
   published?: Prisma.BoolFilter<"Article"> | boolean
-  categoryId?: Prisma.StringFilter<"Article"> | string
-  authorId?: Prisma.StringFilter<"Article"> | string
+  status?: Prisma.StringFilter<"Article"> | string
+  categoryId?: Prisma.StringNullableFilter<"Article"> | string | null
+  categorySlug?: Prisma.StringNullableFilter<"Article"> | string | null
+  authorId?: Prisma.StringNullableFilter<"Article"> | string | null
+  keyTakeaways?: Prisma.StringNullableListFilter<"Article">
+  tags?: Prisma.StringNullableListFilter<"Article">
+  weeklyReads?: Prisma.IntFilter<"Article"> | number
+  monthlyReads?: Prisma.IntFilter<"Article"> | number
+  totalReads?: Prisma.IntFilter<"Article"> | number
+  trendingDelta?: Prisma.StringNullableFilter<"Article"> | string | null
+  soldCopies?: Prisma.IntFilter<"Article"> | number
+  revenueGenerated?: Prisma.IntFilter<"Article"> | number
   createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
-  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
-  author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  category?: Prisma.XOR<Prisma.CategoryNullableScalarRelationFilter, Prisma.CategoryWhereInput> | null
   purchases?: Prisma.PurchaseListRelationFilter
 }
 
@@ -283,15 +390,26 @@ export type ArticleOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentSnippet?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
+  readTime?: Prisma.SortOrderInput | Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   published?: Prisma.SortOrder
-  categoryId?: Prisma.SortOrder
-  authorId?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
+  categorySlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  keyTakeaways?: Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  trendingDelta?: Prisma.SortOrderInput | Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   category?: Prisma.CategoryOrderByWithRelationInput
-  author?: Prisma.UserOrderByWithRelationInput
   purchases?: Prisma.PurchaseOrderByRelationAggregateInput
 }
 
@@ -304,15 +422,26 @@ export type ArticleWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Article"> | string
   description?: Prisma.StringFilter<"Article"> | string
   content?: Prisma.StringFilter<"Article"> | string
+  contentSnippet?: Prisma.StringNullableFilter<"Article"> | string | null
   price?: Prisma.FloatFilter<"Article"> | number
+  readTime?: Prisma.StringNullableFilter<"Article"> | string | null
   coverImage?: Prisma.StringNullableFilter<"Article"> | string | null
   published?: Prisma.BoolFilter<"Article"> | boolean
-  categoryId?: Prisma.StringFilter<"Article"> | string
-  authorId?: Prisma.StringFilter<"Article"> | string
+  status?: Prisma.StringFilter<"Article"> | string
+  categoryId?: Prisma.StringNullableFilter<"Article"> | string | null
+  categorySlug?: Prisma.StringNullableFilter<"Article"> | string | null
+  authorId?: Prisma.StringNullableFilter<"Article"> | string | null
+  keyTakeaways?: Prisma.StringNullableListFilter<"Article">
+  tags?: Prisma.StringNullableListFilter<"Article">
+  weeklyReads?: Prisma.IntFilter<"Article"> | number
+  monthlyReads?: Prisma.IntFilter<"Article"> | number
+  totalReads?: Prisma.IntFilter<"Article"> | number
+  trendingDelta?: Prisma.StringNullableFilter<"Article"> | string | null
+  soldCopies?: Prisma.IntFilter<"Article"> | number
+  revenueGenerated?: Prisma.IntFilter<"Article"> | number
   createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
-  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
-  author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  category?: Prisma.XOR<Prisma.CategoryNullableScalarRelationFilter, Prisma.CategoryWhereInput> | null
   purchases?: Prisma.PurchaseListRelationFilter
 }, "id" | "slug">
 
@@ -322,11 +451,23 @@ export type ArticleOrderByWithAggregationInput = {
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentSnippet?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
+  readTime?: Prisma.SortOrderInput | Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   published?: Prisma.SortOrder
-  categoryId?: Prisma.SortOrder
-  authorId?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
+  categorySlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  keyTakeaways?: Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  trendingDelta?: Prisma.SortOrderInput | Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ArticleCountOrderByAggregateInput
@@ -345,11 +486,23 @@ export type ArticleScalarWhereWithAggregatesInput = {
   slug?: Prisma.StringWithAggregatesFilter<"Article"> | string
   description?: Prisma.StringWithAggregatesFilter<"Article"> | string
   content?: Prisma.StringWithAggregatesFilter<"Article"> | string
+  contentSnippet?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
   price?: Prisma.FloatWithAggregatesFilter<"Article"> | number
+  readTime?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
   coverImage?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
   published?: Prisma.BoolWithAggregatesFilter<"Article"> | boolean
-  categoryId?: Prisma.StringWithAggregatesFilter<"Article"> | string
-  authorId?: Prisma.StringWithAggregatesFilter<"Article"> | string
+  status?: Prisma.StringWithAggregatesFilter<"Article"> | string
+  categoryId?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
+  categorySlug?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
+  authorId?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
+  keyTakeaways?: Prisma.StringNullableListFilter<"Article">
+  tags?: Prisma.StringNullableListFilter<"Article">
+  weeklyReads?: Prisma.IntWithAggregatesFilter<"Article"> | number
+  monthlyReads?: Prisma.IntWithAggregatesFilter<"Article"> | number
+  totalReads?: Prisma.IntWithAggregatesFilter<"Article"> | number
+  trendingDelta?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
+  soldCopies?: Prisma.IntWithAggregatesFilter<"Article"> | number
+  revenueGenerated?: Prisma.IntWithAggregatesFilter<"Article"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Article"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Article"> | Date | string
 }
@@ -360,13 +513,25 @@ export type ArticleCreateInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
+  status?: string
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  category: Prisma.CategoryCreateNestedOneWithoutArticlesInput
-  author: Prisma.UserCreateNestedOneWithoutArticlesInput
+  category?: Prisma.CategoryCreateNestedOneWithoutArticlesInput
   purchases?: Prisma.PurchaseCreateNestedManyWithoutArticleInput
 }
 
@@ -376,11 +541,23 @@ export type ArticleUncheckedCreateInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
-  categoryId: string
-  authorId: string
+  status?: string
+  categoryId?: string | null
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   purchases?: Prisma.PurchaseUncheckedCreateNestedManyWithoutArticleInput
@@ -392,13 +569,25 @@ export type ArticleUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  category?: Prisma.CategoryUpdateOneRequiredWithoutArticlesNestedInput
-  author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
+  category?: Prisma.CategoryUpdateOneWithoutArticlesNestedInput
   purchases?: Prisma.PurchaseUpdateManyWithoutArticleNestedInput
 }
 
@@ -408,11 +597,23 @@ export type ArticleUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
-  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   purchases?: Prisma.PurchaseUncheckedUpdateManyWithoutArticleNestedInput
@@ -424,11 +625,23 @@ export type ArticleCreateManyInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
-  categoryId: string
-  authorId: string
+  status?: string
+  categoryId?: string | null
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -439,9 +652,22 @@ export type ArticleUpdateManyMutationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -452,11 +678,23 @@ export type ArticleUncheckedUpdateManyInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
-  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -471,23 +709,48 @@ export type ArticleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
 export type ArticleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentSnippet?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  readTime?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   published?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
+  categorySlug?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
+  keyTakeaways?: Prisma.SortOrder
+  tags?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  trendingDelta?: Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ArticleAvgOrderByAggregateInput = {
   price?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
 }
 
 export type ArticleMaxOrderByAggregateInput = {
@@ -496,11 +759,21 @@ export type ArticleMaxOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentSnippet?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  readTime?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   published?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
+  categorySlug?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  trendingDelta?: Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -511,64 +784,37 @@ export type ArticleMinOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentSnippet?: Prisma.SortOrder
   price?: Prisma.SortOrder
+  readTime?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   published?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
+  categorySlug?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  trendingDelta?: Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ArticleSumOrderByAggregateInput = {
   price?: Prisma.SortOrder
+  weeklyReads?: Prisma.SortOrder
+  monthlyReads?: Prisma.SortOrder
+  totalReads?: Prisma.SortOrder
+  soldCopies?: Prisma.SortOrder
+  revenueGenerated?: Prisma.SortOrder
 }
 
 export type ArticleScalarRelationFilter = {
   is?: Prisma.ArticleWhereInput
   isNot?: Prisma.ArticleWhereInput
-}
-
-export type ArticleCreateNestedManyWithoutAuthorInput = {
-  create?: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput> | Prisma.ArticleCreateWithoutAuthorInput[] | Prisma.ArticleUncheckedCreateWithoutAuthorInput[]
-  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
-  createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
-  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-}
-
-export type ArticleUncheckedCreateNestedManyWithoutAuthorInput = {
-  create?: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput> | Prisma.ArticleCreateWithoutAuthorInput[] | Prisma.ArticleUncheckedCreateWithoutAuthorInput[]
-  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
-  createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
-  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-}
-
-export type ArticleUpdateManyWithoutAuthorNestedInput = {
-  create?: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput> | Prisma.ArticleCreateWithoutAuthorInput[] | Prisma.ArticleUncheckedCreateWithoutAuthorInput[]
-  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
-  upsert?: Prisma.ArticleUpsertWithWhereUniqueWithoutAuthorInput | Prisma.ArticleUpsertWithWhereUniqueWithoutAuthorInput[]
-  createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
-  set?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  disconnect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  delete?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  update?: Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput | Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput[]
-  updateMany?: Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput | Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput[]
-  deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
-}
-
-export type ArticleUncheckedUpdateManyWithoutAuthorNestedInput = {
-  create?: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput> | Prisma.ArticleCreateWithoutAuthorInput[] | Prisma.ArticleUncheckedCreateWithoutAuthorInput[]
-  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
-  upsert?: Prisma.ArticleUpsertWithWhereUniqueWithoutAuthorInput | Prisma.ArticleUpsertWithWhereUniqueWithoutAuthorInput[]
-  createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
-  set?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  disconnect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  delete?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
-  update?: Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput | Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput[]
-  updateMany?: Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput | Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput[]
-  deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
 }
 
 export type ArticleCreateNestedManyWithoutCategoryInput = {
@@ -613,6 +859,32 @@ export type ArticleUncheckedUpdateManyWithoutCategoryNestedInput = {
   deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
 }
 
+export type ArticleCreatekeyTakeawaysInput = {
+  set: string[]
+}
+
+export type ArticleCreatetagsInput = {
+  set: string[]
+}
+
+export type ArticleUpdatekeyTakeawaysInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type ArticleUpdatetagsInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type ArticleCreateNestedOneWithoutPurchasesInput = {
   create?: Prisma.XOR<Prisma.ArticleCreateWithoutPurchasesInput, Prisma.ArticleUncheckedCreateWithoutPurchasesInput>
   connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutPurchasesInput
@@ -627,92 +899,30 @@ export type ArticleUpdateOneRequiredWithoutPurchasesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ArticleUpdateToOneWithWhereWithoutPurchasesInput, Prisma.ArticleUpdateWithoutPurchasesInput>, Prisma.ArticleUncheckedUpdateWithoutPurchasesInput>
 }
 
-export type ArticleCreateWithoutAuthorInput = {
-  id?: string
-  title: string
-  slug: string
-  description: string
-  content: string
-  price?: number
-  coverImage?: string | null
-  published?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  category: Prisma.CategoryCreateNestedOneWithoutArticlesInput
-  purchases?: Prisma.PurchaseCreateNestedManyWithoutArticleInput
-}
-
-export type ArticleUncheckedCreateWithoutAuthorInput = {
-  id?: string
-  title: string
-  slug: string
-  description: string
-  content: string
-  price?: number
-  coverImage?: string | null
-  published?: boolean
-  categoryId: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  purchases?: Prisma.PurchaseUncheckedCreateNestedManyWithoutArticleInput
-}
-
-export type ArticleCreateOrConnectWithoutAuthorInput = {
-  where: Prisma.ArticleWhereUniqueInput
-  create: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput>
-}
-
-export type ArticleCreateManyAuthorInputEnvelope = {
-  data: Prisma.ArticleCreateManyAuthorInput | Prisma.ArticleCreateManyAuthorInput[]
-  skipDuplicates?: boolean
-}
-
-export type ArticleUpsertWithWhereUniqueWithoutAuthorInput = {
-  where: Prisma.ArticleWhereUniqueInput
-  update: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
-  create: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput>
-}
-
-export type ArticleUpdateWithWhereUniqueWithoutAuthorInput = {
-  where: Prisma.ArticleWhereUniqueInput
-  data: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
-}
-
-export type ArticleUpdateManyWithWhereWithoutAuthorInput = {
-  where: Prisma.ArticleScalarWhereInput
-  data: Prisma.XOR<Prisma.ArticleUpdateManyMutationInput, Prisma.ArticleUncheckedUpdateManyWithoutAuthorInput>
-}
-
-export type ArticleScalarWhereInput = {
-  AND?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
-  OR?: Prisma.ArticleScalarWhereInput[]
-  NOT?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
-  id?: Prisma.StringFilter<"Article"> | string
-  title?: Prisma.StringFilter<"Article"> | string
-  slug?: Prisma.StringFilter<"Article"> | string
-  description?: Prisma.StringFilter<"Article"> | string
-  content?: Prisma.StringFilter<"Article"> | string
-  price?: Prisma.FloatFilter<"Article"> | number
-  coverImage?: Prisma.StringNullableFilter<"Article"> | string | null
-  published?: Prisma.BoolFilter<"Article"> | boolean
-  categoryId?: Prisma.StringFilter<"Article"> | string
-  authorId?: Prisma.StringFilter<"Article"> | string
-  createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
-}
-
 export type ArticleCreateWithoutCategoryInput = {
   id?: string
   title: string
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
+  status?: string
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  author: Prisma.UserCreateNestedOneWithoutArticlesInput
   purchases?: Prisma.PurchaseCreateNestedManyWithoutArticleInput
 }
 
@@ -722,10 +932,22 @@ export type ArticleUncheckedCreateWithoutCategoryInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
-  authorId: string
+  status?: string
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   purchases?: Prisma.PurchaseUncheckedCreateNestedManyWithoutArticleInput
@@ -757,19 +979,61 @@ export type ArticleUpdateManyWithWhereWithoutCategoryInput = {
   data: Prisma.XOR<Prisma.ArticleUpdateManyMutationInput, Prisma.ArticleUncheckedUpdateManyWithoutCategoryInput>
 }
 
+export type ArticleScalarWhereInput = {
+  AND?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
+  OR?: Prisma.ArticleScalarWhereInput[]
+  NOT?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
+  id?: Prisma.StringFilter<"Article"> | string
+  title?: Prisma.StringFilter<"Article"> | string
+  slug?: Prisma.StringFilter<"Article"> | string
+  description?: Prisma.StringFilter<"Article"> | string
+  content?: Prisma.StringFilter<"Article"> | string
+  contentSnippet?: Prisma.StringNullableFilter<"Article"> | string | null
+  price?: Prisma.FloatFilter<"Article"> | number
+  readTime?: Prisma.StringNullableFilter<"Article"> | string | null
+  coverImage?: Prisma.StringNullableFilter<"Article"> | string | null
+  published?: Prisma.BoolFilter<"Article"> | boolean
+  status?: Prisma.StringFilter<"Article"> | string
+  categoryId?: Prisma.StringNullableFilter<"Article"> | string | null
+  categorySlug?: Prisma.StringNullableFilter<"Article"> | string | null
+  authorId?: Prisma.StringNullableFilter<"Article"> | string | null
+  keyTakeaways?: Prisma.StringNullableListFilter<"Article">
+  tags?: Prisma.StringNullableListFilter<"Article">
+  weeklyReads?: Prisma.IntFilter<"Article"> | number
+  monthlyReads?: Prisma.IntFilter<"Article"> | number
+  totalReads?: Prisma.IntFilter<"Article"> | number
+  trendingDelta?: Prisma.StringNullableFilter<"Article"> | string | null
+  soldCopies?: Prisma.IntFilter<"Article"> | number
+  revenueGenerated?: Prisma.IntFilter<"Article"> | number
+  createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
+}
+
 export type ArticleCreateWithoutPurchasesInput = {
   id?: string
   title: string
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
+  status?: string
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  category: Prisma.CategoryCreateNestedOneWithoutArticlesInput
-  author: Prisma.UserCreateNestedOneWithoutArticlesInput
+  category?: Prisma.CategoryCreateNestedOneWithoutArticlesInput
 }
 
 export type ArticleUncheckedCreateWithoutPurchasesInput = {
@@ -778,11 +1042,23 @@ export type ArticleUncheckedCreateWithoutPurchasesInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
-  categoryId: string
-  authorId: string
+  status?: string
+  categoryId?: string | null
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -809,13 +1085,25 @@ export type ArticleUpdateWithoutPurchasesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  category?: Prisma.CategoryUpdateOneRequiredWithoutArticlesNestedInput
-  author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
+  category?: Prisma.CategoryUpdateOneWithoutArticlesNestedInput
 }
 
 export type ArticleUncheckedUpdateWithoutPurchasesInput = {
@@ -824,69 +1112,23 @@ export type ArticleUncheckedUpdateWithoutPurchasesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
-  authorId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ArticleCreateManyAuthorInput = {
-  id?: string
-  title: string
-  slug: string
-  description: string
-  content: string
-  price?: number
-  coverImage?: string | null
-  published?: boolean
-  categoryId: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type ArticleUpdateWithoutAuthorInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  price?: Prisma.FloatFieldUpdateOperationsInput | number
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  category?: Prisma.CategoryUpdateOneRequiredWithoutArticlesNestedInput
-  purchases?: Prisma.PurchaseUpdateManyWithoutArticleNestedInput
-}
-
-export type ArticleUncheckedUpdateWithoutAuthorInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  price?: Prisma.FloatFieldUpdateOperationsInput | number
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  purchases?: Prisma.PurchaseUncheckedUpdateManyWithoutArticleNestedInput
-}
-
-export type ArticleUncheckedUpdateManyWithoutAuthorInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  price?: Prisma.FloatFieldUpdateOperationsInput | number
-  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -897,10 +1139,22 @@ export type ArticleCreateManyCategoryInput = {
   slug: string
   description: string
   content: string
+  contentSnippet?: string | null
   price?: number
+  readTime?: string | null
   coverImage?: string | null
   published?: boolean
-  authorId: string
+  status?: string
+  categorySlug?: string | null
+  authorId?: string | null
+  keyTakeaways?: Prisma.ArticleCreatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleCreatetagsInput | string[]
+  weeklyReads?: number
+  monthlyReads?: number
+  totalReads?: number
+  trendingDelta?: string | null
+  soldCopies?: number
+  revenueGenerated?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -911,12 +1165,24 @@ export type ArticleUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
   purchases?: Prisma.PurchaseUpdateManyWithoutArticleNestedInput
 }
 
@@ -926,10 +1192,22 @@ export type ArticleUncheckedUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   purchases?: Prisma.PurchaseUncheckedUpdateManyWithoutArticleNestedInput
@@ -941,10 +1219,22 @@ export type ArticleUncheckedUpdateManyWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentSnippet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.FloatFieldUpdateOperationsInput | number
+  readTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categorySlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyTakeaways?: Prisma.ArticleUpdatekeyTakeawaysInput | string[]
+  tags?: Prisma.ArticleUpdatetagsInput | string[]
+  weeklyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  monthlyReads?: Prisma.IntFieldUpdateOperationsInput | number
+  totalReads?: Prisma.IntFieldUpdateOperationsInput | number
+  trendingDelta?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soldCopies?: Prisma.IntFieldUpdateOperationsInput | number
+  revenueGenerated?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -986,15 +1276,26 @@ export type ArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   slug?: boolean
   description?: boolean
   content?: boolean
+  contentSnippet?: boolean
   price?: boolean
+  readTime?: boolean
   coverImage?: boolean
   published?: boolean
+  status?: boolean
   categoryId?: boolean
+  categorySlug?: boolean
   authorId?: boolean
+  keyTakeaways?: boolean
+  tags?: boolean
+  weeklyReads?: boolean
+  monthlyReads?: boolean
+  totalReads?: boolean
+  trendingDelta?: boolean
+  soldCopies?: boolean
+  revenueGenerated?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
   purchases?: boolean | Prisma.Article$purchasesArgs<ExtArgs>
   _count?: boolean | Prisma.ArticleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["article"]>
@@ -1005,15 +1306,26 @@ export type ArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   slug?: boolean
   description?: boolean
   content?: boolean
+  contentSnippet?: boolean
   price?: boolean
+  readTime?: boolean
   coverImage?: boolean
   published?: boolean
+  status?: boolean
   categoryId?: boolean
+  categorySlug?: boolean
   authorId?: boolean
+  keyTakeaways?: boolean
+  tags?: boolean
+  weeklyReads?: boolean
+  monthlyReads?: boolean
+  totalReads?: boolean
+  trendingDelta?: boolean
+  soldCopies?: boolean
+  revenueGenerated?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
 }, ExtArgs["result"]["article"]>
 
 export type ArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1022,15 +1334,26 @@ export type ArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   slug?: boolean
   description?: boolean
   content?: boolean
+  contentSnippet?: boolean
   price?: boolean
+  readTime?: boolean
   coverImage?: boolean
   published?: boolean
+  status?: boolean
   categoryId?: boolean
+  categorySlug?: boolean
   authorId?: boolean
+  keyTakeaways?: boolean
+  tags?: boolean
+  weeklyReads?: boolean
+  monthlyReads?: boolean
+  totalReads?: boolean
+  trendingDelta?: boolean
+  soldCopies?: boolean
+  revenueGenerated?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
 }, ExtArgs["result"]["article"]>
 
 export type ArticleSelectScalar = {
@@ -1039,36 +1362,44 @@ export type ArticleSelectScalar = {
   slug?: boolean
   description?: boolean
   content?: boolean
+  contentSnippet?: boolean
   price?: boolean
+  readTime?: boolean
   coverImage?: boolean
   published?: boolean
+  status?: boolean
   categoryId?: boolean
+  categorySlug?: boolean
   authorId?: boolean
+  keyTakeaways?: boolean
+  tags?: boolean
+  weeklyReads?: boolean
+  monthlyReads?: boolean
+  totalReads?: boolean
+  trendingDelta?: boolean
+  soldCopies?: boolean
+  revenueGenerated?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "description" | "content" | "price" | "coverImage" | "published" | "categoryId" | "authorId" | "createdAt" | "updatedAt", ExtArgs["result"]["article"]>
+export type ArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "description" | "content" | "contentSnippet" | "price" | "readTime" | "coverImage" | "published" | "status" | "categoryId" | "categorySlug" | "authorId" | "keyTakeaways" | "tags" | "weeklyReads" | "monthlyReads" | "totalReads" | "trendingDelta" | "soldCopies" | "revenueGenerated" | "createdAt" | "updatedAt", ExtArgs["result"]["article"]>
 export type ArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
   purchases?: boolean | Prisma.Article$purchasesArgs<ExtArgs>
   _count?: boolean | Prisma.ArticleCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ArticleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
 }
 export type ArticleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
-  author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.Article$categoryArgs<ExtArgs>
 }
 
 export type $ArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Article"
   objects: {
-    category: Prisma.$CategoryPayload<ExtArgs>
-    author: Prisma.$UserPayload<ExtArgs>
+    category: Prisma.$CategoryPayload<ExtArgs> | null
     purchases: Prisma.$PurchasePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1077,11 +1408,23 @@ export type $ArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     slug: string
     description: string
     content: string
+    contentSnippet: string | null
     price: number
+    readTime: string | null
     coverImage: string | null
     published: boolean
-    categoryId: string
-    authorId: string
+    status: string
+    categoryId: string | null
+    categorySlug: string | null
+    authorId: string | null
+    keyTakeaways: string[]
+    tags: string[]
+    weeklyReads: number
+    monthlyReads: number
+    totalReads: number
+    trendingDelta: string | null
+    soldCopies: number
+    revenueGenerated: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["article"]>
@@ -1478,8 +1821,7 @@ readonly fields: ArticleFieldRefs;
  */
 export interface Prisma__ArticleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  category<T extends Prisma.CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  author<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  category<T extends Prisma.Article$categoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Article$categoryArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   purchases<T extends Prisma.Article$purchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Article$purchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1515,11 +1857,23 @@ export interface ArticleFieldRefs {
   readonly slug: Prisma.FieldRef<"Article", 'String'>
   readonly description: Prisma.FieldRef<"Article", 'String'>
   readonly content: Prisma.FieldRef<"Article", 'String'>
+  readonly contentSnippet: Prisma.FieldRef<"Article", 'String'>
   readonly price: Prisma.FieldRef<"Article", 'Float'>
+  readonly readTime: Prisma.FieldRef<"Article", 'String'>
   readonly coverImage: Prisma.FieldRef<"Article", 'String'>
   readonly published: Prisma.FieldRef<"Article", 'Boolean'>
+  readonly status: Prisma.FieldRef<"Article", 'String'>
   readonly categoryId: Prisma.FieldRef<"Article", 'String'>
+  readonly categorySlug: Prisma.FieldRef<"Article", 'String'>
   readonly authorId: Prisma.FieldRef<"Article", 'String'>
+  readonly keyTakeaways: Prisma.FieldRef<"Article", 'String[]'>
+  readonly tags: Prisma.FieldRef<"Article", 'String[]'>
+  readonly weeklyReads: Prisma.FieldRef<"Article", 'Int'>
+  readonly monthlyReads: Prisma.FieldRef<"Article", 'Int'>
+  readonly totalReads: Prisma.FieldRef<"Article", 'Int'>
+  readonly trendingDelta: Prisma.FieldRef<"Article", 'String'>
+  readonly soldCopies: Prisma.FieldRef<"Article", 'Int'>
+  readonly revenueGenerated: Prisma.FieldRef<"Article", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Article", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Article", 'DateTime'>
 }
@@ -1920,6 +2274,25 @@ export type ArticleDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Articles to delete.
    */
   limit?: number
+}
+
+/**
+ * Article.category
+ */
+export type Article$categoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Category
+   */
+  select?: Prisma.CategorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Category
+   */
+  omit?: Prisma.CategoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CategoryInclude<ExtArgs> | null
+  where?: Prisma.CategoryWhereInput
 }
 
 /**
