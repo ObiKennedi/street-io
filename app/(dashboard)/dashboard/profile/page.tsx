@@ -6,7 +6,7 @@ import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Profile & Account · streetio",
-  description: "View your Street IO reader profile, manage your Naira balance via Paga, and manage account security.",
+  description: "View your Street IO reader profile, manage your Naira balance, and manage account security.",
 };
 
 export const instant = false;

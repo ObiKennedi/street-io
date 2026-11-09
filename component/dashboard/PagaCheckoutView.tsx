@@ -1,11 +1,11 @@
 // File: component/dashboard/PagaCheckoutView.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type Article } from "@/lib/articles";
-import { formatNaira, PAGA_MERCHANT_DETAILS } from "@/lib/paga";
+import { formatNaira } from "@/lib/paga";
 import "./paga-checkout.scss";
 
 type PagaCheckoutViewProps = {
@@ -19,17 +19,12 @@ type PagaCheckoutViewProps = {
   returnStatusMessage?: string;
 };
 
-const PRESET_AMOUNTS = [2000, 5000, 10000, 20000];
-
 export function PagaCheckoutView({
   initialAmount = 5000,
   targetArticle,
   customerName = "Reader",
-  customerEmail = "reader@reader.streetio.org",
+  customerEmail = "reader@streetio.org",
   userWalletBalance = 0,
-  returnReference,
-  returnStatusCode,
-  returnStatusMessage,
 }: PagaCheckoutViewProps) {
   const router = useRouter();
 
@@ -61,79 +56,28 @@ export function PagaCheckoutView({
   const [walletBalance, setWalletBalance] = useState<number>(userWalletBalance);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isInlineModalOpen, setIsInlineModalOpen] = useState(false);
-  const [isIframeLoading, setIsIframeLoading] = useState(true);
 
-  // Active Paga checkout session initialized with official API
-  const [activeSession, setActiveSession] = useState<{
+  // Manual payment state
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [senderNameInput, setSenderNameInput] = useState<string>(customerName);
+  const [isSubmittingReceipt, setIsSubmittingReceipt] = useState(false);
+  const [hasCopiedAccount, setHasCopiedAccount] = useState(false);
+  const [manualSuccessSlip, setManualSuccessSlip] = useState<{
     reference: string;
-    checkoutUrl: string;
+    amount: number;
+    receiptUrl: string;
+    status: string;
   } | null>(null);
 
-  const [successReceipt, setSuccessReceipt] = useState<{
+  const [walletSuccessReceipt, setWalletSuccessReceipt] = useState<{
     reference: string;
     amount: number;
     newBalance: number;
-    isWalletDebit?: boolean;
   } | null>(null);
-
-  // Auto-verify if returning from Paga redirect (charge_url callback)
-  useEffect(() => {
-    if (returnReference && !successReceipt) {
-      handleVerifyReference(returnReference);
-    }
-  }, [returnReference, returnStatusCode]);
-
-  // Listen for Paga close-iframe postMessage
-  useEffect(() => {
-    const handleWindowMessage = (event: MessageEvent) => {
-      if (event.data === "close-iframe") {
-        setIsInlineModalOpen(false);
-      }
-    };
-
-    window.addEventListener("message", handleWindowMessage);
-    return () => window.removeEventListener("message", handleWindowMessage);
-  }, []);
-
-  // Auto-poll verification while inline modal is active
-  useEffect(() => {
-    if (!isInlineModalOpen || !activeSession?.reference) return;
-
-    const intervalId = setInterval(async () => {
-      try {
-        const res = await fetch("/api/paga/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            reference: activeSession.reference,
-            amount,
-            articleSlug: targetArticle?.slug,
-          }),
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          setIsInlineModalOpen(false);
-          setSuccessReceipt({
-            reference: data.reference,
-            amount: data.amount,
-            newBalance: data.balance,
-          });
-          setActiveSession(null);
-          router.refresh();
-        }
-      } catch {
-        // silent polling retry
-      }
-    }, 3500);
-
-    return () => clearInterval(intervalId);
-  }, [isInlineModalOpen, activeSession, amount, targetArticle, router]);
 
   /**
    * Unlock target article directly using the reader's wallet balance
-   * (Used whenever wallet balance is sufficient)
    */
   const handleDirectWalletUnlock = async () => {
     if (!targetArticle) return;
@@ -150,18 +94,17 @@ export function PagaCheckoutView({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setSuccessReceipt({
+        setWalletSuccessReceipt({
           reference: "WALLET-DEBIT-" + Date.now().toString(36).toUpperCase(),
           amount: articlePrice || amount,
           newBalance: data.balance,
-          isWalletDebit: true,
         });
         setWalletBalance(data.balance);
         router.refresh();
       } else {
         setErrorMessage(data.error || "Failed to unlock article with wallet balance.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Wallet unlock error:", err);
       setErrorMessage("Network error trying to unlock with wallet.");
     } finally {
@@ -169,92 +112,91 @@ export function PagaCheckoutView({
     }
   };
 
-  /**
-   * Initializes real live Paga Checkout session via official API.
-   * Leverages Paga Public Key f9511100-a474-49d7-9045-4410ccf2e084
-   */
-  const handleLaunchPagaCheckout = async () => {
-    if (!isAmountValid) {
-      setErrorMessage(`Please enter an amount of at least ${formatNaira(minAmount)}.`);
-      return;
-    }
-    setIsProcessing(true);
-    setErrorMessage(null);
-
-    try {
-      const res = await fetch("/api/paga/initialize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          articleSlug: targetArticle?.slug,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to initialize Paga checkout");
-      }
-
-      setActiveSession({
-        reference: data.reference,
-        checkoutUrl: data.checkoutUrl,
-      });
-
-      // Launch official Paga Checkout Inline Modal
-      setIsIframeLoading(true);
-      setIsInlineModalOpen(true);
-    } catch (err: any) {
-      console.error("Paga launch error:", err);
-      setErrorMessage(err?.message || "Could not connect to Paga Gateway. Please retry.");
-    } finally {
-      setIsProcessing(false);
+  const handleCopyAccount = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText("7067997301");
+      setHasCopiedAccount(true);
+      setTimeout(() => setHasCopiedAccount(false), 2500);
     }
   };
 
-  /**
-   * Verifies payment reference directly against Paga verification endpoint
-   */
-  const handleVerifyReference = async (refToVerify: string, allowSimulation = false) => {
-    setIsProcessing(true);
+  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setErrorMessage("Please select a valid image file (PNG, JPG, WebP).");
+        return;
+      }
+      setReceiptFile(file);
+      setReceiptPreview(URL.createObjectURL(file));
+      setErrorMessage(null);
+    }
+  };
+
+  const handleRemoveReceipt = () => {
+    setReceiptFile(null);
+    if (receiptPreview) {
+      URL.revokeObjectURL(receiptPreview);
+      setReceiptPreview(null);
+    }
+  };
+
+  const handleSubmitManualReceipt = async () => {
+    if (!receiptFile) {
+      setErrorMessage("Please select and upload your payment slip receipt before submitting.");
+      return;
+    }
+
+    if (!isAmountValid) {
+      setErrorMessage(`Minimum payment amount is ${formatNaira(minAmount)}.`);
+      return;
+    }
+
+    setIsSubmittingReceipt(true);
     setErrorMessage(null);
 
     try {
-      const res = await fetch("/api/paga/verify", {
+      // 1. Upload receipt to Cloudinary
+      const formData = new FormData();
+      formData.append("file", receiptFile);
+      formData.append("folder", "streetio_receipts");
+
+      const uploadRes = await fetch("/api/upload/cloudinary", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.url) {
+        throw new Error(uploadData.error || "Failed to upload payment slip image.");
+      }
+
+      // 2. Register manual payment and alert admin on Telegram
+      const submitRes = await fetch("/api/manual-payment/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reference: refToVerify,
           amount,
+          receiptUrl: uploadData.url,
+          receiptPublicId: uploadData.publicId,
+          senderName: senderNameInput,
+          purpose: targetArticle ? "article_purchase" : "wallet_funding",
           articleSlug: targetArticle?.slug,
-          statusCode: returnStatusCode,
-          statusMessage: returnStatusMessage,
-          allowSandboxSimulation: allowSimulation,
-          isTestMode: allowSimulation,
         }),
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        setSuccessReceipt({
-          reference: data.reference,
-          amount: data.amount,
-          newBalance: data.balance,
-        });
-        setWalletBalance(data.balance);
-        setActiveSession(null);
-        setIsInlineModalOpen(false);
-        router.refresh();
-      } else {
-        setErrorMessage(data.error || "Payment verification failed or still pending on Paga.");
+      const submitData = await submitRes.json();
+      if (!submitRes.ok || !submitData.success) {
+        throw new Error(submitData.error || "Failed to submit manual payment slip.");
       }
-    } catch (err: any) {
-      console.error("Verification error:", err);
-      setErrorMessage("Network error during verification. Please try again.");
+
+      setManualSuccessSlip(submitData.slip);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error submitting payment slip. Please retry.";
+      console.error("Manual submit error:", err);
+      setErrorMessage(msg);
     } finally {
-      setIsProcessing(false);
+      setIsSubmittingReceipt(false);
     }
   };
 
@@ -265,16 +207,18 @@ export function PagaCheckoutView({
       {/* Cancel and return link */}
       <Link href="/dashboard" className="paga-checkout__cancel">
         <span>←</span>
-        <span>Cancel & Return to Dashboard</span>
+        <span>Cancel &amp; Return to Dashboard</span>
       </Link>
 
       <div className="paga-checkout__card">
-        {/* Paga Official Brand Top Bar */}
-        <div className="paga-checkout__topbar">
+        {/* Brand Top Bar */}
+        <div className="paga-checkout__topbar" style={{ background: "var(--brand-charcoal, #111827)" }}>
           <div className="paga-checkout__brand">
-            <span className="paga-checkout__logo">paga</span>
+            <span className="paga-checkout__logo" style={{ color: "var(--brand-charcoal, #111827)" }}>
+              streetio
+            </span>
             <div className="paga-checkout__brand-text">
-              <span>Secure Payment Gateway</span>
+              <span>Direct Bank Payment</span>
               <span>Merchant: Street IO</span>
             </div>
           </div>
@@ -291,8 +235,8 @@ export function PagaCheckoutView({
           </div>
         )}
 
-        {/* SUFFICIENT WALLET BALANCE CALLOUT (Primary: Buy from wallet!) */}
-        {hasSufficientWalletBalance && !successReceipt && (
+        {/* SUFFICIENT WALLET BALANCE CALLOUT */}
+        {hasSufficientWalletBalance && !manualSuccessSlip && !walletSuccessReceipt && (
           <div style={{ margin: "var(--space-4) var(--space-6) 0" }}>
             <div
               style={{
@@ -321,7 +265,7 @@ export function PagaCheckoutView({
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: "12px", color: "#065F46" }}>
-                You have sufficient funds in your reader wallet to unlock this guide directly without external Paga payment.
+                You have sufficient funds in your reader wallet to unlock this guide directly.
               </p>
               <button
                 type="button"
@@ -343,17 +287,89 @@ export function PagaCheckoutView({
           </div>
         )}
 
-        {successReceipt ? (
-          /* Payment Success Confirmation */
+        {manualSuccessSlip ? (
+          /* Manual Bank Transfer Submitted Confirmation */
+          <div className="paga-checkout__success">
+            <div className="paga-checkout__success-icon" style={{ background: "#ECFDF5", color: "#059669" }}>
+              ✓
+            </div>
+            <h2 style={{ margin: 0, fontSize: "1.35rem", color: "var(--color-charcoal-900)" }}>
+              Payment Receipt Uploaded!
+            </h2>
+            <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-steel-800)" }}>
+              Your transfer receipt for <strong>{formatNaira(manualSuccessSlip.amount)}</strong> to Moniepoint has been received. Our admin has been alerted via Telegram and will verify your payment shortly.
+            </p>
+
+            <div className="paga-checkout__receipt">
+              <div className="paga-checkout__receipt-row">
+                <span>Reader Account:</span>
+                <strong>{customerName} ({customerEmail})</strong>
+              </div>
+              <div className="paga-checkout__receipt-row">
+                <span>Reference:</span>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>{manualSuccessSlip.reference}</strong>
+              </div>
+              <div className="paga-checkout__receipt-row">
+                <span>Destination Bank:</span>
+                <span>Moniepoint (7067997301 - Sopulu omah)</span>
+              </div>
+              <div className="paga-checkout__receipt-row">
+                <span>Verification Status:</span>
+                <span style={{ color: "#D97706", fontWeight: "bold" }}>
+                  ⏳ Pending Admin Verification
+                </span>
+              </div>
+              {manualSuccessSlip.receiptUrl && (
+                <div style={{ marginTop: "var(--space-3)", textAlign: "center" }}>
+                  <span style={{ fontSize: "11px", color: "var(--color-steel-700)", display: "block", marginBottom: "4px" }}>
+                    Uploaded Payment Slip:
+                  </span>
+                  <a href={manualSuccessSlip.receiptUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={manualSuccessSlip.receiptUrl}
+                      alt="Uploaded Payment Slip Preview"
+                      style={{
+                        maxHeight: "160px",
+                        maxWidth: "100%",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--color-steel-300)",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "var(--space-2)", width: "100%", marginTop: "var(--space-2)" }}>
+              {targetArticle ? (
+                <Link
+                  href={`/article/${targetArticle.slug}`}
+                  className="paga-checkout__pay-btn"
+                  style={{ textDecoration: "none" }}
+                >
+                  Return to Guide →
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard")}
+                  className="paga-checkout__pay-btn"
+                >
+                  Return to Dashboard
+                </button>
+              )}
+            </div>
+          </div>
+        ) : walletSuccessReceipt ? (
+          /* Wallet Debit Success */
           <div className="paga-checkout__success">
             <div className="paga-checkout__success-icon">✓</div>
             <h2 style={{ margin: 0, fontSize: "1.35rem", color: "var(--color-charcoal-900)" }}>
-              {successReceipt.isWalletDebit ? "Article Unlocked from Wallet!" : "Payment Verified via Paga!"}
+              Article Unlocked from Wallet!
             </h2>
             <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "var(--color-steel-800)" }}>
-              {successReceipt.isWalletDebit
-                ? `Debited ${formatNaira(successReceipt.amount)} from your reader wallet. Access granted.`
-                : `Your transaction of ${formatNaira(successReceipt.amount)} was confirmed on Paga and credited.`}
+              Debited {formatNaira(walletSuccessReceipt.amount)} from your reader wallet. Access granted.
             </p>
 
             <div className="paga-checkout__receipt">
@@ -363,17 +379,11 @@ export function PagaCheckoutView({
               </div>
               <div className="paga-checkout__receipt-row">
                 <span>Transaction Ref:</span>
-                <strong style={{ fontFamily: "var(--font-mono)" }}>{successReceipt.reference}</strong>
-              </div>
-              <div className="paga-checkout__receipt-row">
-                <span>Settlement Method:</span>
-                <span style={{ color: "var(--color-success)", fontWeight: "bold" }}>
-                  {successReceipt.isWalletDebit ? "Reader Wallet Balance" : "Paga Live Gateway"}
-                </span>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>{walletSuccessReceipt.reference}</strong>
               </div>
               <div className="paga-checkout__receipt-row paga-checkout__receipt-row--bold">
                 <span>Updated Reader Wallet:</span>
-                <span>{formatNaira(successReceipt.newBalance)}</span>
+                <span>{formatNaira(walletSuccessReceipt.newBalance)}</span>
               </div>
             </div>
 
@@ -398,7 +408,7 @@ export function PagaCheckoutView({
             </div>
           </div>
         ) : (
-          /* Paga Checkout Gateway */
+          /* Direct Transfer Payment View */
           <>
             {/* Merchant and Amount Summary */}
             <div className="paga-checkout__summary">
@@ -512,273 +522,163 @@ export function PagaCheckoutView({
               )}
             </div>
 
-            {/* If target article and wallet is empty/insufficient, show callout */}
-            {targetArticle && !hasSufficientWalletBalance && (
-              <div style={{ margin: "var(--space-4) var(--space-6) 0" }}>
-                <div
+            {/* DIRECT BANK TRANSFER VIA MONIEPOINT WITH RECEIPT UPLOAD */}
+            <div className="paga-manual">
+              {/* Moniepoint Account Details Card */}
+              <div className="paga-manual__bank-card">
+                <div className="paga-manual__bank-header">
+                  <span className="paga-manual__bank-name">Moniepoint</span>
+                  <span className="paga-manual__bank-badge">Official Manual Account</span>
+                </div>
+
+                <div className="paga-manual__account-row">
+                  <div>
+                    <span style={{ fontSize: "11px", color: "#94A3B8", display: "block", letterSpacing: "0.05em" }}>
+                      ACCOUNT NUMBER
+                    </span>
+                    <span className="paga-manual__account-num">7067997301</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyAccount}
+                    className={`paga-manual__copy-btn${hasCopiedAccount ? " paga-manual__copy-btn--copied" : ""}`}
+                    aria-label="Copy Moniepoint Account Number"
+                  >
+                    {hasCopiedAccount ? "✓ Copied" : "Copy Number"}
+                  </button>
+                </div>
+
+                <div className="paga-manual__account-name-row">
+                  <span>ACCOUNT NAME:</span>
+                  <strong>Sopulu omah</strong>
+                </div>
+              </div>
+
+              {/* Steps instructions */}
+              <div className="paga-manual__steps">
+                <div className="paga-manual__step">
+                  <span className="paga-manual__step-num">1</span>
+                  <span>
+                    Transfer <strong>{formatNaira(amount)}</strong> to <strong>Moniepoint (7067997301 - Sopulu omah)</strong> using your banking app.
+                  </span>
+                </div>
+                <div className="paga-manual__step">
+                  <span className="paga-manual__step-num">2</span>
+                  <span>
+                    Take a screenshot or save the transaction slip receipt from your banking app.
+                  </span>
+                </div>
+                <div className="paga-manual__step">
+                  <span className="paga-manual__step-num">3</span>
+                  <span>
+                    Upload your payment slip below and submit. Our admin will be alerted immediately via Telegram to confirm.
+                  </span>
+                </div>
+              </div>
+
+              {/* Sender Account Name */}
+              <div className="paga-manual__sender-field">
+                <label htmlFor="manual-sender-name">
+                  Sender Account Name (as shown on your bank receipt):
+                </label>
+                <input
+                  id="manual-sender-name"
+                  type="text"
+                  value={senderNameInput}
+                  onChange={(e) => setSenderNameInput(e.target.value)}
+                  placeholder="e.g. Sopulu Omah"
+                />
+              </div>
+
+              {/* Upload Receipt Slip */}
+              <div>
+                <label
                   style={{
-                    padding: "var(--space-3) var(--space-4)",
-                    background: "#FFFBEB",
-                    border: "1px solid #FCD34D",
-                    borderRadius: "var(--radius-lg)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "12px",
-                    color: "#92400E",
+                    fontSize: "11.5px",
+                    fontWeight: "bold",
+                    color: "var(--color-charcoal-800)",
+                    display: "block",
+                    marginBottom: "6px",
                   }}
                 >
-                  <span>
-                    Wallet Balance: <strong>{formatNaira(walletBalance)}</strong> {walletBalance <= 0 ? "(Empty)" : "(Insufficient)"}
-                  </span>
-                  <span>Fund &amp; unlock via Paga</span>
-                </div>
-              </div>
-            )}
+                  Upload Payment Slip / Transfer Receipt:
+                </label>
 
-            {activeSession && (
-              <div style={{ margin: "var(--space-4) var(--space-6) 0" }}>
-                <div className="paga-checkout__active-session">
-                  <div className="paga-checkout__active-session-title">
-                    <span>⚡ Paga Gateway Session Active</span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px" }}>
-                      {activeSession.reference}
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: "11.5px", color: "var(--color-steel-800)" }}>
-                    You are being redirected to Paga. If your payment completed, click verify below to finalize:
-                  </p>
-                  <div className="paga-checkout__active-session-actions">
+                {receiptPreview ? (
+                  <div className="paga-manual__preview-card">
                     <button
                       type="button"
-                      onClick={() => handleVerifyReference(activeSession.reference)}
-                      disabled={isProcessing}
-                      className="paga-checkout__pay-btn"
-                      style={{ height: "40px", fontSize: "13px" }}
+                      onClick={handleRemoveReceipt}
+                      className="paga-manual__preview-remove"
+                      title="Remove image"
+                      aria-label="Remove image"
                     >
-                      {isProcessing ? "Verifying with Paga..." : "I Completed Payment · Verify Now"}
+                      ✕
                     </button>
-                    <a
-                      href={activeSession.checkoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="paga-checkout__secondary-btn"
+                    <img
+                      src={receiptPreview}
+                      alt="Selected receipt preview"
+                      className="paga-manual__preview-image"
+                    />
+                    <span
+                      style={{
+                        fontSize: "11.5px",
+                        color: "var(--color-steel-800)",
+                        textAlign: "center",
+                        display: "block",
+                      }}
                     >
-                      Re-open Paga ↗
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {hasSufficientWalletBalance ? (
-              /* User has enough reader wallet balance -> Unlock directly with wallet */
-              <div className="paga-checkout__body">
-                <div style={{
-                  padding: "var(--space-4)",
-                  background: "#ECFDF5",
-                  border: "1px solid #A7F3D0",
-                  borderRadius: "var(--radius-lg)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "var(--space-2)",
-                }}>
-                  <span style={{ fontSize: "var(--text-xs)", fontWeight: "bold", color: "#065F46" }}>
-                    ✓ Sufficient Wallet Balance Available
-                  </span>
-                  <p style={{ margin: 0, fontSize: "var(--text-xs)", color: "#047857" }}>
-                    You have <strong>{formatNaira(walletBalance)}</strong> in your reader wallet. Unlock this guide instantly without making a new payment.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleDirectWalletUnlock}
-                  disabled={isProcessing}
-                  className="paga-checkout__pay-btn"
-                  style={{ background: "#10B981" }}
-                >
-                  <span>
-                    {isProcessing ? "Unlocking Guide..." : `Unlock with Wallet (${formatNaira(articlePrice)})`}
-                  </span>
-                  <span aria-hidden="true">✓</span>
-                </button>
-              </div>
-            ) : (
-              /* User needs to fund/pay via official Paga Gateway */
-              <div className="paga-checkout__body">
-                {/* Order Summary Box */}
-                <div className="paga-checkout__order-card">
-                  <div className="paga-checkout__order-row">
-                    <span className="paga-checkout__order-label">Item</span>
-                    <strong className="paga-checkout__order-value">
-                      {targetArticle ? targetArticle.title : "Street IO Reader Wallet Funding"}
-                    </strong>
-                  </div>
-                  <div className="paga-checkout__order-row">
-                    <span className="paga-checkout__order-label">Reader Account</span>
-                    <span className="paga-checkout__order-value">
-                      {customerName} ({customerEmail})
+                      {receiptFile?.name} ({(receiptFile ? receiptFile.size / 1024 : 0).toFixed(1)} KB)
                     </span>
                   </div>
-                  <div className="paga-checkout__order-row">
-                    <span className="paga-checkout__order-label">Current Balance</span>
-                    <span className="paga-checkout__order-value" style={{ fontFamily: "var(--font-mono)" }}>
-                      {formatNaira(walletBalance)}
+                ) : (
+                  <label className="paga-manual__dropzone">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReceiptFileChange}
+                    />
+                    <span className="paga-manual__dropzone-icon" aria-hidden="true">
+                      📸
                     </span>
-                  </div>
-                  {targetArticle && (
-                    <div className="paga-checkout__order-row">
-                      <span className="paga-checkout__order-label">Guide Cost</span>
-                      <span className="paga-checkout__order-value">
-                        {formatNaira(articlePrice)}
-                      </span>
-                    </div>
-                  )}
-                  {targetArticle && amount > articlePrice && (
-                    <div className="paga-checkout__order-row">
-                      <span className="paga-checkout__order-label">Surplus to Wallet</span>
-                      <span className="paga-checkout__order-value" style={{ color: "#059669", fontWeight: "bold" }}>
-                        +{formatNaira(amount - articlePrice)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="paga-checkout__order-row paga-checkout__order-row--total">
-                    <span className="paga-checkout__order-label">Total to Pay</span>
-                    <strong className="paga-checkout__order-value" style={{ fontSize: "14px", color: "var(--color-charcoal-900)" }}>
-                      {formatNaira(amount > 0 ? amount : 0)}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Supported payment channels in Paga */}
-                <div className="paga-checkout__supported-channels">
-                  <span className="paga-checkout__channels-title">
-                    Instant payment options available in Paga checkout:
-                  </span>
-                  <div className="paga-checkout__channel-chips">
-                    <span className="paga-checkout__channel-chip">💳 Card (Mastercard, Visa, Verve)</span>
-                    <span className="paga-checkout__channel-chip">🏦 Bank Transfer</span>
-                    <span className="paga-checkout__channel-chip">📱 USSD (*242#)</span>
-                    <span className="paga-checkout__channel-chip">🟠 Paga Wallet</span>
-                  </div>
-                </div>
-
-                {/* Primary Launch Action */}
-                <button
-                  type="button"
-                  onClick={handleLaunchPagaCheckout}
-                  disabled={!isAmountValid || isProcessing}
-                  className="paga-checkout__pay-btn"
-                >
-                  <span>
-                    {isProcessing
-                      ? "Opening Paga Checkout..."
-                      : !isAmountValid
-                      ? `Enter at least ${formatNaira(minAmount)} to Pay`
-                      : `Pay ${formatNaira(amount)} with Paga`}
-                  </span>
-                  <span aria-hidden="true">→</span>
-                </button>
+                    <span className="paga-manual__dropzone-text">
+                      Tap or click to select receipt screenshot
+                    </span>
+                    <span className="paga-manual__dropzone-hint">
+                      JPEG, PNG, WebP supported (Max 10MB)
+                    </span>
+                  </label>
+                )}
               </div>
-            )}
 
-            {/* Paga Trust Footer */}
+              {/* Submit Receipt Action */}
+              <button
+                type="button"
+                onClick={handleSubmitManualReceipt}
+                disabled={!receiptFile || isSubmittingReceipt || !isAmountValid}
+                className="paga-manual__submit-btn"
+              >
+                {isSubmittingReceipt ? (
+                  <span>Uploading Slip &amp; Alerting Admin...</span>
+                ) : (
+                  <>
+                    <span>Submit Payment Slip ({formatNaira(amount)})</span>
+                    <span aria-hidden="true">→</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Trust Footer */}
             <div className="paga-checkout__footer">
               <span>Customer: {customerName} ({customerEmail})</span>
               <span>·</span>
-              <span>Paga Group Secured</span>
+              <span>Street IO Secured Transfer</span>
             </div>
           </>
         )}
       </div>
-
-      {/* Official Paga Checkout Inline Modal */}
-      {isInlineModalOpen && activeSession && (
-        <div
-          className="paga-inline-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="paga-modal-title"
-        >
-          <div
-            className="paga-inline-modal__backdrop"
-            onClick={() => setIsInlineModalOpen(false)}
-          />
-          <div className="paga-inline-modal__dialog">
-            {/* Modal Header */}
-            <div className="paga-inline-modal__header">
-              <div className="paga-inline-modal__header-left">
-                <span className="paga-inline-modal__badge">paga</span>
-                <div>
-                  <h3 id="paga-modal-title" className="paga-inline-modal__title">
-                    Paga Secure Checkout
-                  </h3>
-                  <span className="paga-inline-modal__subtitle">
-                    Street IO · Ref: {activeSession.reference}
-                  </span>
-                </div>
-              </div>
-              <div className="paga-inline-modal__header-right">
-                <span className="paga-inline-modal__amount">
-                  {formatNaira(amount)}
-                </span>
-                <a
-                  href={activeSession.checkoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="paga-inline-modal__external-link"
-                  title="Open checkout in new window if preferred"
-                >
-                  ↗ New Tab
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setIsInlineModalOpen(false)}
-                  className="paga-inline-modal__close-btn"
-                  aria-label="Close payment modal"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body / Iframe */}
-            <div className="paga-inline-modal__body">
-              {isIframeLoading && (
-                <div className="paga-inline-modal__loader">
-                  <div className="paga-inline-modal__spinner" />
-                  <p>Connecting securely to Paga Gateway...</p>
-                  <span>Cards, Bank Transfers, USSD, and Wallets accepted</span>
-                </div>
-              )}
-              <iframe
-                src={activeSession.checkoutUrl}
-                title="Paga Payment Checkout"
-                className="paga-inline-modal__iframe"
-                allow="payment"
-                onLoad={() => setIsIframeLoading(false)}
-              />
-            </div>
-
-            {/* Modal Footer */}
-            <div className="paga-inline-modal__footer">
-              <div className="paga-inline-modal__status-info">
-                <span className="paga-inline-modal__pulse" />
-                <span>Auto-confirming once payment is received...</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleVerifyReference(activeSession.reference)}
-                disabled={isProcessing}
-                className="paga-inline-modal__verify-btn"
-              >
-                {isProcessing ? "Verifying..." : "I've Completed Payment"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

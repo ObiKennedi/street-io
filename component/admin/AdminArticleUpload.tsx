@@ -591,7 +591,7 @@ export function AdminArticleUpload({
               />
             </div>
             <span className="admin-form__hint">
-              Paid by readers via direct Paga gateway integration.
+              Paid by readers via direct bank transfer and reader wallet.
             </span>
           </div>
 

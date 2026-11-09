@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Owner Executive Console · streetio",
-  description: "Executive console for managing articles, setting Naira pricing, policy enforcement, and Paga revenue metrics.",
+  description: "Executive console for managing articles, setting Naira pricing, policy enforcement, and platform revenue metrics.",
 };
 
 export const instant = false;

@@ -5,8 +5,8 @@ import { ARTICLES_DATABASE } from "@/lib/articles";
 import { PagaCheckoutView } from "@/component/dashboard/PagaCheckoutView";
 
 export const metadata: Metadata = {
-  title: "Paga Secure Checkout · streetio",
-  description: "Complete your payment directly with Paga for Street IO reader wallet and educational guides.",
+  title: "Secure Checkout · streetio",
+  description: "Complete your payment directly via Moniepoint bank transfer for Street IO reader wallet and educational guides.",
 };
 
 export const instant = false;

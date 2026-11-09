@@ -20,9 +20,10 @@ import { AdminArticleUpload } from "./AdminArticleUpload";
 import { AdminArticlesList } from "./AdminArticlesList";
 import { AdminUserModeration } from "./AdminUserModeration";
 import { AdminReportsFeed } from "./AdminReportsFeed";
+import { AdminPaymentSlips } from "./AdminPaymentSlips";
 import "./admin.scss";
 
-type AdminTab = "overview" | "upload" | "articles" | "moderation" | "reports";
+type AdminTab = "overview" | "upload" | "articles" | "moderation" | "reports" | "slips";
 
 export function AdminDashboardView() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -30,6 +31,18 @@ export function AdminDashboardView() {
   const [users, setUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS);
   const [reports, setReports] = useState<ArticleReport[]>(INITIAL_ARTICLE_REPORTS);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+  const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
+
+  const refreshSlipsCount = () => {
+    fetch("/api/manual-payment/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.stats) {
+          setPendingSlipsCount(data.stats.pending || 0);
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch("/api/article/list")
@@ -40,6 +53,8 @@ export function AdminDashboardView() {
         }
       })
       .catch((err) => console.error("Error loading articles:", err));
+
+    refreshSlipsCount();
   }, []);
 
   const summary = useMemo(() => {
@@ -241,11 +256,31 @@ export function AdminDashboardView() {
             </span>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("slips")}
+          className={`admin-nav__tab${activeTab === "slips" ? " admin-nav__tab--active" : ""}`}
+        >
+          <span>Payment Slips</span>
+          {pendingSlipsCount > 0 ? (
+            <span className="admin-nav__pill" style={{ background: "#FEF3C7", color: "#92400E" }}>
+              {pendingSlipsCount} pending
+            </span>
+          ) : (
+            <span className="admin-nav__pill" style={{ background: "#DCFCE7", color: "#166534" }}>
+              Moniepoint
+            </span>
+          )}
+        </button>
       </nav>
 
       {/* Tab Contents */}
       {activeTab === "overview" && (
         <div className="admin-overview-stack">
+          {/* Payment Slips review for quick admin action */}
+          <AdminPaymentSlips onStatusChange={refreshSlipsCount} />
+
           {/* Articles & Pricing section */}
           <AdminArticlesList
             articles={articles}
@@ -268,6 +303,10 @@ export function AdminDashboardView() {
             onDismissReport={handleDismissReport}
           />
         </div>
+      )}
+
+      {activeTab === "slips" && (
+        <AdminPaymentSlips onStatusChange={refreshSlipsCount} />
       )}
 
       {activeTab === "upload" && (

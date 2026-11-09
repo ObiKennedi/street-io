@@ -14,7 +14,7 @@ type AdminUserModerationProps = {
 const COMMON_VIOLATIONS = [
   "Automated scraper / crawler bot attempting bulk extraction",
   "Unauthorized leak / redistribution of proprietary guide on Telegram/forums",
-  "Payment abuse: Multiple disputed chargebacks on Paga gateway",
+  "Payment abuse: Multiple disputed transfers or fake payment slips",
   "Harassment / breach of Street IO code of conduct",
 ];
 

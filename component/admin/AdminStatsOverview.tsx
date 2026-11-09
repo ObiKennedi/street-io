@@ -40,9 +40,9 @@ export function AdminStatsOverview({
         </span>
       </div>
 
-      {/* 3. Paga Gateway Settlements */}
+      {/* 3. Verified Settlements */}
       <div className="admin-kpis__card">
-        <span className="admin-kpis__label">Paga Settled Payouts</span>
+        <span className="admin-kpis__label">Verified Settlements</span>
         <span className="admin-kpis__value" style={{ color: "#059669" }}>
           {formatAdminNaira(summary.settledViaPaga)}
         </span>

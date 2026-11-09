@@ -6,3 +6,5 @@ export { AdminArticleUpload } from "./AdminArticleUpload";
 export { AdminArticlesList } from "./AdminArticlesList";
 export { AdminUserModeration } from "./AdminUserModeration";
 export { AdminReportsFeed } from "./AdminReportsFeed";
+export { AdminPaymentSlips } from "./AdminPaymentSlips";
+
