@@ -151,13 +151,15 @@ export async function submitManualPayment(params: {
     `🆔 <b>Reference:</b> <code>${newSlip.reference}</code>\n\n` +
     `👉 <i>Log in to the Admin Dashboard to review and verify this receipt.</i>`;
 
-  // Send asynchronously without blocking the user response
-  sendTelegramNotification({
-    text: telegramMsg,
-    photoUrl: newSlip.receiptUrl,
-  }).catch((err) => {
-    console.error("Async Telegram alert error:", err);
-  });
+  // Send real-time Telegram notification to Admin (await to ensure delivery in serverless/Next.js)
+  try {
+    await sendTelegramNotification({
+      text: telegramMsg,
+      photoUrl: newSlip.receiptUrl,
+    });
+  } catch (err) {
+    console.error("[Manual Payments] Telegram alert error:", err);
+  }
 
   return newSlip;
 }
@@ -213,7 +215,11 @@ export async function approveManualPayment(
     `🆔 <b>Reference:</b> <code>${slip.reference}</code>\n` +
     `🛡️ <b>Approved By:</b> ${adminIdentifier}`;
 
-  sendTelegramNotification({ text: telegramMsg }).catch(() => {});
+  try {
+    await sendTelegramNotification({ text: telegramMsg });
+  } catch (err) {
+    console.error("[Manual Payments] Telegram approval alert error:", err);
+  }
 
   return { success: true, slip };
 }
@@ -249,7 +255,11 @@ export async function rejectManualPayment(
     `🆔 <b>Reference:</b> <code>${slip.reference}</code>\n` +
     `🛡️ <b>Rejected By:</b> ${adminIdentifier}`;
 
-  sendTelegramNotification({ text: telegramMsg }).catch(() => {});
+  try {
+    await sendTelegramNotification({ text: telegramMsg });
+  } catch (err) {
+    console.error("[Manual Payments] Telegram rejection alert error:", err);
+  }
 
   return { success: true, slip };
 }

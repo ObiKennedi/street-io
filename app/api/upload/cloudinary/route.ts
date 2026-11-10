@@ -1,11 +1,32 @@
 // File: app/api/upload/cloudinary/route.ts
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
+
+// Helper for local disk fallback when Cloudinary is unavailable or fails
+async function saveLocalFallback(file: File): Promise<string> {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const uploadsDir = path.join(process.cwd(), "public", "uploads", "receipts");
+  await fs.mkdir(uploadsDir, { recursive: true });
+
+  const ext = path.extname(file.name) || ".jpg";
+  const safeBase = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 20);
+  const fileName = `${Date.now()}_${safeBase}${ext}`;
+  const filePath = path.join(uploadsDir, fileName);
+
+  await fs.writeFile(filePath, buffer);
+  return `/uploads/receipts/${fileName}`;
+}
 
 export async function POST(req: Request) {
+  let file: File | null = null;
+
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    file = formData.get("file") as File | null;
 
     if (!file) {
       return NextResponse.json(
@@ -37,7 +58,7 @@ export async function POST(req: Request) {
     let apiSecret = process.env.CLOUDINARY_API_SECRET || "";
     const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
 
-    // Parse CLOUDINARY_URL if provided (cloudinary://API_KEY:API_SECRET@CLOUD_NAME)
+    // Parse CLOUDINARY_URL if provided
     const cloudinaryUrl = process.env.CLOUDINARY_URL;
     if (cloudinaryUrl && (!cloudName || !apiKey || !apiSecret)) {
       const match = cloudinaryUrl.match(/cloudinary:\/\/([^:]+):([^@]+)@(.+)/);
@@ -48,69 +69,87 @@ export async function POST(req: Request) {
       }
     }
 
-    // Check if Cloudinary is configured
     const hasSignedConfig = Boolean(cloudName && apiKey && apiSecret);
     const hasPresetConfig = Boolean(cloudName && uploadPreset);
 
+    // If Cloudinary credentials are not configured, fallback gracefully to local storage
     if (!hasSignedConfig && !hasPresetConfig) {
-      return NextResponse.json(
-        {
-          error:
-            "Cloudinary credentials are not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your .env file.",
-          missingConfig: true,
-        },
-        { status: 400 }
-      );
+      const localUrl = await saveLocalFallback(file);
+      return NextResponse.json({
+        success: true,
+        url: localUrl,
+        publicId: "local_" + Date.now(),
+      });
     }
 
-    // Prepare upload payload to Cloudinary REST API
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append("file", file);
+    // Attempt Cloudinary upload
+    try {
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append("file", file);
+      const folder = (formData.get("folder") as string) || "streetio_articles";
 
-    const folder = (formData.get("folder") as string) || "streetio_articles";
+      if (hasSignedConfig) {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const strToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+        const signature = crypto.createHash("sha1").update(strToSign).digest("hex");
 
-    if (hasSignedConfig) {
-      const timestamp = Math.floor(Date.now() / 1000);
-      // Alphabetical order of params for Cloudinary signature
-      const strToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
-      const signature = crypto.createHash("sha1").update(strToSign).digest("hex");
+        cloudinaryFormData.append("api_key", apiKey);
+        cloudinaryFormData.append("timestamp", String(timestamp));
+        cloudinaryFormData.append("folder", folder);
+        cloudinaryFormData.append("signature", signature);
+      } else {
+        cloudinaryFormData.append("upload_preset", uploadPreset);
+        cloudinaryFormData.append("folder", folder);
+      }
 
-      cloudinaryFormData.append("api_key", apiKey);
-      cloudinaryFormData.append("timestamp", String(timestamp));
-      cloudinaryFormData.append("folder", folder);
-      cloudinaryFormData.append("signature", signature);
-    } else {
-      // Unsigned upload preset
-      cloudinaryFormData.append("upload_preset", uploadPreset);
-      cloudinaryFormData.append("folder", folder);
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: cloudinaryFormData,
+        signal: AbortSignal.timeout(12000),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && (data.secure_url || data.url)) {
+        return NextResponse.json({
+          success: true,
+          url: data.secure_url || data.url,
+          publicId: data.public_id,
+          width: data.width,
+          height: data.height,
+          format: data.format,
+        });
+      }
+
+      console.warn("Cloudinary upload failed, falling back to local disk storage:", data);
+    } catch (cloudErr) {
+      console.warn("Cloudinary fetch error, falling back to local disk storage:", cloudErr);
     }
 
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      body: cloudinaryFormData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || data.error) {
-      return NextResponse.json(
-        { error: data.error?.message || "Failed to upload image to Cloudinary." },
-        { status: response.status || 500 }
-      );
-    }
-
+    // Fallback: save to local public/uploads directory
+    const localUrl = await saveLocalFallback(file);
     return NextResponse.json({
       success: true,
-      url: data.secure_url || data.url,
-      publicId: data.public_id,
-      width: data.width,
-      height: data.height,
-      format: data.format,
+      url: localUrl,
+      publicId: "local_" + Date.now(),
     });
   } catch (err: unknown) {
+    console.error("Upload fatal error:", err);
+
+    // If we have the file, try local save before failing
+    if (file) {
+      try {
+        const localUrl = await saveLocalFallback(file);
+        return NextResponse.json({
+          success: true,
+          url: localUrl,
+          publicId: "local_" + Date.now(),
+        });
+      } catch {}
+    }
+
     const message = err instanceof Error ? err.message : "Internal server error during upload.";
-    console.error("Cloudinary upload error:", err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
