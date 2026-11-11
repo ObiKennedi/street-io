@@ -22,7 +22,7 @@ type Props = {
   }>;
 };
 
-import { getUserWalletBalance } from "@/lib/paga";
+import { resolveUserWalletState } from "@/lib/manual-payments";
 
 export default async function PagaCheckoutPage({ searchParams }: Props) {
   const session = await requireSession("/checkout/paga");
@@ -81,7 +81,8 @@ export default async function PagaCheckoutPage({ searchParams }: Props) {
   }
 
   const returnReference = charge_reference || reference || null;
-  const walletBalance = getUserWalletBalance(session.user.id);
+  const walletState = await resolveUserWalletState(session.user.id, session.user.email);
+  const walletBalance = walletState.balance;
 
   return (
     <PagaCheckoutView

@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ARTICLES_DATABASE, getArticleBySlug, addArticle, type Article } from "@/lib/articles";
 import { getToolsForArticle } from "@/lib/article-tools";
-import { isArticleUnlockedForUser, getUserWalletBalance } from "@/lib/paga";
+import { isArticleUnlockedForUser } from "@/lib/paga";
+import { resolveUserWalletState } from "@/lib/manual-payments";
 import { ArticleDetailView } from "@/component/dashboard/ArticleDetailView";
 import { prisma } from "@/lib/prisma";
 import { exploreCategories } from "@/component/dashboard/categories.config";
@@ -118,12 +119,17 @@ export default async function ArticleMicroPage({ params }: Props) {
     article.tools && article.tools.length > 0
       ? article.tools
       : getToolsForArticle(article.categorySlug);
+
+  const walletState = session?.user?.id
+    ? await resolveUserWalletState(session.user.id, session.user.email)
+    : null;
+
   const isUnlocked = session?.user?.id
-    ? isArticleUnlockedForUser(session.user.id, article.slug)
+    ? (Boolean(walletState?.unlockedSlugs.includes(article.slug.toLowerCase())) ||
+        isArticleUnlockedForUser(session.user.id, article.slug))
     : false;
-  const walletBalance = session?.user?.id
-    ? getUserWalletBalance(session.user.id)
-    : 0;
+
+  const walletBalance = walletState ? walletState.balance : 0;
 
   return (
     <ArticleDetailView

@@ -4,6 +4,9 @@ export type Wallet = {
   balance: number;
   currency: string;
   formattedBalance: string;
+  pendingAmount?: number;
+  formattedPendingAmount?: string;
+  hasPending?: boolean;
 };
 
 export type Membership = {
@@ -27,20 +30,27 @@ export type DashboardData = {
   recentActivity: ReadingActivity[];
 };
 
-import { getUserWalletBalance, formatNaira } from "./paga";
+import { resolveUserWalletState } from "./manual-payments";
 
 /**
  * Everything the dashboard needs for one user.
- * Returns default wallet state and reading history.
+ * Accurately aggregates reader wallet balance from verified bank transfers,
+ * PostgreSQL DB, and tracks pending transfers awaiting verification.
  */
-export async function getDashboardData(userId: string): Promise<DashboardData> {
-  const balance = getUserWalletBalance(userId);
+export async function getDashboardData(
+  userId: string,
+  userEmail?: string
+): Promise<DashboardData> {
+  const walletState = await resolveUserWalletState(userId, userEmail);
 
   return {
     wallet: {
-      balance,
+      balance: walletState.balance,
       currency: "₦",
-      formattedBalance: formatNaira(balance),
+      formattedBalance: walletState.formattedBalance,
+      pendingAmount: walletState.pendingAmount,
+      formattedPendingAmount: walletState.formattedPendingAmount,
+      hasPending: walletState.hasPending,
     },
     membership: null,
     recentActivity: [],

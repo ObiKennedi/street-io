@@ -20,7 +20,7 @@ export const instant = false;
 
 export default async function DashboardPage() {
   const session = await requireSession("/dashboard");
-  const data = await getDashboardData(session.user.id);
+  const data = await getDashboardData(session.user.id, session.user.email);
   const userRole = (session.user as { role?: string | null })?.role;
   const isAdmin = userRole === "admin" || userRole === "owner";
 

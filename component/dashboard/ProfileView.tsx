@@ -104,7 +104,7 @@ export function ProfileView({ user, wallet }: ProfileViewProps) {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            PAGA DIRECT
+            MONIEPOINT VERIFIED
           </span>
         </div>
 
@@ -112,6 +112,29 @@ export function ProfileView({ user, wallet }: ProfileViewProps) {
           <span className="profile-wallet__amount">{wallet.formattedBalance}</span>
           <span className="profile-wallet__currency">{wallet.currency} NGN</span>
         </div>
+
+        {wallet.hasPending && wallet.pendingAmount && wallet.pendingAmount > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 14px",
+              marginTop: "12px",
+              borderRadius: "8px",
+              background: "rgba(245, 158, 11, 0.15)",
+              border: "1px solid rgba(245, 158, 11, 0.35)",
+              color: "#FDE68A",
+              fontSize: "13px",
+              fontWeight: 500,
+            }}
+          >
+            <span>⏳</span>
+            <span>
+              <strong>{wallet.formattedPendingAmount}</strong> transfer pending admin verification
+            </span>
+          </div>
+        )}
 
         <p className="profile-wallet__subtext">
           Instant micro-payment balance used to unlock pay-to-access operational guides and situational playbooks.
@@ -123,10 +146,10 @@ export function ProfileView({ user, wallet }: ProfileViewProps) {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Fund Wallet via Paga
+            Fund Wallet via Transfer
           </Link>
           <Link href="/checkout/paga" className="profile-wallet__history-btn">
-            Checkout History
+            Transfer History
           </Link>
         </div>
       </section>

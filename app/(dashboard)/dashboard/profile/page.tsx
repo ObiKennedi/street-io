@@ -13,7 +13,7 @@ export const instant = false;
 
 export default async function DashboardProfilePage() {
   const session = await requireSession("/dashboard/profile");
-  const data = await getDashboardData(session.user.id);
+  const data = await getDashboardData(session.user.id, session.user.email);
 
   return (
     <ProfileView

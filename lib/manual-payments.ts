@@ -46,19 +46,37 @@ if (!globalThis.__streetio_manual_payments) {
   globalThis.__streetio_manual_payments = [];
 }
 
-const STORAGE_FILE = path.join(process.cwd(), "scratch", "manual-payments.json");
+function getStorageCandidates(): string[] {
+  const cwd = process.cwd();
+  return [
+    path.join(cwd, "scratch", "manual-payments.json"),
+    path.join(cwd, "street-io", "scratch", "manual-payments.json"),
+    path.join(path.dirname(cwd), "scratch", "manual-payments.json"),
+    path.join(path.dirname(cwd), "street-io", "scratch", "manual-payments.json"),
+  ];
+}
+
+function getPrimaryStoragePath(): string {
+  const cwd = process.cwd();
+  if (cwd.endsWith("street-io")) {
+    return path.join(cwd, "scratch", "manual-payments.json");
+  }
+  return path.join(cwd, "street-io", "scratch", "manual-payments.json");
+}
 
 // Helper to load persisted records from disk
 async function loadStoredPayments(): Promise<ManualPaymentSlip[]> {
-  try {
-    const raw = await fs.readFile(STORAGE_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      globalThis.__streetio_manual_payments = parsed;
-      return parsed;
+  for (const candidate of getStorageCandidates()) {
+    try {
+      const raw = await fs.readFile(candidate, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        globalThis.__streetio_manual_payments = parsed;
+        return parsed;
+      }
+    } catch {
+      // try next candidate
     }
-  } catch {
-    // File doesn't exist yet or invalid JSON
   }
   return globalThis.__streetio_manual_payments || [];
 }
@@ -66,13 +84,118 @@ async function loadStoredPayments(): Promise<ManualPaymentSlip[]> {
 // Helper to save records to disk
 async function persistPayments(payments: ManualPaymentSlip[]): Promise<void> {
   globalThis.__streetio_manual_payments = payments;
+  const primary = getPrimaryStoragePath();
   try {
-    const dir = path.dirname(STORAGE_FILE);
+    const dir = path.dirname(primary);
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(STORAGE_FILE, JSON.stringify(payments, null, 2), "utf-8");
+    await fs.writeFile(primary, JSON.stringify(payments, null, 2), "utf-8");
   } catch (err) {
-    console.error("Failed to write manual-payments.json:", err);
+    console.error("Failed to write primary manual-payments.json:", err);
   }
+
+  // Also write to secondary cwd path if distinct so both stay perfectly synchronized
+  try {
+    const secondary = path.join(process.cwd(), "scratch", "manual-payments.json");
+    if (secondary !== primary) {
+      await fs.mkdir(path.dirname(secondary), { recursive: true });
+      await fs.writeFile(secondary, JSON.stringify(payments, null, 2), "utf-8");
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export type UserWalletSummary = {
+  balance: number;
+  currency: string;
+  formattedBalance: string;
+  pendingAmount: number;
+  formattedPendingAmount: string;
+  hasPending: boolean;
+  unlockedSlugs: string[];
+  approvedCount: number;
+  pendingCount: number;
+};
+
+/**
+ * Resolve a user's wallet state accurately from:
+ * 1. Approved & Pending manual payment slips (persisted to disk)
+ * 2. Neon PostgreSQL Database via Prisma (when available)
+ * 3. In-memory hot state
+ */
+export async function resolveUserWalletState(
+  userId: string,
+  userEmail?: string
+): Promise<UserWalletSummary> {
+  const payments = await loadStoredPayments();
+
+  // Find all slips for this user (matching by userId or userEmail)
+  const userSlips = payments.filter((slip) => {
+    if (slip.userId && slip.userId === userId) return true;
+    if (
+      userEmail &&
+      slip.userEmail &&
+      slip.userEmail.trim().toLowerCase() === userEmail.trim().toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  });
+
+  let approvedFunding = 0;
+  let pendingAmount = 0;
+  let approvedCount = 0;
+  let pendingCount = 0;
+  const unlockedSlugs: string[] = [];
+
+  for (const slip of userSlips) {
+    if (slip.status === "approved") {
+      approvedCount += 1;
+      if (slip.purpose === "wallet_funding") {
+        approvedFunding += slip.amount;
+      } else if (slip.purpose === "article_purchase" && slip.articleSlug) {
+        unlockedSlugs.push(slip.articleSlug.toLowerCase());
+        unlockArticleForUser(userId, slip.articleSlug);
+      }
+    } else if (slip.status === "pending") {
+      pendingCount += 1;
+      pendingAmount += slip.amount;
+    }
+  }
+
+  // Also query PostgreSQL database if reachable
+  let dbBalance = 0;
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { walletBalance: true },
+    });
+    if (user && typeof user.walletBalance === "number") {
+      dbBalance = user.walletBalance;
+    }
+  } catch {
+    // If DB is offline or getaddrinfo fails, dbBalance stays 0 and safely fallbacks
+  }
+
+  const { getUserWalletBalance } = await import("./paga");
+  const memoryBalance = getUserWalletBalance(userId);
+  const finalBalance = Math.max(dbBalance, approvedFunding, memoryBalance);
+
+  // Sync in-memory map so synchronous calls remain consistent
+  creditUserWallet(userId, 0, "SYNC", { balanceOverride: finalBalance });
+
+  return {
+    balance: finalBalance,
+    currency: "₦",
+    formattedBalance: formatNaira(finalBalance),
+    pendingAmount,
+    formattedPendingAmount: formatNaira(pendingAmount),
+    hasPending: pendingAmount > 0,
+    unlockedSlugs,
+    approvedCount,
+    pendingCount,
+  };
 }
 
 /**
@@ -202,6 +325,49 @@ export async function approveManualPayment(
       articleSlug: slip.articleSlug,
       paymentMethod: "bank_transfer",
     });
+  }
+
+  // Update Neon PostgreSQL DB via Prisma if reachable
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    if (slip.purpose === "wallet_funding") {
+      await prisma.user.update({
+        where: { id: slip.userId },
+        data: {
+          walletBalance: { increment: slip.amount },
+        },
+      });
+      await prisma.walletTransaction.create({
+        data: {
+          userId: slip.userId,
+          amount: slip.amount,
+          type: "credit",
+          description: `Manual transfer (${slip.bankName}) - Ref: ${slip.reference}`,
+        },
+      });
+    } else if (slip.purpose === "article_purchase" && slip.articleSlug) {
+      const dbArticle = await prisma.article.findUnique({
+        where: { slug: slip.articleSlug },
+      });
+      if (dbArticle) {
+        await prisma.purchase.create({
+          data: {
+            userId: slip.userId,
+            articleId: dbArticle.id,
+            amount: slip.amount,
+          },
+        });
+        await prisma.article.update({
+          where: { id: dbArticle.id },
+          data: {
+            soldCopies: { increment: 1 },
+            revenueGenerated: { increment: Math.round(slip.amount) },
+          },
+        });
+      }
+    }
+  } catch (dbErr) {
+    console.warn("[Manual Payments] Prisma DB sync skipped or failed:", dbErr);
   }
 
   await persistPayments(payments);

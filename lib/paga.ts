@@ -48,20 +48,14 @@ declare global {
 
 if (!globalThis.__streetio_wallets) {
   globalThis.__streetio_wallets = new Map<string, number>();
-} else {
-  globalThis.__streetio_wallets.clear();
 }
 
 if (!globalThis.__streetio_transactions) {
   globalThis.__streetio_transactions = [];
-} else {
-  globalThis.__streetio_transactions.length = 0;
 }
 
 if (!globalThis.__streetio_unlocked_articles) {
   globalThis.__streetio_unlocked_articles = new Map<string, Set<string>>();
-} else {
-  globalThis.__streetio_unlocked_articles.clear();
 }
 
 const wallets = globalThis.__streetio_wallets;
@@ -130,10 +124,12 @@ export function creditUserWallet(
     customerName?: string;
     articleSlug?: string;
     paymentMethod?: "paga_account" | "bank_transfer" | "card" | "ussd";
+    balanceOverride?: number;
   }
 ): { balance: number; formattedBalance: string; transaction: PagaTransaction } {
   const current = getUserWalletBalance(userId);
-  const updated = current + amount;
+  const updated =
+    meta?.balanceOverride !== undefined ? meta.balanceOverride : current + amount;
   wallets.set(userId, updated);
 
   const existingIdx = transactions.findIndex((t) => t.reference.toLowerCase() === reference.toLowerCase());
