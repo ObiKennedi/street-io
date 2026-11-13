@@ -36,9 +36,13 @@ export async function POST(req: Request) {
     if (!title || typeof title !== "string" || !title.trim()) {
       return NextResponse.json({ error: "Article title is required." }, { status: 400 });
     }
-    if (!description || typeof description !== "string" || !description.trim()) {
-      return NextResponse.json({ error: "Article description is required." }, { status: 400 });
-    }
+
+    const derivedDescription =
+      description && typeof description === "string" && description.trim()
+        ? description.trim()
+        : content && typeof content === "string" && content.trim()
+        ? content.trim().replace(/^#+\s+/gm, "").replace(/\n+/g, " ").slice(0, 180).trim() + "..."
+        : `Comprehensive educational guide and field playbook on ${title.trim()}.`;
 
     // Clean slug
     const baseSlug = (body.slug || title)
@@ -61,12 +65,12 @@ export async function POST(req: Request) {
         ? content.trim()
         : contentSnippet && typeof contentSnippet === "string" && contentSnippet.trim()
         ? contentSnippet.trim()
-        : description.trim();
+        : derivedDescription;
 
     const snippet =
       contentSnippet && typeof contentSnippet === "string" && contentSnippet.trim()
         ? contentSnippet.trim()
-        : description.trim();
+        : derivedDescription;
 
     const articleId = body.id || `art-${Date.now()}`;
     const cleanCategorySlug = categorySlug || "dating";
@@ -78,7 +82,7 @@ export async function POST(req: Request) {
         where: { slug },
         update: {
           title: title.trim(),
-          description: description.trim(),
+          description: derivedDescription,
           content: fullContent,
           contentSnippet: snippet,
           price: numericPrice,
@@ -86,7 +90,7 @@ export async function POST(req: Request) {
           coverImage: thumbnailUrl?.trim() || null,
           categorySlug: cleanCategorySlug,
           keyTakeaways: Array.isArray(keyTakeaways) ? keyTakeaways : [],
-          tags: Array.isArray(tags) ? tags : [],
+          tags: Array.isArray(tags) ? tags : [cleanCategorySlug, "guide"],
           status: "published",
           published: true,
           updatedAt: new Date(),
@@ -95,7 +99,7 @@ export async function POST(req: Request) {
           id: articleId,
           slug,
           title: title.trim(),
-          description: description.trim(),
+          description: derivedDescription,
           content: fullContent,
           contentSnippet: snippet,
           price: numericPrice,
@@ -103,7 +107,7 @@ export async function POST(req: Request) {
           coverImage: thumbnailUrl?.trim() || null,
           categorySlug: cleanCategorySlug,
           keyTakeaways: Array.isArray(keyTakeaways) ? keyTakeaways : [],
-          tags: Array.isArray(tags) ? tags : [],
+          tags: Array.isArray(tags) ? tags : [cleanCategorySlug, "guide"],
           status: "published",
           published: true,
           weeklyReads: 140,
@@ -128,13 +132,13 @@ export async function POST(req: Request) {
       categorySlug: cleanCategorySlug,
       price: formattedPrice,
       readTime: readTime?.trim() || "7 min read",
-      description: description.trim(),
+      description: derivedDescription,
       content: fullContent,
       contentSnippet: snippet,
       thumbnailUrl: thumbnailUrl?.trim() || undefined,
       tools: Array.isArray(tools) && tools.length > 0 ? tools : undefined,
       keyTakeaways: Array.isArray(keyTakeaways) && keyTakeaways.length > 0 ? keyTakeaways : [],
-      tags: Array.isArray(tags) && tags.length > 0 ? tags : [],
+      tags: Array.isArray(tags) && tags.length > 0 ? tags : [cleanCategorySlug, "guide"],
       weeklyReads: 140,
       monthlyReads: 620,
       totalReads: 850,

@@ -19,11 +19,9 @@ export function AdminArticleUpload({
   const [categorySlug, setCategorySlug] = useState(exploreCategories[0]?.slug || "dating");
   const [priceNaira, setPriceNaira] = useState("4500");
   const [readTime, setReadTime] = useState("8 min read");
-  const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [contentSnippet, setContentSnippet] = useState("");
   const [keyTakeawaysText, setKeyTakeawaysText] = useState("");
-  const [tagsText, setTagsText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
@@ -192,7 +190,7 @@ export function AdminArticleUpload({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
+    if (!title.trim()) return;
 
     setIsSubmitting(true);
 
@@ -202,11 +200,6 @@ export function AdminArticleUpload({
 
     const takeaways = keyTakeawaysText
       .split("\n")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const tags = tagsText
-      .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
 
@@ -241,10 +234,15 @@ export function AdminArticleUpload({
       badge: "Curated",
     }));
 
+    const derivedDescription =
+      content.trim()
+        ? content.trim().replace(/^#+\s+/gm, "").replace(/\n+/g, " ").slice(0, 180).trim() + "..."
+        : `Comprehensive educational guide and field playbook on ${title.trim()}.`;
+
     const fullArticleContent =
       content.trim() ||
       contentSnippet.trim() ||
-      description.trim();
+      derivedDescription;
 
     const articlePayload = {
       id: `art-custom-${Date.now()}`,
@@ -254,11 +252,11 @@ export function AdminArticleUpload({
       categorySlug: categoryObj.slug,
       price: numericPrice,
       readTime: readTime.trim() || `${autoReadTime} min read`,
-      description: description.trim(),
+      description: derivedDescription,
       content: fullArticleContent,
       contentSnippet:
         contentSnippet.trim() ||
-        "Confidential operational brief detailing tradecraft protocols and countermeasures.",
+        derivedDescription,
       thumbnailUrl: thumbnailUrl.trim() || undefined,
       tools: compiledTools.length > 0 ? compiledTools : undefined,
       keyTakeaways:
@@ -269,7 +267,7 @@ export function AdminArticleUpload({
               "Mandatory dual-authorization protocols to mitigate wire exposure.",
               "Immediate containment steps in case of credential leak.",
             ],
-      tags: tags.length > 0 ? tags : [categoryObj.slug, "operational guide", "tradecraft"],
+      tags: [categoryObj.slug, "operational guide", "tradecraft"],
     };
 
     (async () => {
@@ -307,11 +305,9 @@ export function AdminArticleUpload({
 
         // Reset form
         setTitle("");
-        setDescription("");
         setContent("");
         setContentSnippet("");
         setKeyTakeawaysText("");
-        setTagsText("");
         setPriceNaira("4500");
         setThumbnailUrl("");
         setUploadError(null);
@@ -607,37 +603,6 @@ export function AdminArticleUpload({
               value={readTime}
               onChange={(e) => setReadTime(e.target.value)}
               className="admin-form__input"
-            />
-          </div>
-
-          {/* Tags */}
-          <div className="admin-form__field">
-            <label htmlFor="art-tags" className="admin-form__label">
-              Tags (comma separated)
-            </label>
-            <input
-              id="art-tags"
-              type="text"
-              placeholder="escrow, fraud defense, tradecraft, wire security"
-              value={tagsText}
-              onChange={(e) => setTagsText(e.target.value)}
-              className="admin-form__input"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="admin-form__field admin-form__field--full">
-            <label htmlFor="art-desc" className="admin-form__label">
-              Executive Description / Abstract *
-            </label>
-            <textarea
-              id="art-desc"
-              required
-              rows={3}
-              placeholder="A comprehensive breakdown of covert settlement networks, fake confirmation slip detection, and bank manager collusion."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="admin-form__textarea"
             />
           </div>
 
