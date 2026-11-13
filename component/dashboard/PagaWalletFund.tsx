@@ -17,10 +17,10 @@ type PagaWalletFundProps = {
 };
 
 const PRESET_AMOUNTS = [
-  { amount: 2000, tag: "Starter" },
-  { amount: 5000, tag: "Popular" },
-  { amount: 10000, tag: "Power" },
-  { amount: 20000, tag: "Master" },
+  { amount: 5000, tag: "Starter" },
+  { amount: 10000, tag: "Popular" },
+  { amount: 20000, tag: "Power" },
+  { amount: 50000, tag: "Master" },
 ];
 
 export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
@@ -253,7 +253,7 @@ export function PagaWalletFund({ wallet, targetArticle }: PagaWalletFundProps) {
             <input
               type="text"
               inputMode="numeric"
-              placeholder="Or enter custom amount (min ₦100)"
+              placeholder="Or enter custom amount (min ₦5,000)"
               value={customAmount}
               onChange={handleCustomChange}
               className="wallet-fund__input"

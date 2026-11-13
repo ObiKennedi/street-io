@@ -21,7 +21,7 @@ export function WalletCard({ wallet: initialWallet }: WalletCardProps) {
     }
   }, [initialWallet]);
 
-  // If there is a pending payment transfer, poll the wallet balance endpoint every 5s
+  // If there is a pending payment transfer, poll the wallet balance endpoint every 5s; also fetch on mount
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
 
@@ -46,6 +46,9 @@ export function WalletCard({ wallet: initialWallet }: WalletCardProps) {
         // Silently ignore polling errors
       }
     };
+
+    // Always fetch once on mount
+    checkBalance();
 
     // If there is a pending transfer, poll to catch instant admin approvals
     if (wallet?.hasPending) {

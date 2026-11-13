@@ -22,6 +22,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payment amount." }, { status: 400 });
     }
 
+    if (purpose === "wallet_funding" && amount < 5000) {
+      return NextResponse.json(
+        { error: "Minimum wallet deposit amount is ₦5,000." },
+        { status: 400 }
+      );
+    }
+
     if (!receiptUrl || typeof receiptUrl !== "string") {
       return NextResponse.json(
         { error: "Payment receipt image is required." },

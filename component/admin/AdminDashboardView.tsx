@@ -32,34 +32,40 @@ export function AdminDashboardView() {
   const [reports, setReports] = useState<ArticleReport[]>(INITIAL_ARTICLE_REPORTS);
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
   const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
+  const [serverSummary, setServerSummary] = useState<any | null>(null);
 
-  const refreshSlipsCount = () => {
-    fetch("/api/manual-payment/list")
+  const loadAdminStats = () => {
+    fetch("/api/admin/stats")
       .then((res) => res.json())
       .then((data) => {
-        if (data?.stats) {
-          setPendingSlipsCount(data.stats.pending || 0);
+        if (data?.success) {
+          if (data.summary) {
+            setServerSummary(data.summary);
+          }
+          if (Array.isArray(data.articles) && data.articles.length > 0) {
+            setArticles(data.articles);
+          }
+          if (Array.isArray(data.users) && data.users.length > 0) {
+            setUsers(data.users);
+          }
+          if (typeof data.pendingSlipsCount === "number") {
+            setPendingSlipsCount(data.pendingSlipsCount);
+          }
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("Error loading admin stats:", err));
   };
 
   useEffect(() => {
-    fetch("/api/article/list")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && Array.isArray(data.articles) && data.articles.length > 0) {
-          setArticles(data.articles);
-        }
-      })
-      .catch((err) => console.error("Error loading articles:", err));
-
-    refreshSlipsCount();
+    loadAdminStats();
   }, []);
 
   const summary = useMemo(() => {
+    if (serverSummary) {
+      return serverSummary;
+    }
     return calculateRevenueSummary(articles);
-  }, [articles]);
+  }, [serverSummary, articles]);
 
   const blockedUsersCount = useMemo(() => {
     return users.filter((u) => u.status === "blocked").length;
@@ -279,7 +285,7 @@ export function AdminDashboardView() {
       {activeTab === "overview" && (
         <div className="admin-overview-stack">
           {/* Payment Slips review for quick admin action */}
-          <AdminPaymentSlips onStatusChange={refreshSlipsCount} />
+          <AdminPaymentSlips onStatusChange={loadAdminStats} />
 
           {/* Articles & Pricing section */}
           <AdminArticlesList
@@ -306,7 +312,7 @@ export function AdminDashboardView() {
       )}
 
       {activeTab === "slips" && (
-        <AdminPaymentSlips onStatusChange={refreshSlipsCount} />
+        <AdminPaymentSlips onStatusChange={loadAdminStats} />
       )}
 
       {activeTab === "upload" && (

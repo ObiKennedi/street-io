@@ -139,6 +139,23 @@ export function ArticleDetailView({
     }
   }, [searchParams, article.slug]);
 
+  // Fetch live wallet balance from server on mount to ensure fresh state
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.wallet) {
+          if (typeof data.wallet.balance === "number") {
+            setWalletBalance(data.wallet.balance);
+          }
+          if (Array.isArray(data.wallet.unlockedSlugs) && data.wallet.unlockedSlugs.includes(article.slug.toLowerCase())) {
+            setIsUnlocked(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [article.slug]);
+
   const handleWalletUnlock = async () => {
     setErrorMsg(null);
     setIsUnlocking(true);

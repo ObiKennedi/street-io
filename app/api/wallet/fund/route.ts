@@ -15,9 +15,9 @@ export async function POST(req: Request) {
     const amount = Number(body.amount);
     const articleSlug = body.articleSlug as string | undefined;
 
-    if (!amount || isNaN(amount) || amount < 100) {
+    if (!amount || isNaN(amount) || amount < 5000) {
       return NextResponse.json(
-        { error: "Minimum funding amount is ₦100" },
+        { error: "Minimum wallet deposit amount is ₦5,000" },
         { status: 400 }
       );
     }

@@ -40,10 +40,98 @@ export type ManualPaymentSlip = {
 declare global {
   // eslint-disable-next-line no-var
   var __streetio_manual_payments: ManualPaymentSlip[] | undefined;
+  // eslint-disable-next-line no-var
+  var __streetio_wallet_debits: WalletDebit[] | undefined;
 }
 
 if (!globalThis.__streetio_manual_payments) {
   globalThis.__streetio_manual_payments = [];
+}
+
+export type WalletDebit = {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  amount: number;
+  articleSlug?: string;
+  description?: string;
+  createdAt: string;
+};
+
+if (!globalThis.__streetio_wallet_debits) {
+  globalThis.__streetio_wallet_debits = [];
+}
+
+function getDebitStorageCandidates(): string[] {
+  const cwd = process.cwd();
+  return [
+    path.join(cwd, "scratch", "wallet-debits.json"),
+    path.join(cwd, "street-io", "scratch", "wallet-debits.json"),
+    path.join(path.dirname(cwd), "scratch", "wallet-debits.json"),
+    path.join(path.dirname(cwd), "street-io", "scratch", "wallet-debits.json"),
+  ];
+}
+
+function getPrimaryDebitStoragePath(): string {
+  const cwd = process.cwd();
+  if (cwd.endsWith("street-io")) {
+    return path.join(cwd, "scratch", "wallet-debits.json");
+  }
+  return path.join(cwd, "street-io", "scratch", "wallet-debits.json");
+}
+
+export async function loadStoredDebits(): Promise<WalletDebit[]> {
+  for (const candidate of getDebitStorageCandidates()) {
+    try {
+      const raw = await fs.readFile(candidate, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        globalThis.__streetio_wallet_debits = parsed;
+        return parsed;
+      }
+    } catch {}
+  }
+  return globalThis.__streetio_wallet_debits || [];
+}
+
+export async function recordWalletDebit(
+  userId: string,
+  amount: number,
+  userEmail?: string,
+  articleSlug?: string,
+  description?: string
+): Promise<WalletDebit> {
+  const debits = await loadStoredDebits();
+  const newDebit: WalletDebit = {
+    id: `debit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    userId,
+    userEmail,
+    amount,
+    articleSlug,
+    description: description || "Article purchase via reader wallet",
+    createdAt: new Date().toISOString(),
+  };
+
+  debits.unshift(newDebit);
+  globalThis.__streetio_wallet_debits = debits;
+
+  const primary = getPrimaryDebitStoragePath();
+  try {
+    await fs.mkdir(path.dirname(primary), { recursive: true });
+    await fs.writeFile(primary, JSON.stringify(debits, null, 2), "utf-8");
+  } catch (err) {
+    console.error("Failed to write wallet-debits.json:", err);
+  }
+
+  try {
+    const secondary = path.join(process.cwd(), "scratch", "wallet-debits.json");
+    if (secondary !== primary) {
+      await fs.mkdir(path.dirname(secondary), { recursive: true });
+      await fs.writeFile(secondary, JSON.stringify(debits, null, 2), "utf-8");
+    }
+  } catch {}
+
+  return newDebit;
 }
 
 function getStorageCandidates(): string[] {
@@ -120,14 +208,16 @@ export type UserWalletSummary = {
 /**
  * Resolve a user's wallet state accurately from:
  * 1. Approved & Pending manual payment slips (persisted to disk)
- * 2. Neon PostgreSQL Database via Prisma (when available)
- * 3. In-memory hot state
+ * 2. Recorded wallet debits (persisted to disk)
+ * 3. Neon PostgreSQL Database via Prisma (when available)
+ * 4. In-memory hot state
  */
 export async function resolveUserWalletState(
   userId: string,
   userEmail?: string
 ): Promise<UserWalletSummary> {
   const payments = await loadStoredPayments();
+  const debits = await loadStoredDebits();
 
   // Find all slips for this user (matching by userId or userEmail)
   const userSlips = payments.filter((slip) => {
@@ -141,6 +231,21 @@ export async function resolveUserWalletState(
     }
     return false;
   });
+
+  // Find all debits for this user
+  const userDebits = debits.filter((d) => {
+    if (d.userId && d.userId === userId) return true;
+    if (
+      userEmail &&
+      d.userEmail &&
+      d.userEmail.trim().toLowerCase() === userEmail.trim().toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  });
+
+  const totalDebits = userDebits.reduce((sum, d) => sum + d.amount, 0);
 
   let approvedFunding = 0;
   let pendingAmount = 0;
@@ -163,8 +268,18 @@ export async function resolveUserWalletState(
     }
   }
 
+  // Also include articles unlocked via wallet debits
+  for (const d of userDebits) {
+    if (d.articleSlug) {
+      unlockedSlugs.push(d.articleSlug.toLowerCase());
+      unlockArticleForUser(userId, d.articleSlug);
+    }
+  }
+
+  const netApprovedFunding = Math.max(0, approvedFunding - totalDebits);
+
   // Also query PostgreSQL database if reachable
-  let dbBalance = 0;
+  let dbBalance: number | null = null;
   try {
     const { prisma } = await import("@/lib/prisma");
     const user = await prisma.user.findUnique({
@@ -175,12 +290,17 @@ export async function resolveUserWalletState(
       dbBalance = user.walletBalance;
     }
   } catch {
-    // If DB is offline or getaddrinfo fails, dbBalance stays 0 and safely fallbacks
+    // If DB is offline or getaddrinfo fails, dbBalance stays null
   }
 
   const { getUserWalletBalance } = await import("./paga");
   const memoryBalance = getUserWalletBalance(userId);
-  const finalBalance = Math.max(dbBalance, approvedFunding, memoryBalance);
+
+  // Balance priority: if DB has a non-negative balance, reconcile with netApprovedFunding
+  const finalBalance =
+    dbBalance !== null
+      ? Math.max(dbBalance, netApprovedFunding)
+      : Math.max(netApprovedFunding, memoryBalance);
 
   // Sync in-memory map so synchronous calls remain consistent
   creditUserWallet(userId, 0, "SYNC", { balanceOverride: finalBalance });
@@ -192,9 +312,241 @@ export async function resolveUserWalletState(
     pendingAmount,
     formattedPendingAmount: formatNaira(pendingAmount),
     hasPending: pendingAmount > 0,
-    unlockedSlugs,
+    unlockedSlugs: Array.from(new Set(unlockedSlugs)),
     approvedCount,
     pendingCount,
+  };
+}
+
+/**
+ * Debit a user's wallet when they purchase an article with their balance.
+ * Reconciles across DB, disk debits, and in-memory caches.
+ */
+export async function debitUserWalletState(
+  userId: string,
+  amount: number,
+  userEmail?: string,
+  articleSlug?: string,
+  description?: string
+): Promise<{ success: boolean; balance: number; formattedBalance: string; error?: string }> {
+  const walletState = await resolveUserWalletState(userId, userEmail);
+
+  if (walletState.balance < amount) {
+    return {
+      success: false,
+      balance: walletState.balance,
+      formattedBalance: walletState.formattedBalance,
+      error: `Insufficient reader wallet balance. You have ${walletState.formattedBalance}, but this guide requires ${formatNaira(amount)}.`,
+    };
+  }
+
+  const newBalance = Math.max(0, walletState.balance - amount);
+
+  // 1. Sync in-memory map
+  creditUserWallet(userId, 0, "SYNC", { balanceOverride: newBalance });
+
+  // 2. Persist debit record to disk
+  await recordWalletDebit(userId, amount, userEmail, articleSlug, description);
+
+  // 3. Unlock article in runtime
+  if (articleSlug) {
+    unlockArticleForUser(userId, articleSlug);
+  }
+
+  // 4. Update Neon PostgreSQL DB via Prisma if reachable
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        walletBalance: { decrement: amount },
+      },
+    });
+
+    await prisma.walletTransaction.create({
+      data: {
+        userId,
+        amount: -amount,
+        type: "debit",
+        description: description || "Article purchase via reader wallet",
+      },
+    });
+
+    if (articleSlug) {
+      const dbArticle = await prisma.article.findUnique({
+        where: { slug: articleSlug },
+      });
+      if (dbArticle) {
+        await prisma.purchase.create({
+          data: {
+            userId,
+            articleId: dbArticle.id,
+            amount,
+          },
+        });
+        await prisma.article.update({
+          where: { id: dbArticle.id },
+          data: {
+            soldCopies: { increment: 1 },
+            revenueGenerated: { increment: Math.round(amount) },
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("[Wallet Debit] Prisma DB sync skipped or failed:", err);
+  }
+
+  return {
+    success: true,
+    balance: newBalance,
+    formattedBalance: formatNaira(newBalance),
+  };
+}
+
+export type AdminPlatformStats = {
+  totalRevenueNaira: number;
+  totalArticleSales: number;
+  averageOrderValue: number;
+  settledViaPaga: number;
+  pendingEscrow: number;
+  dailyRevenueDelta: string;
+  totalSlipsCount: number;
+  pendingSlipsCount: number;
+  approvedSlipsCount: number;
+  rejectedSlipsCount: number;
+  users: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: "user" | "admin" | "moderator";
+    status: "active" | "blocked" | "under_review";
+    joinedDate: string;
+    totalPurchases: number;
+    totalSpent: number;
+    walletBalance: number;
+  }>;
+};
+
+/**
+ * Calculates complete platform metrics for the Admin Dashboard.
+ * Reconciles across all persisted manual payments, debits, and PostgreSQL records.
+ * Never resets to zero on page reload.
+ */
+export async function getAdminPlatformStats(): Promise<AdminPlatformStats> {
+  const slips = await loadStoredPayments();
+  const debits = await loadStoredDebits();
+
+  const approvedSlips = slips.filter((s) => s.status === "approved");
+  const pendingSlips = slips.filter((s) => s.status === "pending");
+  const rejectedSlips = slips.filter((s) => s.status === "rejected");
+
+  const approvedSlipsVolume = approvedSlips.reduce((sum, s) => sum + s.amount, 0);
+  const pendingSlipsVolume = pendingSlips.reduce((sum, s) => sum + s.amount, 0);
+
+  // Article sales count: direct purchase slips + wallet debits for articles
+  const directArticleSlips = approvedSlips.filter((s) => s.purpose === "article_purchase");
+  const articleDebits = debits.filter((d) => Boolean(d.articleSlug));
+  const totalArticleSales = directArticleSlips.length + articleDebits.length;
+
+  // Total revenue is all money verified in system (approved slips volume)
+  const totalRevenueNaira = approvedSlipsVolume;
+  const aov = totalArticleSales > 0 ? Math.round(totalRevenueNaira / totalArticleSales) : 0;
+  const settledViaBank = approvedSlipsVolume;
+  const pendingEscrow = pendingSlipsVolume;
+
+  // Aggregate user records
+  const userMap = new Map<string, {
+    id: string;
+    name: string;
+    email: string;
+    role: "user" | "admin" | "moderator";
+    status: "active" | "blocked" | "under_review";
+    joinedDate: string;
+    totalPurchases: number;
+    totalSpent: number;
+    walletBalance: number;
+  }>();
+
+  // Populate from slips
+  for (const s of slips) {
+    const key = (s.userEmail || s.userId).toLowerCase();
+    const existing = userMap.get(key) || {
+      id: s.userId,
+      name: s.userName || "Reader",
+      email: s.userEmail || "reader@streetio.org",
+      role: "user",
+      status: "active",
+      joinedDate: s.createdAt ? s.createdAt.split("T")[0] : "2026-11-01",
+      totalPurchases: 0,
+      totalSpent: 0,
+      walletBalance: 0,
+    };
+
+    if (s.status === "approved") {
+      existing.totalSpent += s.amount;
+      if (s.purpose === "article_purchase") {
+        existing.totalPurchases += 1;
+      }
+    }
+    userMap.set(key, existing);
+  }
+
+  // Populate from debits
+  for (const d of debits) {
+    const key = (d.userEmail || d.userId).toLowerCase();
+    const existing = userMap.get(key);
+    if (existing) {
+      if (d.articleSlug) {
+        existing.totalPurchases += 1;
+      }
+    }
+  }
+
+  // Also query PostgreSQL DB if reachable
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const dbUsers = await prisma.user.findMany({
+      take: 100,
+      orderBy: { createdAt: "desc" },
+    });
+
+    for (const u of dbUsers) {
+      const key = u.email.toLowerCase();
+      const existing = userMap.get(key) || {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: (u.role as any) || "user",
+        status: "active",
+        joinedDate: u.createdAt ? u.createdAt.toISOString().split("T")[0] : "2026-11-01",
+        totalPurchases: 0,
+        totalSpent: 0,
+        walletBalance: u.walletBalance || 0,
+      };
+
+      existing.walletBalance = Math.max(existing.walletBalance, u.walletBalance || 0);
+      existing.role = (u.role as any) || existing.role;
+      userMap.set(key, existing);
+    }
+  } catch {
+    // If DB offline, continue with userMap from slips
+  }
+
+  const users = Array.from(userMap.values());
+
+  return {
+    totalRevenueNaira,
+    totalArticleSales,
+    averageOrderValue: aov,
+    settledViaPaga: settledViaBank,
+    pendingEscrow,
+    dailyRevenueDelta: totalRevenueNaira > 0 ? "+100%" : "0%",
+    totalSlipsCount: slips.length,
+    pendingSlipsCount: pendingSlips.length,
+    approvedSlipsCount: approvedSlips.length,
+    rejectedSlipsCount: rejectedSlips.length,
+    users,
   };
 }
 

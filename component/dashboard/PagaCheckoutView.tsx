@@ -1,7 +1,7 @@
 // File: component/dashboard/PagaCheckoutView.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type Article } from "@/lib/articles";
@@ -31,10 +31,12 @@ export function PagaCheckoutView({
   const articlePrice = targetArticle
     ? parseInt(targetArticle.price.replace(/[^0-9]/g, ""), 10) || 3500
     : 0;
-  const minAmount = targetArticle ? articlePrice : 100;
+  // Minimum deposit is strictly ₦5,000 as configured for reader wallet top-ups
+  const minDeposit = 5000;
+  const minAmount = targetArticle ? Math.max(minDeposit, articlePrice) : minDeposit;
 
   const [amountInput, setAmountInput] = useState<string>(
-    initialAmount ? String(initialAmount) : String(minAmount || 5000)
+    initialAmount ? String(Math.max(minAmount, initialAmount)) : String(minAmount)
   );
 
   const numericAmount = parseInt(amountInput.replace(/[^0-9]/g, ""), 10) || 0;
@@ -44,18 +46,30 @@ export function PagaCheckoutView({
   const presetAmounts = targetArticle
     ? Array.from(
         new Set([
-          articlePrice,
-          ...(articlePrice < 5000 ? [5000] : []),
-          ...(articlePrice < 10000 ? [10000] : []),
-          ...(articlePrice < 20000 ? [20000] : []),
-          ...(articlePrice < 50000 ? [50000] : []),
+          Math.max(minDeposit, articlePrice),
+          10000,
+          20000,
+          50000,
+          100000,
         ])
       )
-    : [2000, 5000, 10000, 20000, 50000];
+    : [5000, 10000, 20000, 50000, 100000];
 
   const [walletBalance, setWalletBalance] = useState<number>(userWalletBalance);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Fetch live wallet balance from server on mount
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.wallet && typeof data.wallet.balance === "number") {
+          setWalletBalance(data.wallet.balance);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Manual payment state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);

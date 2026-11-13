@@ -42,12 +42,12 @@ export function AdminStatsOverview({
 
       {/* 3. Verified Settlements */}
       <div className="admin-kpis__card">
-        <span className="admin-kpis__label">Verified Settlements</span>
+        <span className="admin-kpis__label">Bank Settlements (Moniepoint)</span>
         <span className="admin-kpis__value" style={{ color: "#059669" }}>
           {formatAdminNaira(summary.settledViaPaga)}
         </span>
         <span className="admin-kpis__meta">
-          Escrow Pending: {formatAdminNaira(summary.pendingEscrow)}
+          Pending Verification: {formatAdminNaira(summary.pendingEscrow)}
         </span>
       </div>
 
