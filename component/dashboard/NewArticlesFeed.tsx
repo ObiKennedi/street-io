@@ -217,8 +217,6 @@ export function NewArticlesFeed({ initialArticles }: NewArticlesFeedProps) {
                 </Link>
               </h2>
 
-              <p className="new-card__description">{article.description}</p>
-
               <div className="new-card__snippet-box">
                 &ldquo;{article.contentSnippet}&rdquo;
               </div>

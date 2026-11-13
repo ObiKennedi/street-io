@@ -192,7 +192,6 @@ export function TrendingFeed() {
                         {article.title}
                       </Link>
                     </h2>
-                    <p className="trending-card__desc">{article.description}</p>
 
                     {article.keyTakeaways.length > 0 && (
                       <ul className="trending-card__takeaways">

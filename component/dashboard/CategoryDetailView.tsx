@@ -31,8 +31,7 @@ export function CategoryDetailView({
     return articles.filter(
       (a) =>
         a.title.toLowerCase().includes(q) ||
-        a.description.toLowerCase().includes(q) ||
-        a.tags.some((t) => t.toLowerCase().includes(q))
+        (a.contentSnippet && a.contentSnippet.toLowerCase().includes(q))
     );
   }, [articles, filterQuery]);
 
@@ -216,7 +215,6 @@ export function CategoryDetailView({
                       {article.title}
                     </Link>
                   </h3>
-                  <p className="category-page__card-desc">{article.description}</p>
 
                   {article.keyTakeaways && article.keyTakeaways.length > 0 && (
                     <ul className="category-page__card-takeaways">

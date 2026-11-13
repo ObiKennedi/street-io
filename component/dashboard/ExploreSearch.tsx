@@ -248,8 +248,6 @@ export function ExploreSearch() {
                       </Link>
                     </h3>
 
-                    <p className="explore-results__desc">{article.description}</p>
-
                     {article.keyTakeaways.length > 0 && (
                       <ul className="explore-results__takeaways">
                         {article.keyTakeaways.slice(0, 2).map((takeaway, i) => (

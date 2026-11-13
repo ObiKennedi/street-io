@@ -236,8 +236,6 @@ export function ArticleDetailView({
           {article.title}
         </h1>
 
-        <p className="article-page__desc">{article.description}</p>
-
         {/* Teaser snippet box */}
         <div className="article-page__teaser">
           &ldquo;{article.contentSnippet}&rdquo;
