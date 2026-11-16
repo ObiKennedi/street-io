@@ -106,17 +106,24 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
         }
       }
 
-      // Telegram caption limit is strictly 1024 characters
-      const captionText = payload.text.length > 1020
-        ? payload.text.slice(0, 1016) + "..."
-        : payload.text;
+      // Telegram caption limit is strictly 1024 characters.
+      // If text exceeds 1020 chars, strip HTML before slicing to prevent unclosed tag syntax errors
+      let captionText = payload.text;
+      let captionParseMode: "HTML" | "Markdown" | "MarkdownV2" | undefined = payload.parseMode ?? "HTML";
+
+      if (captionText.length > 1020) {
+        captionText = stripHtml(captionText).slice(0, 1016) + "...";
+        captionParseMode = undefined;
+      }
 
       // 1A. Send image via multipart if we have Blob
       if (imageBlob) {
         const formData = new FormData();
         formData.append("chat_id", chatId);
         formData.append("caption", captionText);
-        formData.append("parse_mode", payload.parseMode ?? "HTML");
+        if (captionParseMode) {
+          formData.append("parse_mode", captionParseMode);
+        }
         formData.append("photo", imageBlob, filename);
 
         const photoRes = await fetch(
@@ -178,7 +185,7 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
               chat_id: chatId,
               photo: payload.photoUrl,
               caption: captionText,
-              parse_mode: payload.parseMode ?? "HTML",
+              ...(captionParseMode ? { parse_mode: captionParseMode } : {}),
             }),
             signal: AbortSignal.timeout(25000),
           }

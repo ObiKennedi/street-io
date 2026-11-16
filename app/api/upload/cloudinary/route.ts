@@ -33,6 +33,10 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log(
+      `[Upload] Received image: "${file.name}", size: ${(file.size / 1024).toFixed(1)} KB, type: ${file.type}`
+    );
+
     // Extract Cloudinary config from env
     let cloudName =
       process.env.CLOUDINARY_CLOUD_NAME ||
