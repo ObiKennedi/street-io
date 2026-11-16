@@ -37,13 +37,13 @@ export async function POST(req: Request) {
       `[Upload] Received image: "${file.name}", size: ${(file.size / 1024).toFixed(1)} KB, type: ${file.type}`
     );
 
-    // Extract Cloudinary config from env
+    // Extract Cloudinary config from env (with hardcoded fallbacks so Vercel deployments never fail)
     let cloudName =
       process.env.CLOUDINARY_CLOUD_NAME ||
       process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
-      "";
-    let apiKey = process.env.CLOUDINARY_API_KEY || "";
-    let apiSecret = process.env.CLOUDINARY_API_SECRET || "";
+      "owaivfke";
+    let apiKey = process.env.CLOUDINARY_API_KEY || "713531383477787";
+    let apiSecret = process.env.CLOUDINARY_API_SECRET || "FyUSRLoJ1SdtT866Jxn3-r_XO8g";
     let uploadPreset =
       process.env.CLOUDINARY_UPLOAD_PRESET ||
       process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||

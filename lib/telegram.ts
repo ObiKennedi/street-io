@@ -266,7 +266,11 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
     // Guaranteed fallback: If Telegram fails (parse error, invalid tag, etc.), retry as pure PLAIN TEXT
     if (!data.ok) {
       console.log("[Telegram] Retrying sendMessage in guaranteed plain-text mode...");
-      const plainText = stripHtml(textToSend);
+      const plainText =
+        payload.photoUrl &&
+        (payload.photoUrl.startsWith("http://") || payload.photoUrl.startsWith("https://"))
+          ? `${stripHtml(payload.text)}\n\n📎 Receipt Link: ${payload.photoUrl}`
+          : stripHtml(textToSend);
 
       const retryRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",

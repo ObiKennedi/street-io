@@ -23,9 +23,22 @@ function sendInBackground(email: Parameters<typeof sendEmail>[0]) {
   after(() => sendEmail(email));
 }
 
+const getBaseURL = () => {
+  if (process.env.BETTER_AUTH_URL && !process.env.BETTER_AUTH_URL.includes("localhost")) {
+    return process.env.BETTER_AUTH_URL;
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return process.env.BETTER_AUTH_URL || "http://localhost:3000";
+};
+
 export const auth = betterAuth({
   appName: "streetio",
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: getBaseURL(),
   secret: process.env.BETTER_AUTH_SECRET,
 
   database: prismaAdapter(prisma, { provider: "postgresql" }),

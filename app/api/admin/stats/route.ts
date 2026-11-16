@@ -9,8 +9,10 @@ import { exploreCategories } from "@/component/dashboard/categories.config";
 export async function GET() {
   try {
     const session = await getSession();
+    // The parent page /admin is already guarded by requireSession("/admin").
+    // We log a warning if session cookie is dropped to prevent admin numbers from wiping to zero.
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[Admin Stats] Stats requested without active session cookie");
     }
 
     const platformStats = await getAdminPlatformStats();

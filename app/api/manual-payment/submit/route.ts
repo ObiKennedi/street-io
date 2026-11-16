@@ -6,17 +6,21 @@ import { submitManualPayment, MANUAL_PAYMENT_CONFIG } from "@/lib/manual-payment
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized. Please log in first." }, { status: 401 });
-    }
-
     const body = await req.json();
+
     const amount = Number(body.amount);
     const receiptUrl = body.receiptUrl as string;
     const receiptPublicId = body.receiptPublicId as string | undefined;
     const senderName = body.senderName as string | undefined;
     const purpose = (body.purpose as "wallet_funding" | "article_purchase") || "wallet_funding";
     const articleSlug = body.articleSlug as string | undefined;
+
+    // Resolve user credentials from session or payload
+    const customerEmail = (session?.user?.email || body.customerEmail || "").trim();
+    const customerName = (session?.user?.name || body.customerName || body.senderName || "Reader").trim();
+    const userId =
+      session?.user?.id ||
+      (customerEmail ? `user_${customerEmail.toLowerCase().replace(/[^a-z0-9]/g, "_")}` : `user_${Date.now()}`);
 
     if (!amount || isNaN(amount) || amount <= 0) {
       return NextResponse.json({ error: "Invalid payment amount." }, { status: 400 });
@@ -37,9 +41,9 @@ export async function POST(req: Request) {
     }
 
     const slip = await submitManualPayment({
-      userId: session.user.id,
-      userName: session.user.name || "Reader",
-      userEmail: session.user.email || "",
+      userId,
+      userName: customerName,
+      userEmail: customerEmail,
       amount,
       receiptUrl,
       receiptPublicId,
@@ -68,4 +72,3 @@ export async function GET() {
     bankDetails: MANUAL_PAYMENT_CONFIG,
   });
 }
-

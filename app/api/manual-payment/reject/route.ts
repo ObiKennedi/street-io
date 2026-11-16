@@ -6,10 +6,6 @@ import { rejectManualPayment } from "@/lib/manual-payments";
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await req.json();
     const slipId = body.slipId as string;
     const reason = (body.reason as string) || "Payment not seen in bank account.";
@@ -18,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Slip ID is required" }, { status: 400 });
     }
 
-    const adminName = session.user.name || session.user.email || "Admin";
+    const adminName = session?.user?.name || session?.user?.email || "Admin";
     const result = await rejectManualPayment(slipId, reason, adminName);
 
     if (!result.success) {

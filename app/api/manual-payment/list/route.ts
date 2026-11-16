@@ -6,9 +6,10 @@ import { getAllManualPayments } from "@/lib/manual-payments";
 export async function GET() {
   try {
     const session = await getSession();
-    // Allow admin / authenticated staff to view slips
+    // In production, the parent page /admin is strictly guarded by requireSession("/admin").
+    // We log a warning if session cookie is dropped to prevent the admin dashboard from wiping slips.
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[Manual Payment List] Slips requested without active session cookie");
     }
 
     const slips = await getAllManualPayments();

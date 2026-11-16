@@ -261,6 +261,8 @@ export function PagaCheckoutView({
           receiptUrl: uploadData.url,
           receiptPublicId: uploadData.publicId,
           senderName: senderNameInput,
+          customerName,
+          customerEmail,
           purpose: targetArticle ? "article_purchase" : "wallet_funding",
           articleSlug: targetArticle?.slug,
         }),

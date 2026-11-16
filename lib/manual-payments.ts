@@ -712,19 +712,30 @@ export async function submitManualPayment(params: {
     const { prisma } = await import("@/lib/prisma");
 
     // Ensure user exists in database to satisfy foreign key constraint
-    let dbUser = await prisma.user.findUnique({ where: { id: params.userId } });
-    if (!dbUser && params.userEmail) {
-      dbUser = await prisma.user.findUnique({ where: { email: params.userEmail } });
+    let dbUser = null;
+    if (params.userId) {
+      dbUser = await prisma.user.findUnique({ where: { id: params.userId } });
+    }
+    if (!dbUser && params.userEmail && params.userEmail.trim()) {
+      dbUser = await prisma.user.findUnique({ where: { email: params.userEmail.trim() } });
     }
     if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          id: params.userId,
-          name: params.userName || "Reader",
-          email: params.userEmail || `user_${Date.now()}@streetio.org`,
-          walletBalance: 0,
-        },
-      });
+      const safeEmail =
+        params.userEmail && params.userEmail.trim()
+          ? params.userEmail.trim()
+          : `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}@streetio.org`;
+
+      dbUser = await prisma.user.findUnique({ where: { email: safeEmail } });
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            id: params.userId || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            name: params.userName || "Reader",
+            email: safeEmail,
+            walletBalance: 0,
+          },
+        });
+      }
     }
 
     await prisma.walletTransaction.create({
