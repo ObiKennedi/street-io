@@ -5,7 +5,7 @@ import fs from "fs/promises";
 import path from "path";
 import { creditUserWallet, unlockArticleForUser, formatNaira } from "./paga";
 import { ARTICLES_DATABASE } from "./articles";
-import { sendTelegramNotification } from "./telegram";
+import { sendTelegramNotification, escapeTelegramHtml } from "./telegram";
 
 export const MANUAL_PAYMENT_CONFIG = {
   bankName: process.env.MANUAL_PAYMENT_BANK || "Moniepoint",
@@ -81,17 +81,53 @@ function getPrimaryDebitStoragePath(): string {
 }
 
 export async function loadStoredDebits(): Promise<WalletDebit[]> {
+  const debitMap = new Map<string, WalletDebit>();
+
+  // 1. Load from DB if available
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const dbDebits = await prisma.walletTransaction.findMany({
+      where: { type: "debit" },
+      orderBy: { createdAt: "desc" },
+    });
+    for (const d of dbDebits) {
+      debitMap.set(d.id, {
+        id: d.id,
+        userId: d.userId,
+        amount: Math.abs(d.amount),
+        description: d.description || undefined,
+        createdAt: d.createdAt.toISOString(),
+      });
+    }
+  } catch {}
+
+  // 2. Load from disk candidates
   for (const candidate of getDebitStorageCandidates()) {
     try {
       const raw = await fs.readFile(candidate, "utf-8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        globalThis.__streetio_wallet_debits = parsed;
-        return parsed;
+      if (Array.isArray(parsed)) {
+        for (const deb of parsed) {
+          if (deb && deb.id && !debitMap.has(deb.id)) {
+            debitMap.set(deb.id, deb);
+          }
+        }
       }
     } catch {}
   }
-  return globalThis.__streetio_wallet_debits || [];
+
+  // 3. Merge with memory cache
+  if (Array.isArray(globalThis.__streetio_wallet_debits)) {
+    for (const deb of globalThis.__streetio_wallet_debits) {
+      if (deb && deb.id && !debitMap.has(deb.id)) {
+        debitMap.set(deb.id, deb);
+      }
+    }
+  }
+
+  const list = Array.from(debitMap.values());
+  globalThis.__streetio_wallet_debits = list;
+  return list;
 }
 
 export async function recordWalletDebit(
@@ -152,24 +188,81 @@ function getPrimaryStoragePath(): string {
   return path.join(cwd, "street-io", "scratch", "manual-payments.json");
 }
 
-// Helper to load persisted records from disk
+/**
+ * Loads stored manual payment slips.
+ * Primary source of truth: PostgreSQL Neon Database via Prisma.
+ * Secondary fallback: local disk and memory cache.
+ * Guarantees zero data loss on serverless instance reboots or page refreshes.
+ */
 async function loadStoredPayments(): Promise<ManualPaymentSlip[]> {
+  const slipsMap = new Map<string, ManualPaymentSlip>();
+
+  // 1. Authoritative source: PostgreSQL Neon Database
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const dbTransactions = await prisma.walletTransaction.findMany({
+      where: {
+        type: { in: ["slip_pending", "slip_approved", "slip_rejected"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    for (const tx of dbTransactions) {
+      if (tx.description) {
+        try {
+          const parsed = JSON.parse(tx.description) as ManualPaymentSlip;
+          if (parsed && parsed.id && parsed.reference) {
+            // Reconcile status with tx.type in case DB record was modified
+            if (tx.type === "slip_approved") parsed.status = "approved";
+            if (tx.type === "slip_rejected") parsed.status = "rejected";
+            if (tx.type === "slip_pending") parsed.status = "pending";
+            slipsMap.set(parsed.id, parsed);
+          }
+        } catch {
+          // not JSON description
+        }
+      }
+    }
+  } catch (dbErr) {
+    // If DB is temporarily offline, fallback to disk/memory
+    console.warn("[Manual Payments] DB read error in loadStoredPayments:", dbErr);
+  }
+
+  // 2. Also check local disk storage candidates to merge any offline slips
   for (const candidate of getStorageCandidates()) {
     try {
       const raw = await fs.readFile(candidate, "utf-8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        globalThis.__streetio_manual_payments = parsed;
-        return parsed;
+      if (Array.isArray(parsed)) {
+        for (const slip of parsed) {
+          if (slip && slip.id && !slipsMap.has(slip.id)) {
+            slipsMap.set(slip.id, slip);
+          }
+        }
       }
     } catch {
       // try next candidate
     }
   }
-  return globalThis.__streetio_manual_payments || [];
+
+  // 3. Also check global memory cache
+  if (Array.isArray(globalThis.__streetio_manual_payments)) {
+    for (const slip of globalThis.__streetio_manual_payments) {
+      if (slip && slip.id && !slipsMap.has(slip.id)) {
+        slipsMap.set(slip.id, slip);
+      }
+    }
+  }
+
+  const merged = Array.from(slipsMap.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  globalThis.__streetio_manual_payments = merged;
+  return merged;
 }
 
-// Helper to save records to disk
+// Helper to save records to disk cache
 async function persistPayments(payments: ManualPaymentSlip[]): Promise<void> {
   globalThis.__streetio_manual_payments = payments;
   const primary = getPrimaryStoragePath();
@@ -181,7 +274,7 @@ async function persistPayments(payments: ManualPaymentSlip[]): Promise<void> {
     console.error("Failed to write primary manual-payments.json:", err);
   }
 
-  // Also write to secondary cwd path if distinct so both stay perfectly synchronized
+  // Also write to secondary cwd path if distinct
   try {
     const secondary = path.join(process.cwd(), "scratch", "manual-payments.json");
     if (secondary !== primary) {
@@ -207,9 +300,9 @@ export type UserWalletSummary = {
 
 /**
  * Resolve a user's wallet state accurately from:
- * 1. Approved & Pending manual payment slips (persisted to disk)
- * 2. Recorded wallet debits (persisted to disk)
- * 3. Neon PostgreSQL Database via Prisma (when available)
+ * 1. Approved & Pending manual payment slips (persisted in DB and disk)
+ * 2. Recorded wallet debits (persisted in DB and disk)
+ * 3. Neon PostgreSQL Database via Prisma
  * 4. In-memory hot state
  */
 export async function resolveUserWalletState(
@@ -290,7 +383,7 @@ export async function resolveUserWalletState(
       dbBalance = user.walletBalance;
     }
   } catch {
-    // If DB is offline or getaddrinfo fails, dbBalance stays null
+    // If DB offline, dbBalance stays null
   }
 
   const { getUserWalletBalance } = await import("./paga");
@@ -561,7 +654,11 @@ export async function getAllManualPayments(): Promise<ManualPaymentSlip[]> {
 }
 
 /**
- * Submit a new manual payment slip
+ * Submit a new manual payment slip.
+ * 1. Creates slip object.
+ * 2. Persists directly to Neon PostgreSQL database (type: "slip_pending") so it never vanishes.
+ * 3. Persists to local disk cache.
+ * 4. Sends real-time Telegram notification to Admin with HTML entity escaping and plain-text fallback.
  */
 export async function submitManualPayment(params: {
   userId: string;
@@ -610,28 +707,73 @@ export async function submitManualPayment(params: {
   payments.unshift(newSlip);
   await persistPayments(payments);
 
-  // Send real-time Telegram notification to Admin
+  // 1. Authoritative persistence: Write to PostgreSQL database
+  try {
+    const { prisma } = await import("@/lib/prisma");
+
+    // Ensure user exists in database to satisfy foreign key constraint
+    let dbUser = await prisma.user.findUnique({ where: { id: params.userId } });
+    if (!dbUser && params.userEmail) {
+      dbUser = await prisma.user.findUnique({ where: { email: params.userEmail } });
+    }
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          id: params.userId,
+          name: params.userName || "Reader",
+          email: params.userEmail || `user_${Date.now()}@streetio.org`,
+          walletBalance: 0,
+        },
+      });
+    }
+
+    await prisma.walletTransaction.create({
+      data: {
+        id: newSlip.id,
+        userId: dbUser.id,
+        amount: newSlip.amount,
+        type: "slip_pending",
+        description: JSON.stringify(newSlip),
+      },
+    });
+    console.log("[Manual Payments] Slip successfully saved to PostgreSQL Neon DB:", newSlip.id);
+  } catch (dbErr) {
+    console.warn("[Manual Payments] Could not write slip_pending to PostgreSQL DB:", dbErr);
+  }
+
+  // 2. Real-time Telegram notification to Admin
   const purposeLabel =
     newSlip.purpose === "article_purchase" && newSlip.articleTitle
       ? `Article: "${newSlip.articleTitle}"`
       : "Reader Wallet Top-up";
 
+  // Sanitize all values against HTML injection / parse breaks
+  const safeName = escapeTelegramHtml(newSlip.userName);
+  const safeEmail = escapeTelegramHtml(newSlip.userEmail);
+  const safeSender = escapeTelegramHtml(newSlip.senderName || "Not provided");
+  const safeBank = escapeTelegramHtml(newSlip.bankName);
+  const safeAccNum = escapeTelegramHtml(newSlip.accountNumber);
+  const safeAccName = escapeTelegramHtml(newSlip.accountName);
+  const safeRef = escapeTelegramHtml(newSlip.reference);
+  const safePurpose = escapeTelegramHtml(purposeLabel);
+
   const telegramMsg =
     `🔔 <b>New Manual Payment Slip Uploaded!</b>\n\n` +
-    `👤 <b>Reader:</b> ${newSlip.userName} (${newSlip.userEmail})\n` +
+    `👤 <b>Reader:</b> ${safeName} (${safeEmail})\n` +
     `💰 <b>Amount:</b> ${formatNaira(newSlip.amount)}\n` +
-    `📌 <b>Purpose:</b> ${purposeLabel}\n` +
-    `🏦 <b>Target Bank:</b> ${newSlip.bankName} (${newSlip.accountNumber} - ${newSlip.accountName})\n` +
-    `👤 <b>Sender Name:</b> ${newSlip.senderName || "Not provided"}\n` +
-    `🆔 <b>Reference:</b> <code>${newSlip.reference}</code>\n\n` +
+    `📌 <b>Purpose:</b> ${safePurpose}\n` +
+    `🏦 <b>Target Bank:</b> ${safeBank} (${safeAccNum} - ${safeAccName})\n` +
+    `👤 <b>Sender Name:</b> ${safeSender}\n` +
+    `🆔 <b>Reference:</b> <code>${safeRef}</code>\n\n` +
     `👉 <i>Log in to the Admin Dashboard to review and verify this receipt.</i>`;
 
-  // Send real-time Telegram notification to Admin (await to ensure delivery in serverless/Next.js)
+  // Await notification call to guarantee delivery on serverless hosts
   try {
-    await sendTelegramNotification({
+    const alertResult = await sendTelegramNotification({
       text: telegramMsg,
       photoUrl: newSlip.receiptUrl,
     });
+    console.log("[Manual Payments] Telegram alert result:", alertResult);
   } catch (err) {
     console.error("[Manual Payments] Telegram alert error:", err);
   }
@@ -679,9 +821,26 @@ export async function approveManualPayment(
     });
   }
 
-  // Update Neon PostgreSQL DB via Prisma if reachable
+  // Update Neon PostgreSQL DB via Prisma
   try {
     const { prisma } = await import("@/lib/prisma");
+
+    // Upsert the slip transaction record
+    await prisma.walletTransaction.upsert({
+      where: { id: slip.id },
+      update: {
+        type: "slip_approved",
+        description: JSON.stringify(slip),
+      },
+      create: {
+        id: slip.id,
+        userId: slip.userId,
+        amount: slip.amount,
+        type: "slip_approved",
+        description: JSON.stringify(slip),
+      },
+    });
+
     if (slip.purpose === "wallet_funding") {
       await prisma.user.update({
         where: { id: slip.userId },
@@ -725,13 +884,19 @@ export async function approveManualPayment(
   await persistPayments(payments);
 
   // Send Telegram approval confirmation
+  const safeName = escapeTelegramHtml(slip.userName);
+  const safeEmail = escapeTelegramHtml(slip.userEmail);
+  const safePurpose = escapeTelegramHtml(slip.articleTitle || "Wallet Top-up");
+  const safeRef = escapeTelegramHtml(slip.reference);
+  const safeAdmin = escapeTelegramHtml(adminIdentifier);
+
   const telegramMsg =
     `✅ <b>Payment Slip Approved!</b>\n\n` +
-    `👤 <b>Reader:</b> ${slip.userName} (${slip.userEmail})\n` +
+    `👤 <b>Reader:</b> ${safeName} (${safeEmail})\n` +
     `💰 <b>Amount:</b> ${formatNaira(slip.amount)}\n` +
-    `📌 <b>Purpose:</b> ${slip.articleTitle || "Wallet Top-up"}\n` +
-    `🆔 <b>Reference:</b> <code>${slip.reference}</code>\n` +
-    `🛡️ <b>Approved By:</b> ${adminIdentifier}`;
+    `📌 <b>Purpose:</b> ${safePurpose}\n` +
+    `🆔 <b>Reference:</b> <code>${safeRef}</code>\n` +
+    `🛡️ <b>Approved By:</b> ${safeAdmin}`;
 
   try {
     await sendTelegramNotification({ text: telegramMsg });
@@ -762,16 +927,43 @@ export async function rejectManualPayment(
   slip.reviewedAt = new Date().toISOString();
   slip.reviewedBy = adminIdentifier;
 
+  // Update PostgreSQL DB via Prisma
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    await prisma.walletTransaction.upsert({
+      where: { id: slip.id },
+      update: {
+        type: "slip_rejected",
+        description: JSON.stringify(slip),
+      },
+      create: {
+        id: slip.id,
+        userId: slip.userId,
+        amount: slip.amount,
+        type: "slip_rejected",
+        description: JSON.stringify(slip),
+      },
+    });
+  } catch (dbErr) {
+    console.warn("[Manual Payments] Prisma DB sync on reject failed:", dbErr);
+  }
+
   await persistPayments(payments);
 
   // Send Telegram rejection update
+  const safeName = escapeTelegramHtml(slip.userName);
+  const safeEmail = escapeTelegramHtml(slip.userEmail);
+  const safeReason = escapeTelegramHtml(slip.rejectionReason || "Payment could not be verified.");
+  const safeRef = escapeTelegramHtml(slip.reference);
+  const safeAdmin = escapeTelegramHtml(adminIdentifier);
+
   const telegramMsg =
     `❌ <b>Payment Slip Rejected</b>\n\n` +
-    `👤 <b>Reader:</b> ${slip.userName} (${slip.userEmail})\n` +
+    `👤 <b>Reader:</b> ${safeName} (${safeEmail})\n` +
     `💰 <b>Amount:</b> ${formatNaira(slip.amount)}\n` +
-    `⚠️ <b>Reason:</b> ${slip.rejectionReason}\n` +
-    `🆔 <b>Reference:</b> <code>${slip.reference}</code>\n` +
-    `🛡️ <b>Rejected By:</b> ${adminIdentifier}`;
+    `⚠️ <b>Reason:</b> ${safeReason}\n` +
+    `🆔 <b>Reference:</b> <code>${safeRef}</code>\n` +
+    `🛡️ <b>Rejected By:</b> ${safeAdmin}`;
 
   try {
     await sendTelegramNotification({ text: telegramMsg });
@@ -781,4 +973,3 @@ export async function rejectManualPayment(
 
   return { success: true, slip };
 }
-

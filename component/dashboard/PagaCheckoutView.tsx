@@ -134,16 +134,82 @@ export function PagaCheckoutView({
     }
   };
 
-  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper to compress raw phone camera photos client-side to bypass Vercel 4.5MB request limit
+  const compressImage = async (file: File, maxWidth = 1600, quality = 0.85): Promise<File> => {
+    if (!file.type.startsWith("image/") || file.size <= 500 * 1024) {
+      return file;
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              const safeName = file.name.replace(/\.[^.]+$/, ".jpg");
+              const compressedFile = new File([blob], safeName, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleReceiptFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
         setErrorMessage("Please select a valid image file (PNG, JPG, WebP).");
         return;
       }
-      setReceiptFile(file);
-      setReceiptPreview(URL.createObjectURL(file));
-      setErrorMessage(null);
+      try {
+        const processed = await compressImage(file);
+        setReceiptFile(processed);
+        setReceiptPreview(URL.createObjectURL(processed));
+        setErrorMessage(null);
+      } catch {
+        setReceiptFile(file);
+        setReceiptPreview(URL.createObjectURL(file));
+        setErrorMessage(null);
+      }
     }
   };
 
@@ -170,9 +236,10 @@ export function PagaCheckoutView({
     setErrorMessage(null);
 
     try {
-      // 1. Upload receipt to Cloudinary
+      // 1. Compress file client-side if needed & upload receipt to Cloudinary
+      const processedFile = await compressImage(receiptFile);
       const formData = new FormData();
-      formData.append("file", receiptFile);
+      formData.append("file", processedFile);
       formData.append("folder", "streetio_receipts");
 
       const uploadRes = await fetch("/api/upload/cloudinary", {

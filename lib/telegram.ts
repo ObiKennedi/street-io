@@ -1,5 +1,6 @@
 // File: lib/telegram.ts
 // Telegram Alert Service for Admin Notifications on Street IO
+// Hardened against entity parse failures, caption limits, and ephemeral network drops
 
 import fs from "fs/promises";
 import path from "path";
@@ -12,15 +13,38 @@ export type TelegramAlertPayload = {
   parseMode?: "HTML" | "Markdown" | "MarkdownV2";
 };
 
+/**
+ * Escapes special HTML characters so Telegram's HTML parse mode doesn't reject messages with 400 Bad Request
+ */
+export function escapeTelegramHtml(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Strips HTML tags for plain-text fallback delivery
+ */
+export function stripHtml(text: string): string {
+  if (!text) return "";
+  return text.replace(/<[^>]+>/g, "");
+}
+
 export async function sendTelegramNotification(payload: TelegramAlertPayload): Promise<{
   success: boolean;
   messageId?: number;
   error?: string;
 }> {
-  const token =
+  const token = (
     process.env.TELEGRAM_BOT_TOKEN ||
-    "9038619284:AAGOptwC_Tcm2Hy41boAqp1XjCtSy_44MIs";
-  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID || "5055261566";
+    "9038619284:AAGOptwC_Tcm2Hy41boAqp1XjCtSy_44MIs"
+  ).trim();
+  const chatId = (
+    process.env.TELEGRAM_ADMIN_CHAT_ID ||
+    "5055261566"
+  ).trim();
 
   if (!token || !chatId) {
     console.warn("[Telegram] Notification skipped: Bot token or Admin Chat ID not set.");
@@ -54,7 +78,11 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
         else if (pUrl.startsWith("/uploads/") || pUrl.startsWith("/public/")) {
           try {
             const cleanPath = pUrl.replace(/^\//, "");
-            const fullLocalPath = path.join(process.cwd(), "public", cleanPath.replace(/^uploads\//, "uploads/"));
+            const fullLocalPath = path.join(
+              process.cwd(),
+              "public",
+              cleanPath.replace(/^uploads\//, "uploads/")
+            );
             const buffer = await fs.readFile(fullLocalPath);
             imageBlob = new Blob([new Uint8Array(buffer)], { type: "image/jpeg" });
           } catch (localReadErr) {
@@ -65,7 +93,7 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
         else if (pUrl.startsWith("http://") || pUrl.startsWith("https://")) {
           try {
             const fetchRes = await fetch(pUrl, {
-              signal: AbortSignal.timeout(8000),
+              signal: AbortSignal.timeout(10000),
             });
             if (fetchRes.ok) {
               const arrayBuffer = await fetchRes.arrayBuffer();
@@ -73,16 +101,21 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
               imageBlob = new Blob([arrayBuffer], { type: cType });
             }
           } catch (remoteFetchErr) {
-            console.warn("[Telegram] Could not fetch remote photo to attach directly:", remoteFetchErr);
+            console.warn("[Telegram] Direct fetch of photo URL timed out/failed:", remoteFetchErr);
           }
         }
       }
 
-      // If we have an image Blob, send as multipart/form-data
+      // Telegram caption limit is strictly 1024 characters
+      const captionText = payload.text.length > 1020
+        ? payload.text.slice(0, 1016) + "..."
+        : payload.text;
+
+      // 1A. Send image via multipart if we have Blob
       if (imageBlob) {
         const formData = new FormData();
         formData.append("chat_id", chatId);
-        formData.append("caption", payload.text);
+        formData.append("caption", captionText);
         formData.append("parse_mode", payload.parseMode ?? "HTML");
         formData.append("photo", imageBlob, filename);
 
@@ -91,7 +124,7 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
           {
             method: "POST",
             body: formData,
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(25000),
           }
         );
 
@@ -105,8 +138,37 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
         }
 
         console.warn("[Telegram] sendPhoto multipart failed:", photoData);
-      } else if (payload.photoUrl && (payload.photoUrl.startsWith("http://") || payload.photoUrl.startsWith("https://"))) {
-        // Fallback: send photo by public URL
+
+        // If failure was due to parse error, retry without parse_mode
+        if (photoData.description && /parse|entity/i.test(photoData.description)) {
+          console.log("[Telegram] Retrying sendPhoto with plain text caption...");
+          const retryFormData = new FormData();
+          retryFormData.append("chat_id", chatId);
+          retryFormData.append("caption", stripHtml(captionText));
+          retryFormData.append("photo", imageBlob, filename);
+
+          const retryRes = await fetch(
+            `https://api.telegram.org/bot${token}/sendPhoto`,
+            {
+              method: "POST",
+              body: retryFormData,
+              signal: AbortSignal.timeout(20000),
+            }
+          );
+          const retryData = await retryRes.json();
+          if (retryData.ok) {
+            console.log("[Telegram] sendPhoto plain-text retry succeeded. ID:", retryData.result?.message_id);
+            return {
+              success: true,
+              messageId: retryData.result?.message_id,
+            };
+          }
+        }
+      } else if (
+        payload.photoUrl &&
+        (payload.photoUrl.startsWith("http://") || payload.photoUrl.startsWith("https://"))
+      ) {
+        // 1B. Fallback: ask Telegram to download the photo from URL directly
         const photoRes = await fetch(
           `https://api.telegram.org/bot${token}/sendPhoto`,
           {
@@ -115,16 +177,16 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
             body: JSON.stringify({
               chat_id: chatId,
               photo: payload.photoUrl,
-              caption: payload.text,
+              caption: captionText,
               parse_mode: payload.parseMode ?? "HTML",
             }),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(25000),
           }
         );
 
         const photoData = await photoRes.json();
         if (photoData.ok) {
-          console.log("[Telegram] sendPhoto by URL delivered. Message ID:", photoData.result?.message_id);
+          console.log("[Telegram] sendPhoto by URL delivered. ID:", photoData.result?.message_id);
           return {
             success: true,
             messageId: photoData.result?.message_id,
@@ -132,17 +194,44 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
         }
 
         console.warn("[Telegram] sendPhoto URL failed:", photoData);
+
+        // Retry without parse_mode if entity error
+        if (photoData.description && /parse|entity/i.test(photoData.description)) {
+          const retryRes = await fetch(
+            `https://api.telegram.org/bot${token}/sendPhoto`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                photo: payload.photoUrl,
+                caption: stripHtml(captionText),
+              }),
+              signal: AbortSignal.timeout(20000),
+            }
+          );
+          const retryData = await retryRes.json();
+          if (retryData.ok) {
+            console.log("[Telegram] sendPhoto URL plain-text retry succeeded. ID:", retryData.result?.message_id);
+            return {
+              success: true,
+              messageId: retryData.result?.message_id,
+            };
+          }
+        }
       }
     } catch (photoErr) {
-      console.warn("[Telegram] Photo delivery error, proceeding to text message:", photoErr);
+      console.warn("[Telegram] Photo delivery error, proceeding to text message fallback:", photoErr);
     }
   }
 
   // 2. Text message fallback or standard notification
   try {
-    const textToSend = payload.photoUrl && (payload.photoUrl.startsWith("http://") || payload.photoUrl.startsWith("https://"))
-      ? `${payload.text}\n\n📎 <b>Receipt Link:</b> <a href="${payload.photoUrl}">View Uploaded Slip</a>`
-      : payload.text;
+    const textToSend =
+      payload.photoUrl &&
+      (payload.photoUrl.startsWith("http://") || payload.photoUrl.startsWith("https://"))
+        ? `${payload.text}\n\n📎 <b>Receipt Link:</b> <a href="${payload.photoUrl}">View Uploaded Slip</a>`
+        : payload.text;
 
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -165,7 +254,40 @@ export async function sendTelegramNotification(payload: TelegramAlertPayload): P
       };
     }
 
-    console.error("[Telegram] sendMessage returned error:", data);
+    console.error("[Telegram] sendMessage initial attempt failed:", data);
+
+    // Guaranteed fallback: If Telegram fails (parse error, invalid tag, etc.), retry as pure PLAIN TEXT
+    if (!data.ok) {
+      console.log("[Telegram] Retrying sendMessage in guaranteed plain-text mode...");
+      const plainText = stripHtml(textToSend);
+
+      const retryRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: plainText,
+          disable_web_page_preview: false,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      const retryData = await retryRes.json();
+      if (retryData.ok) {
+        console.log("[Telegram] Plain-text fallback delivered successfully. Message ID:", retryData.result?.message_id);
+        return {
+          success: true,
+          messageId: retryData.result?.message_id,
+        };
+      }
+
+      console.error("[Telegram] Plain-text fallback also failed:", retryData);
+      return {
+        success: false,
+        error: retryData.description || "Failed to deliver Telegram notification",
+      };
+    }
+
     return {
       success: false,
       error: data.description || "Failed to deliver Telegram notification",

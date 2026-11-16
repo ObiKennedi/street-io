@@ -1,24 +1,14 @@
 // File: app/api/upload/cloudinary/route.ts
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
 
-// Helper for local disk fallback when Cloudinary is unavailable or fails
-async function saveLocalFallback(file: File): Promise<string> {
+// Fallback helper: converts file to a persistent base64 data URL
+// Never relies on serverless ephemeral disks (/public/uploads) which vanish between requests
+async function createBase64Fallback(file: File): Promise<string> {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", "receipts");
-  await fs.mkdir(uploadsDir, { recursive: true });
-
-  const ext = path.extname(file.name) || ".jpg";
-  const safeBase = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 20);
-  const fileName = `${Date.now()}_${safeBase}${ext}`;
-  const filePath = path.join(uploadsDir, fileName);
-
-  await fs.writeFile(filePath, buffer);
-  return `/uploads/receipts/${fileName}`;
+  const mime = file.type || "image/jpeg";
+  return `data:${mime};base64,${buffer.toString("base64")}`;
 }
 
 export async function POST(req: Request) {
@@ -43,20 +33,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // Limit to 10MB
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json(
-        { error: "File size exceeds the 10MB limit." },
-        { status: 400 }
-      );
-    }
-
     // Extract Cloudinary config from env
-    let cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+    let cloudName =
+      process.env.CLOUDINARY_CLOUD_NAME ||
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+      "";
     let apiKey = process.env.CLOUDINARY_API_KEY || "";
     let apiSecret = process.env.CLOUDINARY_API_SECRET || "";
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
+    let uploadPreset =
+      process.env.CLOUDINARY_UPLOAD_PRESET ||
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+      "";
+
+    // If preset was mistakenly set to a CLOUDINARY_URL string, clean it
+    if (uploadPreset.startsWith("CLOUDINARY_URL=")) {
+      process.env.CLOUDINARY_URL = uploadPreset.replace(/^CLOUDINARY_URL=/, "");
+      uploadPreset = "";
+    }
 
     // Parse CLOUDINARY_URL if provided
     const cloudinaryUrl = process.env.CLOUDINARY_URL;
@@ -72,13 +65,14 @@ export async function POST(req: Request) {
     const hasSignedConfig = Boolean(cloudName && apiKey && apiSecret);
     const hasPresetConfig = Boolean(cloudName && uploadPreset);
 
-    // If Cloudinary credentials are not configured, fallback gracefully to local storage
+    // If Cloudinary credentials are not configured, fallback safely to base64 data URL
     if (!hasSignedConfig && !hasPresetConfig) {
-      const localUrl = await saveLocalFallback(file);
+      console.warn("[Upload] Cloudinary config missing; using base64 data URL storage.");
+      const dataUrl = await createBase64Fallback(file);
       return NextResponse.json({
         success: true,
-        url: localUrl,
-        publicId: "local_" + Date.now(),
+        url: dataUrl,
+        publicId: "base64_" + Date.now(),
       });
     }
 
@@ -86,10 +80,11 @@ export async function POST(req: Request) {
     try {
       const cloudinaryFormData = new FormData();
       cloudinaryFormData.append("file", file);
-      const folder = (formData.get("folder") as string) || "streetio_articles";
+      const folder = (formData.get("folder") as string) || "streetio_receipts";
 
       if (hasSignedConfig) {
         const timestamp = Math.floor(Date.now() / 1000);
+        // Signature string parameters must be sorted alphabetically: folder, timestamp
         const strToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
         const signature = crypto.createHash("sha1").update(strToSign).digest("hex");
 
@@ -106,7 +101,7 @@ export async function POST(req: Request) {
       const response = await fetch(uploadUrl, {
         method: "POST",
         body: cloudinaryFormData,
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(15000),
       });
 
       const data = await response.json();
@@ -122,29 +117,29 @@ export async function POST(req: Request) {
         });
       }
 
-      console.warn("Cloudinary upload failed, falling back to local disk storage:", data);
+      console.warn("[Upload] Cloudinary upload returned error, falling back to base64:", data);
     } catch (cloudErr) {
-      console.warn("Cloudinary fetch error, falling back to local disk storage:", cloudErr);
+      console.warn("[Upload] Cloudinary fetch error, falling back to base64:", cloudErr);
     }
 
-    // Fallback: save to local public/uploads directory
-    const localUrl = await saveLocalFallback(file);
+    // Fallback: Return self-contained base64 data URL (bulletproof on serverless)
+    const fallbackUrl = await createBase64Fallback(file);
     return NextResponse.json({
       success: true,
-      url: localUrl,
-      publicId: "local_" + Date.now(),
+      url: fallbackUrl,
+      publicId: "base64_" + Date.now(),
     });
   } catch (err: unknown) {
-    console.error("Upload fatal error:", err);
+    console.error("[Upload] Fatal error in upload route:", err);
 
-    // If we have the file, try local save before failing
+    // If we have the file, return base64 before failing
     if (file) {
       try {
-        const localUrl = await saveLocalFallback(file);
+        const fallbackUrl = await createBase64Fallback(file);
         return NextResponse.json({
           success: true,
-          url: localUrl,
-          publicId: "local_" + Date.now(),
+          url: fallbackUrl,
+          publicId: "base64_" + Date.now(),
         });
       } catch {}
     }
