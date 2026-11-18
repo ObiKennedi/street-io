@@ -218,55 +218,51 @@ export function ExploreSearch() {
               </div>
             ) : (
               <ul className="explore-results__list">
-                {searchResults.map((article) => (
-                  <li key={article.id} className="explore-results__item">
-                    {article.thumbnailUrl && (
-                      <div className="explore-results__cover-wrap">
+                {searchResults.map((article) => {
+                  const articleUrl = article.link || `/article/${article.slug}`;
+
+                  return (
+                    <li key={article.id} className="explore-results__item">
+                      {article.thumbnailUrl && (
+                        <div className="explore-results__cover-wrap">
+                          <Link
+                            href={articleUrl}
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            className="explore-results__cover-link"
+                          >
+                            <img
+                              src={article.thumbnailUrl}
+                              alt={article.title}
+                              className="explore-results__cover-img"
+                            />
+                          </Link>
+                        </div>
+                      )}
+
+                      <h3 className="explore-results__article-title">
+                        <Link href={articleUrl} style={{ color: "inherit", textDecoration: "none" }}>
+                          {article.title}
+                        </Link>
+                      </h3>
+
+                      {article.description && (
+                        <p className="explore-results__desc">
+                          {article.description}
+                        </p>
+                      )}
+
+                      <div className="explore-results__footer">
                         <Link
-                          href={`/article/${article.slug}`}
-                          tabIndex={-1}
-                          aria-hidden="true"
-                          className="explore-results__cover-link"
+                          href={articleUrl}
+                          className="explore-results__cta"
                         >
-                          <img
-                            src={article.thumbnailUrl}
-                            alt={article.title}
-                            className="explore-results__cover-img"
-                          />
+                          <span>Read Article</span> →
                         </Link>
                       </div>
-                    )}
-
-                    <div className="explore-results__meta">
-                      <span className="explore-results__tag">{article.category}</span>
-                      <span className="explore-results__price">{article.price}</span>
-                    </div>
-
-                    <h3 className="explore-results__article-title">
-                      <Link href={`/article/${article.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
-                        {article.title}
-                      </Link>
-                    </h3>
-
-                    {article.keyTakeaways.length > 0 && (
-                      <ul className="explore-results__takeaways">
-                        {article.keyTakeaways.slice(0, 2).map((takeaway, i) => (
-                          <li key={i}>• {takeaway}</li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <div className="explore-results__footer">
-                      <span className="explore-results__time">{article.readTime}</span>
-                      <Link
-                        href={`/article/${article.slug}`}
-                        className="explore-results__cta"
-                      >
-                        <span>Read Guide & Tools</span> →
-                      </Link>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

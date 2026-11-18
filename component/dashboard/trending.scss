@@ -185,8 +185,8 @@ $bp-desktop: 1024px;
 
 .trending-card {
   position: relative;
-  display: grid;
-  grid-template-columns: 56px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-5);
   background: var(--color-neutral-0);
@@ -205,8 +205,6 @@ $bp-desktop: 1024px;
   }
 
   @media (max-width: 540px) {
-    grid-template-columns: 1fr;
-    gap: var(--space-3);
     padding: var(--space-4);
   }
 

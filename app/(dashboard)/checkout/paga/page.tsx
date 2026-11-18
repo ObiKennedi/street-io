@@ -73,7 +73,7 @@ export default async function PagaCheckoutPage({ searchParams }: Props) {
   // If target article found, parse its price e.g. "₦3,500" -> 3500
   let initialAmount = 5000;
   if (targetArticle) {
-    const parsed = parseInt(targetArticle.price.replace(/[^0-9]/g, ""), 10);
+    const parsed = parseInt((targetArticle.price || "3500").replace(/[^0-9]/g, ""), 10);
     if (!isNaN(parsed) && parsed > 0) initialAmount = parsed;
   } else if (amountParam) {
     const parsed = parseInt(amountParam, 10);

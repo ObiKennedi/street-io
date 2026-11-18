@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+    const numericPrice = parseInt((article.price || "3500").replace(/[^0-9]/g, ""), 10) || 3500;
 
     // Debit user wallet using multi-source authoritative balance (checks approved slips & DB)
     const debitResult = await debitUserWalletState(

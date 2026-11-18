@@ -139,6 +139,33 @@ $bp-desktop: 1024px;
     }
   }
 
+  &__link-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  &__resource-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    background: var(--color-steel-100);
+    border: 1px solid var(--color-steel-300);
+    color: var(--brand-charcoal);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    text-decoration: none;
+    transition: background-color var(--duration-fast);
+
+    &:hover {
+      background: var(--color-steel-200);
+      text-decoration: underline;
+    }
+  }
+
   // ---- Teaser Lead Quote Box -----------------------------------------------
   &__teaser {
     position: relative;

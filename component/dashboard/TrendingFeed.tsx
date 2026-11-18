@@ -139,95 +139,58 @@ export function TrendingFeed() {
         ) : (
           <ol className="trending-list">
             {articles.map((article) => {
-            const rankFormatted = String(article.rank).padStart(2, "0");
-            const isTop3 = article.rank <= 3;
+              const articleUrl = article.link || `/article/${article.slug}`;
 
-            return (
-              <li key={article.id}>
-                <article className="trending-card">
-                  {/* Rank Column */}
-                  <div className="trending-card__rank-col">
-                    <span
-                      className={`trending-card__rank-badge${
-                        isTop3 ? ` trending-card__rank-badge--${article.rank}` : ""
-                      }`}
-                      aria-label={`Rank ${article.rank}`}
-                    >
-                      {rankFormatted}
-                    </span>
-                  </div>
+              return (
+                <li key={article.id}>
+                  <article className="trending-card">
+                    {/* Content Column */}
+                    <div className="trending-card__content">
+                      {article.thumbnailUrl && (
+                        <div className="trending-card__cover-wrap">
+                          <Link
+                            href={articleUrl}
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            className="trending-card__cover-link"
+                          >
+                            <img
+                              src={article.thumbnailUrl}
+                              alt={article.title}
+                              className="trending-card__cover-img"
+                            />
+                          </Link>
+                        </div>
+                      )}
 
-                  {/* Content Column */}
-                  <div className="trending-card__content">
-                    {article.thumbnailUrl && (
-                      <div className="trending-card__cover-wrap">
+                      <h2 className="trending-card__title">
+                        <Link href={articleUrl} style={{ color: "inherit", textDecoration: "none" }}>
+                          {article.title}
+                        </Link>
+                      </h2>
+
+                      {article.description && (
+                        <p className="trending-card__desc">
+                          {article.description}
+                        </p>
+                      )}
+
+                      {/* Footer */}
+                      <div className="trending-card__footer">
                         <Link
-                          href={`/article/${article.slug}`}
-                          tabIndex={-1}
-                          aria-hidden="true"
-                          className="trending-card__cover-link"
+                          href={articleUrl}
+                          className="trending-card__cta"
                         >
-                          <img
-                            src={article.thumbnailUrl}
-                            alt={article.title}
-                            className="trending-card__cover-img"
-                          />
+                          <span>Read Article</span>
+                          <span aria-hidden="true">→</span>
                         </Link>
                       </div>
-                    )}
-
-                    <div className="trending-card__meta">
-                      <div className="trending-card__meta-left">
-                        <span className="trending-card__category">{article.category}</span>
-                        <span className="trending-card__velocity">
-                          <span>🔥</span>
-                          <span>{article.trendingDelta}</span>
-                        </span>
-                      </div>
-                      <span className="trending-card__price">{article.price}</span>
                     </div>
-
-                    <h2 className="trending-card__title">
-                      <Link href={`/article/${article.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
-                        {article.title}
-                      </Link>
-                    </h2>
-
-                    {article.keyTakeaways.length > 0 && (
-                      <ul className="trending-card__takeaways">
-                        {article.keyTakeaways.slice(0, 2).map((takeaway, i) => (
-                          <li key={i}>• {takeaway}</li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {/* Footer */}
-                    <div className="trending-card__footer">
-                      <div className="trending-card__stats">
-                        <span className="trending-card__reads">
-                          <CategoryIcon name="trending" size={14} />
-                          <span>
-                            {article.currentReads.toLocaleString()}{" "}
-                            {timeframe === "weekly" ? "reads this week" : "reads this month"}
-                          </span>
-                        </span>
-                        <span className="trending-card__time">· {article.readTime}</span>
-                      </div>
-
-                      <Link
-                        href={`/article/${article.slug}`}
-                        className="trending-card__cta"
-                      >
-                        <span>Read Guide & Tools</span>
-                        <span aria-hidden="true">→</span>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              </li>
-            );
-          })}
-        </ol>
+                  </article>
+                </li>
+              );
+            })}
+          </ol>
         )}
       </section>
     </div>

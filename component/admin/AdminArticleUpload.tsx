@@ -2,9 +2,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { exploreCategories } from "@/component/dashboard/categories.config";
 import type { AdminArticle } from "@/lib/admin-data";
-import type { ArticleTool } from "@/lib/article-tools";
 
 type AdminArticleUploadProps = {
   onArticleCreated: (newArticle: AdminArticle) => void;
@@ -16,12 +14,11 @@ export function AdminArticleUpload({
   onCancel,
 }: AdminArticleUploadProps) {
   const [title, setTitle] = useState("");
-  const [categorySlug, setCategorySlug] = useState(exploreCategories[0]?.slug || "dating");
-  const [priceNaira, setPriceNaira] = useState("4500");
-  const [readTime, setReadTime] = useState("8 min read");
+  const [description, setDescription] = useState("");
+  const [link, setLink] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [content, setContent] = useState("");
-  const [contentSnippet, setContentSnippet] = useState("");
-  const [keyTakeawaysText, setKeyTakeawaysText] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
@@ -31,30 +28,12 @@ export function AdminArticleUpload({
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Cloudinary image upload states
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Tools & verification links states
-  type ToolDraft = {
-    id: string;
-    name: string;
-    url: string;
-    type: "Verification" | "Forensics" | "Defense" | "Regulatory" | "Intelligence" | "Security";
-    description?: string;
-  };
-  const [toolsList, setToolsList] = useState<ToolDraft[]>([]);
-  const [newToolName, setNewToolName] = useState("");
-  const [newToolUrl, setNewToolUrl] = useState("");
-  const [newToolType, setNewToolType] = useState<ToolDraft["type"]>("Verification");
-  const [newToolDesc, setNewToolDesc] = useState("");
-  const [toolSuccessNotice, setToolSuccessNotice] = useState<string | null>(null);
-  const toolNameInputRef = useRef<HTMLInputElement>(null);
-
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
-  const autoReadTime = Math.max(1, Math.ceil(wordCount / 200));
 
   const handleDocumentFile = (file: File) => {
     if (
@@ -77,9 +56,7 @@ export function AdminArticleUpload({
           if (headingMatch) setTitle(headingMatch[1].trim());
         }
         const words = text.trim().split(/\s+/).length;
-        const mins = Math.max(1, Math.ceil(words / 200));
-        setReadTime(`${mins} min read`);
-        setFileUploadNotice(`✓ Imported "${file.name}" (${words} words, ~${mins} min read).`);
+        setFileUploadNotice(`✓ Imported "${file.name}" (${words} words).`);
         setTimeout(() => setFileUploadNotice(null), 5000);
       }
     };
@@ -101,41 +78,6 @@ export function AdminArticleUpload({
       textarea.focus();
       textarea.setSelectionRange(start + snippet.length, start + snippet.length);
     }, 20);
-  };
-
-  const handleAddTool = () => {
-    if (!newToolName.trim() || !newToolUrl.trim()) return;
-    const formattedUrl =
-      newToolUrl.trim().startsWith("http://") || newToolUrl.trim().startsWith("https://")
-        ? newToolUrl.trim()
-        : `https://${newToolUrl.trim()}`;
-
-    const addedName = newToolName.trim();
-
-    setToolsList((prev) => [
-      ...prev,
-      {
-        id: `tool-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        name: addedName,
-        url: formattedUrl,
-        type: newToolType,
-        description: newToolDesc.trim() || undefined,
-      },
-    ]);
-    setNewToolName("");
-    setNewToolUrl("");
-    setNewToolDesc("");
-    setToolSuccessNotice(`✓ Tool "${addedName}" added. Click "Add More" to attach another.`);
-    setTimeout(() => {
-      setToolSuccessNotice(null);
-    }, 4500);
-    setTimeout(() => {
-      toolNameInputRef.current?.focus();
-    }, 60);
-  };
-
-  const handleRemoveTool = (idToRemove: string) => {
-    setToolsList((prev) => prev.filter((t) => t.id !== idToRemove));
   };
 
   const handleImageFile = async (file: File) => {
@@ -165,21 +107,11 @@ export function AdminArticleUpload({
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        if (data.missingConfig) {
-          // Cloudinary env vars not filled yet: provide local preview fallback so client isn't blocked
-          const localUrl = URL.createObjectURL(file);
-          setThumbnailUrl(localUrl);
-          setUploadError(
-            "Note: Cloudinary credentials are not set in .env yet. Using local preview. Fill in CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY in .env to save to Cloudinary cloud."
-          );
-        } else {
-          setUploadError(data.error || "Failed to upload image to Cloudinary.");
-        }
+        setUploadError(data.error || "Failed to upload image to Cloudinary.");
       } else if (data.url) {
         setThumbnailUrl(data.url);
       }
     } catch {
-      // Local preview fallback
       const localUrl = URL.createObjectURL(file);
       setThumbnailUrl(localUrl);
       setUploadError("Network error reaching upload API. Using local image preview.");
@@ -190,84 +122,51 @@ export function AdminArticleUpload({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-
-    setIsSubmitting(true);
-
-    const categoryObj = exploreCategories.find((c) => c.slug === categorySlug) || exploreCategories[0];
-    const numericPrice = parseInt(priceNaira.replace(/[^0-9]/g, ""), 10) || 3500;
-    const formattedPrice = `₦${numericPrice.toLocaleString()}`;
-
-    const takeaways = keyTakeawaysText
-      .split("\n")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-    const finalDrafts = [...toolsList];
-    if (newToolName.trim() && newToolUrl.trim()) {
-      const formattedUrl =
-        newToolUrl.trim().startsWith("http://") || newToolUrl.trim().startsWith("https://")
-          ? newToolUrl.trim()
-          : `https://${newToolUrl.trim()}`;
-      finalDrafts.push({
-        id: `tool-${Date.now()}`,
-        name: newToolName.trim(),
-        url: formattedUrl,
-        type: newToolType,
-        description: newToolDesc.trim() || undefined,
-      });
+    if (!title.trim()) {
+      setUploadError("Article title is required.");
+      return;
     }
 
-    const compiledTools: ArticleTool[] = finalDrafts.map((t) => ({
-      id: t.id,
-      name: t.name,
-      description: t.description || `${t.type} tool link for ${categoryObj.label}`,
-      category: categoryObj.label,
-      type: t.type,
-      url: t.url,
-      isExternal: true,
-      badge: "Curated",
-    }));
+    setIsSubmitting(true);
+    setUploadError(null);
+    setSuccessMessage("");
 
-    const derivedDescription =
-      content.trim()
+    // Generate slug from link or title
+    const cleanLink = link.trim();
+    let slug = "";
+    if (cleanLink && !cleanLink.startsWith("http://") && !cleanLink.startsWith("https://")) {
+      slug = cleanLink
+        .replace(/^\/article\//, "")
+        .replace(/^\/+/, "")
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .toLowerCase();
+    }
+    if (!slug) {
+      slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+
+    const finalLink =
+      cleanLink.startsWith("http://") || cleanLink.startsWith("https://")
+        ? cleanLink
+        : `/article/${slug}`;
+
+    const finalDescription =
+      description.trim() ||
+      (content.trim()
         ? content.trim().replace(/^#+\s+/gm, "").replace(/\n+/g, " ").slice(0, 180).trim() + "..."
-        : `Comprehensive educational guide and field playbook on ${title.trim()}.`;
-
-    const fullArticleContent =
-      content.trim() ||
-      contentSnippet.trim() ||
-      derivedDescription;
+        : "");
 
     const articlePayload = {
       id: `art-custom-${Date.now()}`,
       slug: slug || `article-${Date.now()}`,
+      link: finalLink,
       title: title.trim(),
-      category: categoryObj.label,
-      categorySlug: categoryObj.slug,
-      price: numericPrice,
-      readTime: readTime.trim() || `${autoReadTime} min read`,
-      description: derivedDescription,
-      content: fullArticleContent,
-      contentSnippet:
-        contentSnippet.trim() ||
-        derivedDescription,
+      description: finalDescription,
+      content: content.trim() || finalDescription,
       thumbnailUrl: thumbnailUrl.trim() || undefined,
-      tools: compiledTools.length > 0 ? compiledTools : undefined,
-      keyTakeaways:
-        takeaways.length > 0
-          ? takeaways
-          : [
-              "Standard operating procedure checklist for risk verification.",
-              "Mandatory dual-authorization protocols to mitigate wire exposure.",
-              "Immediate containment steps in case of credential leak.",
-            ],
-      tags: [categoryObj.slug, "operational guide", "tradecraft"],
     };
 
     (async () => {
@@ -281,7 +180,13 @@ export function AdminArticleUpload({
         const data = await res.json();
         const createdArticle: AdminArticle = (data && data.article) || {
           ...articlePayload,
-          price: formattedPrice,
+          category: "General",
+          categorySlug: "general",
+          price: "₦3,500",
+          readTime: "5 min read",
+          contentSnippet: finalDescription,
+          keyTakeaways: [],
+          tags: [],
           weeklyReads: 140,
           monthlyReads: 620,
           totalReads: 850,
@@ -301,25 +206,26 @@ export function AdminArticleUpload({
         onArticleCreated(createdArticle);
         setIsSubmitting(false);
         setCreatedSlug(createdArticle.slug);
-        setSuccessMessage(`"${createdArticle.title}" published successfully at ${formattedPrice}!`);
+        setSuccessMessage(`"${createdArticle.title}" published successfully!`);
 
         // Reset form
         setTitle("");
+        setDescription("");
+        setLink("");
         setContent("");
-        setContentSnippet("");
-        setKeyTakeawaysText("");
-        setPriceNaira("4500");
         setThumbnailUrl("");
         setUploadError(null);
-        setToolsList([]);
-        setNewToolName("");
-        setNewToolUrl("");
-        setNewToolDesc("");
       } catch (err) {
         console.error("Publish error:", err);
         const fallbackArticle: AdminArticle = {
           ...articlePayload,
-          price: formattedPrice,
+          category: "General",
+          categorySlug: "general",
+          price: "₦3,500",
+          readTime: "5 min read",
+          contentSnippet: finalDescription,
+          keyTakeaways: [],
+          tags: [],
           weeklyReads: 140,
           monthlyReads: 620,
           totalReads: 850,
@@ -339,7 +245,7 @@ export function AdminArticleUpload({
         onArticleCreated(fallbackArticle);
         setIsSubmitting(false);
         setCreatedSlug(fallbackArticle.slug);
-        setSuccessMessage(`"${fallbackArticle.title}" published to current session at ${formattedPrice}!`);
+        setSuccessMessage(`"${fallbackArticle.title}" published successfully!`);
       }
     })();
   };
@@ -349,10 +255,10 @@ export function AdminArticleUpload({
       <div className="admin-box__head">
         <div>
           <h2 id="upload-article-title" className="admin-box__title">
-            Publish New Intelligence Article
+            Publish New Article
           </h2>
           <p className="admin-box__desc">
-            Upload a specialized real-world guide, upload a Cloudinary cover thumbnail, configure paywall fee in Nigerian Naira (₦), and publish immediately to reader feeds.
+            Provide the article title, description, link, thumbnail, and content to publish immediately.
           </p>
         </div>
       </div>
@@ -367,7 +273,7 @@ export function AdminArticleUpload({
               rel="noopener noreferrer"
               className="admin-upload-success-link"
             >
-              Open Article Micro Page ↗
+              Open Published Article ↗
             </a>
           )}
         </div>
@@ -375,33 +281,67 @@ export function AdminArticleUpload({
 
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="admin-form__grid">
-          {/* Title */}
+          {/* Article Title */}
           <div className="admin-form__field admin-form__field--full">
             <label htmlFor="art-title" className="admin-form__label">
-              Article Title *
+              Article *
             </label>
             <input
               id="art-title"
               type="text"
               required
-              placeholder="e.g. Cross-Border FX Arbitrage: Risk Mitigation & Dual-Escrow Protocols"
+              placeholder="e.g. How to Repair Alternators at Home"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="admin-form__input"
             />
           </div>
 
-          {/* Article Cover Thumbnail (Cloudinary) */}
+          {/* Description */}
+          <div className="admin-form__field admin-form__field--full">
+            <label htmlFor="art-description" className="admin-form__label">
+              Description *
+            </label>
+            <textarea
+              id="art-description"
+              rows={3}
+              required
+              placeholder="Enter a brief, actionable summary of this article..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="admin-form__textarea"
+            />
+          </div>
+
+          {/* Link */}
+          <div className="admin-form__field admin-form__field--full">
+            <label htmlFor="art-link" className="admin-form__label">
+              Link
+            </label>
+            <input
+              id="art-link"
+              type="text"
+              placeholder="e.g. /article/repair-alternators or https://..."
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              className="admin-form__input"
+            />
+            <span className="admin-form__hint">
+              Optional direct URL or custom slug. Defaults to standard article page if left empty.
+            </span>
+          </div>
+
+          {/* Cover Thumbnail */}
           <div className="admin-form__field admin-form__field--full">
             <label className="admin-form__label">
-              Article Cover Thumbnail (Cloudinary)
+              Thumbnail
             </label>
 
             <div className="admin-thumbnail-uploader">
               {isUploadingImage ? (
                 <div className="admin-thumbnail-loading">
                   <div className="admin-thumbnail-spinner" />
-                  <span>Uploading thumbnail to Cloudinary...</span>
+                  <span>Uploading thumbnail...</span>
                 </div>
               ) : thumbnailUrl ? (
                 <div className="admin-thumbnail-preview">
@@ -410,7 +350,7 @@ export function AdminArticleUpload({
                   </div>
                   <div className="admin-thumbnail-preview__details">
                     <span className="admin-thumbnail-preview__badge">
-                      ✓ Thumbnail Uploaded to Cloudinary
+                      ✓ Thumbnail Ready
                     </span>
                     <span className="admin-thumbnail-preview__url" title={thumbnailUrl}>
                       {thumbnailUrl}
@@ -457,7 +397,7 @@ export function AdminArticleUpload({
                     Upload Article Thumbnail
                   </div>
                   <div className="admin-thumbnail-dropzone__sub">
-                    Click to browse or drag &amp; drop your cover image here (PNG, JPG, WebP up to 10MB)
+                    Click to browse or drag &amp; drop cover image here (PNG, JPG, WebP)
                   </div>
                   <button
                     type="button"
@@ -467,7 +407,7 @@ export function AdminArticleUpload({
                       fileInputRef.current?.click();
                     }}
                   >
-                    <span>Choose Image (Cloudinary)</span>
+                    <span>Choose Image</span>
                   </button>
                 </div>
               )}
@@ -497,6 +437,7 @@ export function AdminArticleUpload({
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: "8px",
+                  marginTop: "8px",
                 }}>
                   <span>⚠️ {uploadError}</span>
                   <button
@@ -516,14 +457,14 @@ export function AdminArticleUpload({
                 </div>
               )}
 
-              {/* Optional URL manual override */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Direct image URL */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
                 <span className="admin-form__hint">
-                  Or paste direct image URL:
+                  Or paste thumbnail image URL:
                 </span>
                 <input
                   type="url"
-                  placeholder="https://res.cloudinary.com/..."
+                  placeholder="https://..."
                   value={thumbnailUrl}
                   onChange={(e) => {
                     setThumbnailUrl(e.target.value);
@@ -536,86 +477,16 @@ export function AdminArticleUpload({
             </div>
           </div>
 
-
-          {/* Category */}
-          <div className="admin-form__field">
-            <label htmlFor="art-category" className="admin-form__label">
-              Category *
-            </label>
-            <select
-              id="art-category"
-              value={categorySlug}
-              onChange={(e) => setCategorySlug(e.target.value)}
-              className="admin-form__select"
-            >
-              {exploreCategories.map((cat) => (
-                <option key={cat.slug} value={cat.slug}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Price in Naira */}
-          <div className="admin-form__field">
-            <label htmlFor="art-price" className="admin-form__label">
-              Unlock Fee (Nigerian Naira ₦) *
-            </label>
-            <div style={{ position: "relative" }}>
-              <span style={{
-                position: "absolute",
-                left: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                fontFamily: "var(--font-mono)",
-                fontWeight: "bold",
-                color: "var(--color-steel-600)",
-              }}>
-                ₦
-              </span>
-              <input
-                id="art-price"
-                type="number"
-                min="500"
-                step="500"
-                required
-                style={{ paddingLeft: "32px" }}
-                placeholder="4500"
-                value={priceNaira}
-                onChange={(e) => setPriceNaira(e.target.value)}
-                className="admin-form__input"
-              />
-            </div>
-            <span className="admin-form__hint">
-              Paid by readers via direct bank transfer and reader wallet.
-            </span>
-          </div>
-
-          {/* Read Time */}
-          <div className="admin-form__field">
-            <label htmlFor="art-readtime" className="admin-form__label">
-              Estimated Read Time
-            </label>
-            <input
-              id="art-readtime"
-              type="text"
-              placeholder="8 min read"
-              value={readTime}
-              onChange={(e) => setReadTime(e.target.value)}
-              className="admin-form__input"
-            />
-          </div>
-
-          {/* Full Article Content / Field Playbook Guide (Dedicated Upload & Editor Space) */}
+          {/* Full Article Content */}
           <div className="admin-form__field admin-form__field--full">
             <div className="admin-article-editor">
               <div className="admin-article-editor__header">
                 <div className="admin-article-editor__title-group">
                   <span className="admin-article-editor__title">
-                    📖 Full Article Content &amp; Playbook Guide *
+                    📖 Article Content
                   </span>
                   <p className="admin-article-editor__desc">
-                    This is the full comprehensive operational guide unlocked by readers after paywall payment. Supports Markdown, headings, lists, and callout blocks.
+                    Write or paste your article text. Supports Markdown formatting or upload of .md / .txt files.
                   </p>
                 </div>
 
@@ -652,12 +523,13 @@ export function AdminArticleUpload({
                   color: "#065F46",
                   fontSize: "12px",
                   fontWeight: 600,
+                  marginBottom: "8px",
                 }}>
                   {fileUploadNotice}
                 </div>
               )}
 
-              {/* Formatting Toolbar & View Mode Tabs */}
+              {/* Formatting Toolbar */}
               <div className="admin-article-editor__toolbar">
                 <div className="admin-article-editor__toolbar-group">
                   <button
@@ -691,7 +563,7 @@ export function AdminArticleUpload({
                 <div className="admin-article-editor__toolbar-group">
                   <button
                     type="button"
-                    onClick={() => insertTemplate("\n- Operational action item\n- Verification requirement\n")}
+                    onClick={() => insertTemplate("\n- Point 1\n- Point 2\n")}
                     className="admin-article-editor__tool-btn"
                     title="Bullet List"
                   >
@@ -699,7 +571,7 @@ export function AdminArticleUpload({
                   </button>
                   <button
                     type="button"
-                    onClick={() => insertTemplate("\n1. Step 1: Initial Containment\n2. Step 2: Verification Challenge\n")}
+                    onClick={() => insertTemplate("\n1. Step 1\n2. Step 2\n")}
                     className="admin-article-editor__tool-btn"
                     title="Numbered Steps"
                   >
@@ -707,7 +579,7 @@ export function AdminArticleUpload({
                   </button>
                   <button
                     type="button"
-                    onClick={() => insertTemplate("\n> FIELD MANDATE: Verify all routing codes before transferring value.\n")}
+                    onClick={() => insertTemplate("\n> Important note or mandate.\n")}
                     className="admin-article-editor__tool-btn"
                     title="Callout Box"
                   >
@@ -721,14 +593,14 @@ export function AdminArticleUpload({
                     onClick={() => setContentTab("edit")}
                     className={`admin-article-editor__tab ${contentTab === "edit" ? "admin-article-editor__tab--active" : ""}`}
                   >
-                    Edit Content
+                    Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => setContentTab("preview")}
                     className={`admin-article-editor__tab ${contentTab === "preview" ? "admin-article-editor__tab--active" : ""}`}
                   >
-                    Live Reader Preview
+                    Preview
                   </button>
                 </div>
               </div>
@@ -737,9 +609,8 @@ export function AdminArticleUpload({
                 <textarea
                   ref={contentTextareaRef}
                   id="art-content"
-                  rows={14}
-                  required
-                  placeholder={`Write or paste your full playbook guide here...\n\n## 1. Adversary Mechanics & Situational Modus Operandi\nDetailed operational analysis of the compromise vectors...\n\n## 2. Step-by-Step Countermeasures\n1. Initiate out-of-band callback protocol.\n2. Execute live visual biometric challenge.\n\n> FIELD RULE: Mandatory verification before releasing value.`}
+                  rows={12}
+                  placeholder="Write or paste your article content here..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   className="admin-article-editor__textarea"
@@ -785,7 +656,7 @@ export function AdminArticleUpload({
                       })
                     ) : (
                       <p style={{ color: "var(--color-steel-500)", fontStyle: "italic" }}>
-                        No content entered yet. Switch back to &ldquo;Edit Content&rdquo; or upload a document (.md/.txt).
+                        No content entered yet.
                       </p>
                     )}
                   </div>
@@ -795,227 +666,6 @@ export function AdminArticleUpload({
               <div className="admin-article-editor__footer">
                 <div className="admin-article-editor__stats">
                   <span>{wordCount} words</span>
-                  <span>•</span>
-                  <span>Estimated {autoReadTime} min read</span>
-                </div>
-
-                {wordCount > 0 && readTime !== `${autoReadTime} min read` && (
-                  <button
-                    type="button"
-                    onClick={() => setReadTime(`${autoReadTime} min read`)}
-                    className="admin-article-editor__apply-btn"
-                  >
-                    Apply &ldquo;{autoReadTime} min read&rdquo; to article specs
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Paywall Preview Snippet */}
-          <div className="admin-form__field admin-form__field--full">
-            <label htmlFor="art-snippet" className="admin-form__label">
-              Paywall Content Snippet (Preview quote visible to readers)
-            </label>
-            <textarea
-              id="art-snippet"
-              rows={3}
-              placeholder="Crucial excerpt that hooks the reader before the paywall barrier..."
-              value={contentSnippet}
-              onChange={(e) => setContentSnippet(e.target.value)}
-              className="admin-form__textarea"
-            />
-          </div>
-
-          {/* Key Takeaways */}
-          <div className="admin-form__field admin-form__field--full">
-            <label htmlFor="art-takeaways" className="admin-form__label">
-              Key Operational Takeaways (One per line)
-            </label>
-            <textarea
-              id="art-takeaways"
-              rows={3}
-              placeholder="Always verify routing numbers with voice callbacks.&#10;Never release commodities prior to bank ledger value dating.&#10;Maintain a secondary off-grid paper audit trail."
-              value={keyTakeawaysText}
-              onChange={(e) => setKeyTakeawaysText(e.target.value)}
-              className="admin-form__textarea"
-            />
-          </div>
-
-          {/* Operational Tools / Links to the Tools Space */}
-          <div className="admin-form__field admin-form__field--full">
-            <div className="admin-tools-manager">
-              <div className="admin-tools-manager__header">
-                <span className="admin-tools-manager__title">
-                  🛠️ Operational Field Tools &amp; Verification Links
-                </span>
-                <p className="admin-tools-manager__desc">
-                  Curate links to field verification utilities, forensic tools, lookup portals, or registries for this task. These links are prominently displayed in the reader&apos;s playbook footer.
-                </p>
-              </div>
-
-              {toolSuccessNotice && (
-                <div className="admin-tools-manager__added-pill" role="status">
-                  <span>{toolSuccessNotice}</span>
-                </div>
-              )}
-
-              {toolsList.length > 0 && (
-                <div className="admin-tools-manager__list">
-                  <div className="admin-tools-manager__list-header">
-                    <span className="admin-tools-manager__list-count">
-                      Attached Task Tools ({toolsList.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        toolNameInputRef.current?.focus();
-                        toolNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }}
-                      className="admin-tools-manager__add-more-link-btn"
-                    >
-                      + Add More
-                    </button>
-                  </div>
-
-                  {toolsList.map((tool) => (
-                    <div key={tool.id} className="admin-tools-manager__item">
-                      <div className="admin-tools-manager__item-left">
-                        <div className="admin-tools-manager__item-title-row">
-                          <span className="admin-tools-manager__item-name">{tool.name}</span>
-                          <span className="admin-tools-manager__item-badge">{tool.type}</span>
-                        </div>
-                        <a
-                          href={tool.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="admin-tools-manager__item-url"
-                        >
-                          {tool.url} ↗
-                        </a>
-                        {tool.description && (
-                          <span className="admin-tools-manager__item-desc">{tool.description}</span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTool(tool.id)}
-                        className="admin-tools-manager__item-del-btn"
-                        title="Remove tool link"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Explicit Add More button right after adding links */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toolNameInputRef.current?.focus();
-                      toolNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                    }}
-                    className="admin-tools-manager__add-more-btn"
-                  >
-                    <span aria-hidden="true">+</span>
-                    <span>Add More Tools</span>
-                  </button>
-                </div>
-              )}
-
-              <div className="admin-tools-manager__add-box">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--dash-text)" }}>
-                    {toolsList.length > 0 ? "Attach Another Tool Link" : "Add Tool Link"}
-                  </span>
-                  {toolsList.length > 0 && (
-                    <span style={{ fontSize: "11px", color: "var(--color-steel-600)" }}>
-                      Step: Multi-tool task support
-                    </span>
-                  )}
-                </div>
-
-                <div className="admin-tools-manager__inputs-row">
-                  <div>
-                    <label className="admin-form__label" style={{ fontSize: "10px" }}>Tool Name</label>
-                    <input
-                      ref={toolNameInputRef}
-                      type="text"
-                      placeholder="e.g. NumVerify, TinEye, ExifTool"
-                      value={newToolName}
-                      onChange={(e) => setNewToolName(e.target.value)}
-                      className="admin-form__input"
-                      style={{ height: "38px", fontSize: "13px" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="admin-form__label" style={{ fontSize: "10px" }}>Tool Link / URL</label>
-                    <input
-                      type="url"
-                      placeholder="https://numverify.com"
-                      value={newToolUrl}
-                      onChange={(e) => setNewToolUrl(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddTool();
-                        }
-                      }}
-                      className="admin-form__input"
-                      style={{ height: "38px", fontSize: "13px" }}
-                    />
-                  </div>
-                  <div>
-                    <label className="admin-form__label" style={{ fontSize: "10px" }}>Classification</label>
-                    <select
-                      value={newToolType}
-                      onChange={(e) => setNewToolType(e.target.value as any)}
-                      className="admin-form__select"
-                      style={{ height: "38px", fontSize: "13px" }}
-                    >
-                      <option value="Verification">Verification</option>
-                      <option value="Forensics">Forensics</option>
-                      <option value="Defense">Defense</option>
-                      <option value="Intelligence">Intelligence</option>
-                      <option value="Security">Security</option>
-                      <option value="Regulatory">Regulatory</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="admin-form__label" style={{ fontSize: "10px" }}>Tool Purpose / Description (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Short description of what the user executes with this tool"
-                    value={newToolDesc}
-                    onChange={(e) => setNewToolDesc(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddTool();
-                      }
-                    }}
-                    className="admin-form__input"
-                    style={{ height: "38px", fontSize: "13px" }}
-                  />
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={handleAddTool}
-                    disabled={!newToolName.trim() || !newToolUrl.trim()}
-                    className="admin-tools-manager__add-btn"
-                    style={{ opacity: !newToolName.trim() || !newToolUrl.trim() ? 0.5 : 1 }}
-                  >
-                    {toolsList.length > 0 ? "+ Add More Tool" : "+ Add Tool Link"}
-                  </button>
-                  {toolsList.length > 0 && (
-                    <span style={{ fontSize: "11px", color: "var(--color-steel-600)" }}>
-                      {toolsList.length} {toolsList.length === 1 ? "tool" : "tools"} attached to this task
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -1037,7 +687,7 @@ export function AdminArticleUpload({
             disabled={isSubmitting}
             className="admin-form__submit-btn"
           >
-            {isSubmitting ? "Publishing to Network..." : "Publish Article to Readers"}
+            {isSubmitting ? "Publishing..." : "Publish Article"}
           </button>
         </div>
       </form>

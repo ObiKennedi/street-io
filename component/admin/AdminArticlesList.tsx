@@ -3,83 +3,50 @@
 
 import { useState } from "react";
 import type { AdminArticle } from "@/lib/admin-data";
-import { formatAdminNaira } from "@/lib/admin-data";
 
 type AdminArticlesListProps = {
   articles: AdminArticle[];
-  onPriceUpdate: (articleId: string, newPriceFormatted: string) => void;
+  onPriceUpdate?: (articleId: string, newPriceFormatted: string) => void;
   onStatusToggle?: (articleId: string) => void;
   onDeleteArticle?: (articleId: string) => void;
 };
 
 export function AdminArticlesList({
   articles,
-  onPriceUpdate,
-  onStatusToggle,
   onDeleteArticle,
 }: AdminArticlesListProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingPrice, setEditingPrice] = useState<string>("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-
-  const categories = ["all", ...Array.from(new Set(articles.map((a) => a.category)))];
 
   const filteredArticles = articles.filter((art) => {
-    const matchesSearch =
-      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      art.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = selectedCategory === "all" || art.category === selectedCategory;
-    return matchesSearch && matchesCat;
+    const q = searchQuery.toLowerCase();
+    return (
+      art.title.toLowerCase().includes(q) ||
+      (art.description && art.description.toLowerCase().includes(q))
+    );
   });
-
-  const handleStartEdit = (article: AdminArticle) => {
-    const numericOnly = article.price.replace(/[^0-9]/g, "");
-    setEditingId(article.id);
-    setEditingPrice(numericOnly);
-  };
-
-  const handleSavePrice = (articleId: string) => {
-    const numeric = parseInt(editingPrice.replace(/[^0-9]/g, ""), 10);
-    if (!isNaN(numeric) && numeric > 0) {
-      onPriceUpdate(articleId, `₦${numeric.toLocaleString()}`);
-    }
-    setEditingId(null);
-  };
 
   return (
     <section className="admin-box" aria-labelledby="inventory-title">
       <div className="admin-box__head">
         <div>
           <h2 id="inventory-title" className="admin-box__title">
-            Articles Inventory & Pricing Controls
+            Articles Inventory
           </h2>
           <p className="admin-box__desc">
-            Monitor read traffic, copies sold, revenue generated, and update micro-pricing in real-time.
+            Manage your published articles, links, descriptions, and cover thumbnails.
           </p>
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* Search Bar */}
         <div className="admin-box__search-bar">
           <input
             type="search"
-            placeholder="Search playbooks..."
+            placeholder="Search articles..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="admin-box__search-input"
           />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="admin-box__filter-select"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c === "all" ? "All Categories" : c}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -88,205 +55,124 @@ export function AdminArticlesList({
         <table className="admin-table">
           <thead>
             <tr>
+              <th style={{ width: "60px" }}>Thumbnail</th>
               <th>Article</th>
-              <th>Category</th>
-              <th>Unlock Price</th>
-              <th>Sold Unlocks</th>
-              <th>Revenue Generated</th>
-              <th>Status</th>
+              <th>Description</th>
+              <th>Link</th>
               <th className="admin-table__actions-head">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredArticles.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
-                  No articles in inventory yet. Use the <strong>Upload</strong> tab above to publish operational guides.
+                <td colSpan={5} style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
+                  No articles in inventory yet. Use the <strong>Upload</strong> tab above to publish articles.
                 </td>
               </tr>
             ) : (
               filteredArticles.map((art) => {
-                const isEditing = editingId === art.id;
+                const articleLink = art.link || `/article/${art.slug}`;
 
                 return (
                   <tr key={art.id}>
-                    <td className="admin-table__title-cell">
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {/* Thumbnail */}
+                    <td style={{ width: "60px" }}>
                       {art.thumbnailUrl ? (
                         <img
                           src={art.thumbnailUrl}
                           alt={art.title}
                           style={{
-                            width: "42px",
-                            height: "42px",
+                            width: "48px",
+                            height: "48px",
                             borderRadius: "6px",
                             objectFit: "cover",
-                            flexShrink: 0,
+                            display: "block",
                             border: "1px solid var(--color-steel-300)",
                           }}
                         />
                       ) : (
                         <div
                           style={{
-                            width: "42px",
-                            height: "42px",
+                            width: "48px",
+                            height: "48px",
                             borderRadius: "6px",
                             background: "var(--color-steel-100)",
                             border: "1px solid var(--color-steel-200)",
                             display: "grid",
                             placeItems: "center",
-                            fontSize: "15px",
-                            flexShrink: 0,
+                            fontSize: "16px",
                             color: "var(--color-steel-600)",
                           }}
                         >
                           📄
                         </div>
                       )}
-                      <div>
-                        <span className="admin-table__article-title" title={art.title}>
-                          {art.title}
-                        </span>
-                        <span className="admin-table__article-meta">
-                          {art.readTime} • {art.weeklyReads.toLocaleString()} reads this wk
-                        </span>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
-
-                  <td>
-                    <span style={{
-                      display: "inline-block",
-                      padding: "2px 8px",
-                      borderRadius: "var(--radius-full)",
-                      background: "var(--color-steel-100)",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: "var(--color-steel-800)",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {art.category}
-                    </span>
-                  </td>
-
-                  {/* Unlock Price with Inline Editor */}
-                  <td>
-                    {isEditing ? (
-                      <div className="admin-table__price-input-group">
-                        <span style={{ fontFamily: "var(--font-mono)", fontWeight: "bold" }}>₦</span>
-                        <input
-                          type="number"
-                          step="500"
-                          min="500"
-                          value={editingPrice}
-                          onChange={(e) => setEditingPrice(e.target.value)}
-                          className="admin-table__inline-price-input"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSavePrice(art.id)}
-                          className="admin-table__save-price-btn"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="admin-table__cancel-btn"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="admin-table__price-badge">
-                        {art.price}
+                    {/* Article Title */}
+                    <td className="admin-table__title-cell">
+                      <span className="admin-table__article-title" title={art.title} style={{ fontWeight: 600 }}>
+                        {art.title}
                       </span>
-                    )}
-                  </td>
+                    </td>
 
-                  <td style={{ fontFamily: "var(--font-mono)", fontWeight: "bold" }}>
-                    {art.soldCopies.toLocaleString()} copies
-                  </td>
+                    {/* Description */}
+                    <td style={{ maxWidth: "280px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--color-steel-700)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {art.description || "—"}
+                      </span>
+                    </td>
 
-                  <td style={{ fontFamily: "var(--font-mono)", fontWeight: "bold", color: "#059669" }}>
-                    {formatAdminNaira(art.revenueGenerated)}
-                  </td>
+                    {/* Link */}
+                    <td>
+                      <a
+                        href={articleLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: "12px",
+                          color: "#2563EB",
+                          textDecoration: "underline",
+                          wordBreak: "break-all",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <span>{articleLink}</span>
+                        <span>↗</span>
+                      </a>
+                    </td>
 
-                  <td>
-                    <span style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      color: art.status === "published" ? "#065F46" : "#6B7280",
-                      background: art.status === "published" ? "#ECFDF5" : "#F3F4F6",
-                      padding: "2px 8px",
-                      borderRadius: "var(--radius-full)",
-                      border: art.status === "published" ? "1px solid #A7F3D0" : "1px solid #E5E7EB",
-                    }}>
-                      <span style={{
-                        width: "5px",
-                        height: "5px",
-                        borderRadius: "50%",
-                        background: art.status === "published" ? "#10B981" : "#9CA3AF",
-                      }} />
-                      {art.status}
-                    </span>
-                  </td>
-
-                  <td className="admin-table__actions-cell">
-                    <div className="admin-table__action-group">
-                      {confirmDeleteId === art.id ? (
-                        <div className="admin-table__delete-confirm-box">
-                          <span style={{ fontSize: "11px", color: "#B91C1C", fontWeight: "bold" }}>
-                            Delete?
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onDeleteArticle?.(art.id);
-                              setConfirmDeleteId(null);
-                            }}
-                            className="admin-table__action-btn admin-table__action-btn--danger-confirm"
-                            title="Permanently remove article"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(null)}
-                            className="admin-table__action-btn"
-                            title="Cancel"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          {!isEditing && (
+                    {/* Actions */}
+                    <td className="admin-table__actions-cell">
+                      <div className="admin-table__action-group">
+                        {confirmDeleteId === art.id ? (
+                          <div className="admin-table__delete-confirm-box">
+                            <span style={{ fontSize: "11px", color: "#B91C1C", fontWeight: "bold" }}>
+                              Delete?
+                            </span>
                             <button
                               type="button"
-                              onClick={() => handleStartEdit(art)}
-                              className="admin-table__action-btn"
-                              title="Adjust Article Price in Naira"
+                              onClick={() => {
+                                onDeleteArticle?.(art.id);
+                                setConfirmDeleteId(null);
+                              }}
+                              className="admin-table__action-btn admin-table__action-btn--danger-confirm"
+                              title="Permanently remove article"
                             >
-                              Set Price
+                              Confirm
                             </button>
-                          )}
-                          {onStatusToggle && (
                             <button
                               type="button"
-                              onClick={() => onStatusToggle(art.id)}
+                              onClick={() => setConfirmDeleteId(null)}
                               className="admin-table__action-btn"
                             >
-                              {art.status === "published" ? "Archive" : "Publish"}
+                              Cancel
                             </button>
-                          )}
-                          {onDeleteArticle && (
+                          </div>
+                        ) : (
+                          onDeleteArticle && (
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(art.id)}
@@ -301,170 +187,96 @@ export function AdminArticlesList({
                               </svg>
                               <span>Delete</span>
                             </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
+                          )
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
         </table>
       </div>
 
-      {/* Mobile Card Column View (< 768px) */}
+      {/* Mobile Card View (< 768px) */}
       <div className="admin-articles-mobile">
         {filteredArticles.length === 0 ? (
           <div style={{ textAlign: "center", padding: "24px 12px", color: "var(--color-steel-500)", fontSize: "13px" }}>
-            No articles match your search or category filter.
+            No articles match your search.
           </div>
         ) : (
           filteredArticles.map((art) => {
-            const isEditing = editingId === art.id;
+            const articleLink = art.link || `/article/${art.slug}`;
 
             return (
-              <div key={art.id} className="admin-article-card">
-                {/* Thumbnail Cover (displayed above article card) */}
+              <div key={art.id} className="admin-article-card" style={{ padding: "16px", borderRadius: "10px", background: "#fff", border: "1px solid var(--color-steel-200)", marginBottom: "12px" }}>
+                {/* Thumbnail Cover */}
                 {art.thumbnailUrl && (
-                  <div style={{ width: "100%", height: "150px", borderRadius: "8px", overflow: "hidden", marginBottom: "10px", background: "#111827" }}>
+                  <div style={{ width: "100%", height: "140px", borderRadius: "8px", overflow: "hidden", marginBottom: "10px", background: "#111827" }}>
                     <img src={art.thumbnailUrl} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
                 )}
 
-                {/* Top Badges */}
-                <div className="admin-article-card__top">
-                  <span className="admin-article-card__cat-badge">{art.category}</span>
-                  <span className={`admin-article-card__status-badge admin-article-card__status-badge--${art.status}`}>
-                    <span className="admin-article-card__status-dot" />
-                    {art.status.toUpperCase()}
-                  </span>
-                </div>
+                {/* Title */}
+                <h3 className="admin-article-card__title" style={{ margin: "0 0 6px", fontSize: "15px", color: "var(--color-charcoal-900)" }}>
+                  {art.title}
+                </h3>
 
-                {/* Title & Reading Meta */}
-                <div className="admin-article-card__info">
-                  <h3 className="admin-article-card__title">{art.title}</h3>
-                  <p className="admin-article-card__meta">
-                    {art.readTime} • {art.weeklyReads.toLocaleString()} reads this week
+                {/* Description */}
+                {art.description && (
+                  <p style={{ margin: "0 0 10px", fontSize: "12.5px", color: "var(--color-steel-700)", lineHeight: 1.4 }}>
+                    {art.description}
                   </p>
+                )}
+
+                {/* Link */}
+                <div style={{ marginBottom: "12px" }}>
+                  <a
+                    href={articleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: "12px", color: "#2563EB", textDecoration: "underline", wordBreak: "break-all" }}
+                  >
+                    {articleLink} ↗
+                  </a>
                 </div>
 
-
-                {/* Performance Stats Column */}
-                <div className="admin-article-card__stats">
-                  <div className="admin-article-card__stat-item">
-                    <span className="admin-article-card__stat-label">Sold Copies</span>
-                    <span className="admin-article-card__stat-value">{art.soldCopies.toLocaleString()} copies</span>
-                  </div>
-                  <div className="admin-article-card__stat-item">
-                    <span className="admin-article-card__stat-label">Revenue Generated</span>
-                    <span className="admin-article-card__stat-value admin-article-card__stat-value--revenue">
-                      {formatAdminNaira(art.revenueGenerated)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Price Management */}
-                <div className="admin-article-card__price-section">
-                  <span className="admin-article-card__price-label">Unlock Price (₦)</span>
-                  {isEditing ? (
-                    <div className="admin-article-card__price-edit-row">
-                      <span style={{ fontFamily: "var(--font-mono)", fontWeight: "bold" }}>₦</span>
-                      <input
-                        type="number"
-                        step="500"
-                        min="500"
-                        value={editingPrice}
-                        onChange={(e) => setEditingPrice(e.target.value)}
-                        className="admin-article-card__price-input"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSavePrice(art.id)}
-                        className="admin-article-card__save-btn"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className="admin-article-card__cancel-btn"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="admin-article-card__price-display-row">
-                      <span className="admin-article-card__price-badge">{art.price}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleStartEdit(art)}
-                        className="admin-article-card__edit-price-btn"
-                      >
-                        Set Price
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Controls Column */}
-                <div className="admin-article-card__actions">
-                  {confirmDeleteId === art.id ? (
-                    <div className="admin-article-card__delete-confirm">
-                      <span style={{ fontSize: "12px", color: "#B91C1C", fontWeight: "bold" }}>
-                        Permanently delete this article?
-                      </span>
-                      <div className="admin-article-card__delete-buttons">
+                {/* Actions */}
+                {onDeleteArticle && (
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    {confirmDeleteId === art.id ? (
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", color: "#B91C1C", fontWeight: "bold" }}>Delete?</span>
                         <button
                           type="button"
                           onClick={() => {
-                            onDeleteArticle?.(art.id);
+                            onDeleteArticle(art.id);
                             setConfirmDeleteId(null);
                           }}
-                          className="admin-article-card__btn admin-article-card__btn--danger-confirm"
+                          className="admin-table__action-btn admin-table__action-btn--danger-confirm"
                         >
-                          Yes, Delete
+                          Confirm
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="admin-article-card__btn admin-article-card__btn--cancel"
+                          className="admin-table__action-btn"
                         >
                           Cancel
                         </button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="admin-article-card__action-buttons">
-                      {onStatusToggle && (
-                        <button
-                          type="button"
-                          onClick={() => onStatusToggle(art.id)}
-                          className="admin-article-card__btn admin-article-card__btn--secondary"
-                        >
-                          {art.status === "published" ? "Archive Article" : "Publish Article"}
-                        </button>
-                      )}
-                      {onDeleteArticle && (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(art.id)}
-                          className="admin-article-card__btn admin-article-card__btn--danger"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <line x1="10" y1="11" x2="10" y2="17" />
-                            <line x1="14" y1="11" x2="14" y2="17" />
-                          </svg>
-                          <span>Delete</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(art.id)}
+                        className="admin-table__action-btn admin-table__action-btn--danger"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -473,3 +285,4 @@ export function AdminArticlesList({
     </section>
   );
 }
+export default AdminArticlesList;

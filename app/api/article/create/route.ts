@@ -51,6 +51,10 @@ export async function POST(req: Request) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
     const slug = baseSlug || `article-${Date.now()}`;
+    const link =
+      body.link && typeof body.link === "string" && body.link.trim()
+        ? body.link.trim()
+        : `/article/${slug}`;
 
     // Price parsing
     const numericPrice =
@@ -127,6 +131,7 @@ export async function POST(req: Request) {
     const newArticle: AdminArticle = {
       id: articleId,
       slug,
+      link,
       title: title.trim(),
       category: category || "Operational Guide",
       categorySlug: cleanCategorySlug,

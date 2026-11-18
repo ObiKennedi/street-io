@@ -6,22 +6,24 @@ export type Article = {
   id: string;
   slug: string;
   title: string;
-  category: string;
-  categorySlug: string;
-  price: string;
-  isUnlocked?: boolean;
-  readTime: string;
   description: string;
-  content?: string;
-  contentSnippet: string;
-  keyTakeaways: string[];
-  tags: string[];
-  weeklyReads: number;
-  monthlyReads: number;
-  totalReads: number;
-  trendingDelta: string;
-  uploadedAt?: string;
+  link?: string;
   thumbnailUrl?: string;
+  content?: string;
+  // Optional / backwards-compatibility
+  category?: string;
+  categorySlug?: string;
+  price?: string;
+  isUnlocked?: boolean;
+  readTime?: string;
+  contentSnippet?: string;
+  keyTakeaways?: string[];
+  tags?: string[];
+  weeklyReads?: number;
+  monthlyReads?: number;
+  totalReads?: number;
+  trendingDelta?: string;
+  uploadedAt?: string;
   tools?: ArticleTool[];
 };
 
@@ -49,15 +51,15 @@ export function addArticle(article: Article): void {
 
 export function getTrendingArticles(timeframe: TrendingTimeframe = "weekly"): TrendingArticle[] {
   const sorted = [...ARTICLES_DATABASE].sort((a, b) => {
-    const readsA = timeframe === "weekly" ? a.weeklyReads : a.monthlyReads;
-    const readsB = timeframe === "weekly" ? b.weeklyReads : b.monthlyReads;
+    const readsA = (timeframe === "weekly" ? a.weeklyReads : a.monthlyReads) ?? 0;
+    const readsB = (timeframe === "weekly" ? b.weeklyReads : b.monthlyReads) ?? 0;
     return readsB - readsA;
   });
 
   return sorted.map((article, index) => ({
     ...article,
     rank: index + 1,
-    currentReads: timeframe === "weekly" ? article.weeklyReads : article.monthlyReads,
+    currentReads: (timeframe === "weekly" ? article.weeklyReads : article.monthlyReads) ?? 0,
   }));
 }
 
@@ -103,7 +105,7 @@ export function getArticlesByCategory(categorySlug: string): Article[] {
 
   const allowedSlugs = aliasMap[clean] || [clean];
   return ARTICLES_DATABASE.filter((a) =>
-    allowedSlugs.includes(a.categorySlug.toLowerCase())
+    allowedSlugs.includes((a.categorySlug || "").toLowerCase())
   );
 }
 
@@ -149,9 +151,9 @@ export function searchArticles(query: string): Article[] {
     let score = 0;
     const titleLower = article.title.toLowerCase();
     const descLower = article.description.toLowerCase();
-    const snippetLower = article.contentSnippet.toLowerCase();
-    const catLower = article.category.toLowerCase();
-    const tagsLower = article.tags.map((t) => t.toLowerCase());
+    const snippetLower = (article.contentSnippet || "").toLowerCase();
+    const catLower = (article.category || "").toLowerCase();
+    const tagsLower = (article.tags || []).map((t) => t.toLowerCase());
 
     // Full match bonuses
     if (titleLower.includes(clean)) score += 15;

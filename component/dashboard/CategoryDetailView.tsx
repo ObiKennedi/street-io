@@ -102,15 +102,15 @@ export function CategoryDetailView({
             </span>
           </div>
           <div className="category-page__metric-item">
-            <span className="category-page__metric-label">Access Pricing</span>
+            <span className="category-page__metric-label">Format</span>
             <span className="category-page__metric-value">
-              {articles[0]?.price ? `From ${articles[0].price} per guide` : "Wallet Balance Access"}
+              Practical Playbooks
             </span>
           </div>
           <div className="category-page__metric-item">
-            <span className="category-page__metric-label">Audited Readership</span>
+            <span className="category-page__metric-label">Curriculum</span>
             <span className="category-page__metric-value">
-              {totalReads > 0 ? `${totalReads.toLocaleString()} reads` : "Vetted Curriculum"}
+              Verified & Actionable
             </span>
           </div>
         </div>
@@ -185,64 +185,54 @@ export function CategoryDetailView({
           </div>
         ) : (
           <ul className="category-page__list">
-            {filteredArticles.map((article) => (
-              <li key={article.id}>
-                <article className="category-page__card">
-                  {article.thumbnailUrl && (
-                    <div className="category-page__card-cover-wrap">
+            {filteredArticles.map((article) => {
+              const articleUrl = article.link || `/article/${article.slug}`;
+
+              return (
+                <li key={article.id}>
+                  <article className="category-page__card">
+                    {article.thumbnailUrl && (
+                      <div className="category-page__card-cover-wrap">
+                        <Link
+                          href={articleUrl}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="category-page__card-cover-link"
+                        >
+                          <img
+                            src={article.thumbnailUrl}
+                            alt={article.title}
+                            className="category-page__card-cover-img"
+                          />
+                        </Link>
+                      </div>
+                    )}
+
+                    <h3 className="category-page__card-title">
+                      <Link href={articleUrl} style={{ color: "inherit", textDecoration: "none" }}>
+                        {article.title}
+                      </Link>
+                    </h3>
+
+                    {article.description && (
+                      <p className="category-page__card-desc">
+                        {article.description}
+                      </p>
+                    )}
+
+                    <div className="category-page__card-footer">
                       <Link
-                        href={`/article/${article.slug}`}
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="category-page__card-cover-link"
+                        href={articleUrl}
+                        className="category-page__card-cta"
                       >
-                        <img
-                          src={article.thumbnailUrl}
-                          alt={article.title}
-                          className="category-page__card-cover-img"
-                        />
+                        <span>Read Article</span>
+                        <span aria-hidden="true">→</span>
                       </Link>
                     </div>
-                  )}
-
-                  <div className="category-page__card-meta">
-                    <span className="category-page__card-tag">{article.category}</span>
-                    <span className="category-page__card-price">{article.price}</span>
-                  </div>
-
-                  <h3 className="category-page__card-title">
-                    <Link href={`/article/${article.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
-                      {article.title}
-                    </Link>
-                  </h3>
-
-                  {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-                    <ul className="category-page__card-takeaways">
-                      {article.keyTakeaways.map((takeaway, i) => (
-                        <li key={i}>• {takeaway}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="category-page__card-footer">
-                    <div className="category-page__card-stats">
-                      <span>{article.readTime}</span>
-                      {article.totalReads && (
-                        <span>· {article.totalReads.toLocaleString()} reads</span>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/article/${article.slug}`}
-                      className="category-page__card-cta"
-                    >
-                      <span>Read Guide & Tools</span>
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  </div>
-                </article>
-              </li>
-            ))}
+                  </article>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

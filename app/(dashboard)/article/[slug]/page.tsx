@@ -118,7 +118,7 @@ export default async function ArticleMicroPage({ params }: Props) {
   const tools =
     article.tools && article.tools.length > 0
       ? article.tools
-      : getToolsForArticle(article.categorySlug);
+      : getToolsForArticle(article.categorySlug || "general");
 
   const walletState = session?.user?.id
     ? await resolveUserWalletState(session.user.id, session.user.email)

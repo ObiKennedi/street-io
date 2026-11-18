@@ -116,7 +116,7 @@ export function ArticleDetailView({
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+  const numericPrice = parseInt((article.price || "3500").replace(/[^0-9]/g, ""), 10) || 3500;
   const [payAmountInput, setPayAmountInput] = useState<string>(String(numericPrice));
   const enteredAmount = parseInt(payAmountInput.replace(/[^0-9]/g, ""), 10) || 0;
   const isAmountValid = enteredAmount >= numericPrice;
@@ -192,14 +192,14 @@ export function ArticleDetailView({
 
   return (
     <article className="article-page" aria-labelledby="article-heading">
-      {/* Back to category navigation */}
+      {/* Back navigation */}
       <nav aria-label="Breadcrumb">
         <Link
-          href={`/category/${article.categorySlug}`}
+          href="/dashboard"
           className="article-page__back"
         >
           <span>←</span>
-          <span>Back to {article.category} Hub</span>
+          <span>Back to Dashboard</span>
         </Link>
       </nav>
 
@@ -215,31 +215,29 @@ export function ArticleDetailView({
           </div>
         )}
 
-        <div className="article-page__meta-strip">
-
-          <Link
-            href={`/category/${article.categorySlug}`}
-            className="article-page__category-badge"
-          >
-            {article.category}
-          </Link>
-          <span className="article-page__stat-chip">• {article.readTime}</span>
-          {article.totalReads && (
-            <span className="article-page__stat-chip">
-              • {article.totalReads.toLocaleString()} reads
-            </span>
-          )}
-          <span className="article-page__price-chip">{article.price}</span>
-        </div>
-
         <h1 id="article-heading" className="article-page__title">
           {article.title}
         </h1>
 
-        {/* Teaser snippet box */}
-        <div className="article-page__teaser">
-          &ldquo;{article.contentSnippet}&rdquo;
-        </div>
+        {article.description && (
+          <p className="article-page__desc">
+            {article.description}
+          </p>
+        )}
+
+        {article.link && (
+          <div className="article-page__link-wrap">
+            <a
+              href={article.link}
+              target={article.link.startsWith("http") ? "_blank" : undefined}
+              rel={article.link.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="article-page__resource-link"
+            >
+              <span>{article.link}</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        )}
       </header>
 
       {/* ACCESS CONTROL: Paid vs Unpaid */}
@@ -330,7 +328,7 @@ export function ArticleDetailView({
 
           {/* Buy & Unlock Actions */}
           {(() => {
-            const numericPrice = parseInt(article.price.replace(/[^0-9]/g, ""), 10) || 3500;
+            const numericPrice = parseInt((article.price || "3500").replace(/[^0-9]/g, ""), 10) || 3500;
             const hasSufficientBalance = walletBalance >= numericPrice;
 
             return (
@@ -613,71 +611,8 @@ export function ArticleDetailView({
                 </ul>
               </>
             )}
-
-            {article.keyTakeaways && article.keyTakeaways.length > 0 && (
-              <>
-                <h2>4. Summary Defense Checklist</h2>
-                <ul>
-                  {article.keyTakeaways.map((takeaway, idx) => (
-                    <li key={idx}>
-                      <strong>✓ {takeaway}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
           </div>
         </section>
-      )}
-
-      {/* ================= LINKS TO TOOLS AT THE FOOTER ================= */}
-      {tools && tools.length > 0 && (
-        <footer className="article-tools" aria-labelledby="footer-tools-heading">
-          <div className="article-tools__head">
-            <h2 id="footer-tools-heading" className="article-tools__title">
-              Operational Field Tools &amp; Verification Resources
-            </h2>
-            <p className="article-tools__desc">
-              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
-            </p>
-          </div>
-
-          <ul className="article-tools__grid">
-            {tools.map((tool) => (
-              <li key={tool.id} className="article-tools__card">
-                <div className="article-tools__card-top">
-                  <h3 className="article-tools__tool-name">{tool.name}</h3>
-                  <span className="article-tools__type-pill">{tool.type}</span>
-                </div>
-
-                <p className="article-tools__tool-desc">{tool.description}</p>
-
-                <div className="article-tools__card-footer">
-                  <span className="article-tools__tool-category">
-                    {tool.category}
-                  </span>
-
-                  {tool.isExternal ? (
-                    <a
-                      href={tool.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="article-tools__tool-btn"
-                    >
-                      <span>Launch Tool</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  ) : (
-                    <Link href={tool.url} className="article-tools__tool-btn">
-                      <span>Open Resource</span>
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </footer>
       )}
     </article>
   );

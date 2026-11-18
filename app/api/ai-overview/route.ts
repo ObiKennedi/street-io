@@ -25,7 +25,7 @@ export async function POST(req: Request) {
               .slice(0, 4)
               .map(
                 (a, i) =>
-                  `[Guide ${i + 1}: ${a.title}]\nCategory: ${a.category}\nSummary: ${a.contentSnippet}\nTakeaways: ${a.keyTakeaways.join("; ")}`
+                  `[Guide ${i + 1}: ${a.title}]\nCategory: ${a.category || "General"}\nSummary: ${a.description || a.contentSnippet || ""}\nTakeaways: ${(a.keyTakeaways || []).join("; ")}`
               )
               .join("\n\n")
           : "No exact matches in database; provide authoritative street intelligence on this topic.";

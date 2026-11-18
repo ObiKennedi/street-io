@@ -29,7 +29,7 @@ export function PagaCheckoutView({
   const router = useRouter();
 
   const articlePrice = targetArticle
-    ? parseInt(targetArticle.price.replace(/[^0-9]/g, ""), 10) || 3500
+    ? parseInt((targetArticle.price || "3500").replace(/[^0-9]/g, ""), 10) || 3500
     : 0;
   // Minimum deposit is strictly ₦5,000 as configured for reader wallet top-ups
   const minDeposit = 5000;
