@@ -240,6 +240,67 @@ export function ArticleDetailView({
         )}
       </header>
 
+      {/* ================= OPERATIONAL TOOLS AT THE TOP OF THE ARTICLE ================= */}
+      {tools && tools.length > 0 && (
+        <section className="article-tools article-tools--top" aria-labelledby="top-tools-heading">
+          <div className="article-tools__head">
+            <div className="article-tools__badge">
+              <span className="article-tools__pulse-dot" aria-hidden="true" />
+              <span>FIELD VERIFICATION &amp; OPERATIONAL TOOLS</span>
+            </div>
+            <h2 id="top-tools-heading" className="article-tools__title">
+              Operational Field Tools &amp; Verification Resources
+            </h2>
+            <p className="article-tools__desc">
+              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
+            </p>
+          </div>
+
+          <ul className="article-tools__grid">
+            {tools.map((tool) => (
+              <li key={tool.id} className="article-tools__card">
+                <div className="article-tools__card-top">
+                  <div>
+                    <h3 className="article-tools__tool-name">
+                      <span>{tool.name}</span>
+                      {tool.badge && (
+                        <span className="article-tools__badge-pill">{tool.badge}</span>
+                      )}
+                    </h3>
+                  </div>
+                  <span className="article-tools__type-pill">{tool.type}</span>
+                </div>
+
+                <p className="article-tools__tool-desc">{tool.description}</p>
+
+                <div className="article-tools__card-footer">
+                  <span className="article-tools__tool-category">
+                    {tool.category}
+                  </span>
+
+                  {tool.isExternal ? (
+                    <a
+                      href={tool.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="article-tools__tool-btn"
+                    >
+                      <span>Launch Tool</span>
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    <Link href={tool.url} className="article-tools__tool-btn">
+                      <span>Open Resource</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* ACCESS CONTROL: Paid vs Unpaid */}
       {!isUnlocked ? (
         /* ================= LOCKED STATE: GIANT PADLOCK PAYWALL ================= */
@@ -301,7 +362,7 @@ export function ArticleDetailView({
               <li>
                 <span>✓</span>
                 <span>
-                  <strong>Curated Operational Tools:</strong> Direct access to field verification utilities listed below.
+                  <strong>Curated Operational Tools:</strong> Direct access to field verification utilities listed above and below.
                 </span>
               </li>
             </ul>
@@ -613,6 +674,67 @@ export function ArticleDetailView({
             )}
           </div>
         </section>
+      )}
+
+      {/* ================= OPERATIONAL TOOLS AT THE FOOT OF THE ARTICLE ================= */}
+      {tools && tools.length > 0 && (
+        <footer className="article-tools article-tools--foot" aria-labelledby="foot-tools-heading">
+          <div className="article-tools__head">
+            <div className="article-tools__badge">
+              <span className="article-tools__pulse-dot" aria-hidden="true" />
+              <span>FIELD VERIFICATION &amp; OPERATIONAL TOOLS</span>
+            </div>
+            <h2 id="foot-tools-heading" className="article-tools__title">
+              Operational Field Tools &amp; Verification Resources
+            </h2>
+            <p className="article-tools__desc">
+              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
+            </p>
+          </div>
+
+          <ul className="article-tools__grid">
+            {tools.map((tool) => (
+              <li key={tool.id} className="article-tools__card">
+                <div className="article-tools__card-top">
+                  <div>
+                    <h3 className="article-tools__tool-name">
+                      <span>{tool.name}</span>
+                      {tool.badge && (
+                        <span className="article-tools__badge-pill">{tool.badge}</span>
+                      )}
+                    </h3>
+                  </div>
+                  <span className="article-tools__type-pill">{tool.type}</span>
+                </div>
+
+                <p className="article-tools__tool-desc">{tool.description}</p>
+
+                <div className="article-tools__card-footer">
+                  <span className="article-tools__tool-category">
+                    {tool.category}
+                  </span>
+
+                  {tool.isExternal ? (
+                    <a
+                      href={tool.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="article-tools__tool-btn"
+                    >
+                      <span>Launch Tool</span>
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    <Link href={tool.url} className="article-tools__tool-btn">
+                      <span>Open Resource</span>
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </footer>
       )}
     </article>
   );
