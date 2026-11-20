@@ -1,7 +1,7 @@
 // File: component/dashboard/ArticleDetailView.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type Article } from "@/lib/articles";
@@ -125,6 +125,21 @@ export function ArticleDetailView({
   // Active tools & links state with localStorage fallback for instant admin upload preview
   const [activeTools, setActiveTools] = useState<ArticleTool[]>(tools);
   const [activeLink, setActiveLink] = useState<string | undefined>(article.link);
+
+  const displayTools = useMemo(() => {
+    if (activeTools && activeTools.length > 0) return activeTools;
+    if (activeLink && (activeLink.startsWith("http://") || activeLink.startsWith("https://"))) {
+      return [
+        {
+          id: `tool-${article.slug}`,
+          name: `${article.title} Tool`,
+          url: activeLink,
+          description: article.description || "Operational resource link.",
+        },
+      ];
+    }
+    return [];
+  }, [activeTools, activeLink, article.slug, article.title, article.description]);
 
   useEffect(() => {
     if (tools && tools.length > 0) {
@@ -268,95 +283,31 @@ export function ArticleDetailView({
           </p>
         )}
 
-        {activeLink && (
-          <div className="article-page__link-wrap">
-            <a
-              href={activeLink}
-              target={activeLink.startsWith("http") ? "_blank" : undefined}
-              rel={activeLink.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="article-page__resource-link"
-            >
-              <span>{activeLink}</span>
-              <span aria-hidden="true">↗</span>
-            </a>
-          </div>
-        )}
       </header>
 
-      {/* ================= OPERATIONAL TOOLS AT THE TOP OF THE ARTICLE ================= */}
-      {activeTools && activeTools.length > 0 && (
-        <section className="article-tools article-tools--top" aria-labelledby="top-tools-heading">
-          <div className="article-tools__head">
-            <div className="article-tools__badge">
-              <span className="article-tools__pulse-dot" aria-hidden="true" />
-              <span>FIELD VERIFICATION &amp; OPERATIONAL TOOLS</span>
+      {/* ================= COMPACT TOOL LINK (TOP OF ARTICLE) ================= */}
+      {displayTools.length > 0 && (
+        <div className="article-tool-compact" aria-label="Tool Link">
+          {displayTools.map((tool) => (
+            <div key={tool.id} className="article-tool-compact__item">
+              <div className="article-tool-compact__info">
+                <strong className="article-tool-compact__name">{tool.name}</strong>
+                {tool.description && (
+                  <span className="article-tool-compact__desc">{tool.description}</span>
+                )}
+              </div>
+              <a
+                href={tool.url}
+                target={tool.url.startsWith("http") ? "_blank" : undefined}
+                rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                className="article-tool-compact__btn"
+              >
+                <span>Open Tool</span>
+                <span aria-hidden="true">↗</span>
+              </a>
             </div>
-            <h2 id="top-tools-heading" className="article-tools__title">
-              Operational Field Tools &amp; Verification Resources
-            </h2>
-            <p className="article-tools__desc">
-              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
-            </p>
-          </div>
-
-          <ul className="article-tools__grid">
-            {activeTools.map((tool) => (
-              <li key={tool.id} className="article-tools__card">
-                <div className="article-tools__card-top">
-                  <div>
-                    <h3 className="article-tools__tool-name">
-                      <span>{tool.name}</span>
-                      {tool.badge && (
-                        <span className="article-tools__badge-pill">{tool.badge}</span>
-                      )}
-                    </h3>
-                    <a
-                      href={tool.url}
-                      target={tool.url.startsWith("http") ? "_blank" : undefined}
-                      rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                      style={{
-                        fontSize: "12px",
-                        color: "#2563EB",
-                        textDecoration: "underline",
-                        wordBreak: "break-all",
-                        display: "block",
-                        marginTop: "2px",
-                      }}
-                    >
-                      {tool.url}
-                    </a>
-                  </div>
-                  <span className="article-tools__type-pill">{tool.type || "Verification"}</span>
-                </div>
-
-                <p className="article-tools__tool-desc">{tool.description}</p>
-
-                <div className="article-tools__card-footer">
-                  <span className="article-tools__tool-category">
-                    {tool.category || "Field Resource"}
-                  </span>
-
-                  {tool.isExternal || tool.url.startsWith("http") ? (
-                    <a
-                      href={tool.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="article-tools__tool-btn"
-                    >
-                      <span>Launch Tool</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  ) : (
-                    <Link href={tool.url} className="article-tools__tool-btn">
-                      <span>Open Resource</span>
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+          ))}
+        </div>
       )}
 
       {/* ACCESS CONTROL: Paid vs Unpaid */}
@@ -732,82 +683,6 @@ export function ArticleDetailView({
             )}
           </div>
         </section>
-      )}
-
-      {/* ================= OPERATIONAL TOOLS AT THE FOOT OF THE ARTICLE ================= */}
-      {activeTools && activeTools.length > 0 && (
-        <footer className="article-tools article-tools--foot" aria-labelledby="foot-tools-heading">
-          <div className="article-tools__head">
-            <div className="article-tools__badge">
-              <span className="article-tools__pulse-dot" aria-hidden="true" />
-              <span>FIELD VERIFICATION &amp; OPERATIONAL TOOLS</span>
-            </div>
-            <h2 id="foot-tools-heading" className="article-tools__title">
-              Operational Field Tools &amp; Verification Resources
-            </h2>
-            <p className="article-tools__desc">
-              Essential verification utilities, telemetry lookup portals, and forensic registries curated specifically for this playbook.
-            </p>
-          </div>
-
-          <ul className="article-tools__grid">
-            {activeTools.map((tool) => (
-              <li key={tool.id} className="article-tools__card">
-                <div className="article-tools__card-top">
-                  <div>
-                    <h3 className="article-tools__tool-name">
-                      <span>{tool.name}</span>
-                      {tool.badge && (
-                        <span className="article-tools__badge-pill">{tool.badge}</span>
-                      )}
-                    </h3>
-                    <a
-                      href={tool.url}
-                      target={tool.url.startsWith("http") ? "_blank" : undefined}
-                      rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                      style={{
-                        fontSize: "12px",
-                        color: "#2563EB",
-                        textDecoration: "underline",
-                        wordBreak: "break-all",
-                        display: "block",
-                        marginTop: "2px",
-                      }}
-                    >
-                      {tool.url}
-                    </a>
-                  </div>
-                  <span className="article-tools__type-pill">{tool.type || "Verification"}</span>
-                </div>
-
-                <p className="article-tools__tool-desc">{tool.description}</p>
-
-                <div className="article-tools__card-footer">
-                  <span className="article-tools__tool-category">
-                    {tool.category || "Field Resource"}
-                  </span>
-
-                  {tool.isExternal || tool.url.startsWith("http") ? (
-                    <a
-                      href={tool.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="article-tools__tool-btn"
-                    >
-                      <span>Launch Tool</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  ) : (
-                    <Link href={tool.url} className="article-tools__tool-btn">
-                      <span>Open Resource</span>
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </footer>
       )}
     </article>
   );
