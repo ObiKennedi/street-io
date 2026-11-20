@@ -16,13 +16,39 @@ export async function GET() {
       const catConfig = exploreCategories.find((c) => c.slug === a.categorySlug);
       const categoryLabel = catConfig ? catConfig.label : a.categorySlug ? a.categorySlug.toUpperCase() : "GENERAL";
 
+      // Extract tools from a.keyTakeaways
+      const parsedTools: any[] = [];
+      if (Array.isArray(a.keyTakeaways)) {
+        for (const item of a.keyTakeaways) {
+          try {
+            if (item.startsWith("{") && item.includes('"url"')) {
+              const parsed = JSON.parse(item);
+              if (parsed && parsed.url) parsedTools.push(parsed);
+            }
+          } catch {}
+        }
+      }
+
+      // Extract link from a.tags
+      let articleLink = `/article/${a.slug}`;
+      if (Array.isArray(a.tags)) {
+        const linkTag = a.tags.find((t) => t.startsWith("link:"));
+        if (linkTag) {
+          articleLink = linkTag.replace(/^link:/, "");
+        }
+      }
+      if (parsedTools.length > 0 && !articleLink.startsWith("http")) {
+        articleLink = parsedTools[0].url;
+      }
+
       return {
         id: a.id,
         slug: a.slug,
         title: a.title,
         description: a.description || "",
-        link: `/article/${a.slug}`,
+        link: articleLink,
         thumbnailUrl: a.coverImage || undefined,
+        tools: parsedTools.length > 0 ? parsedTools : undefined,
         category: categoryLabel,
         categorySlug: a.categorySlug || "general",
         price: formattedPrice,
@@ -30,7 +56,7 @@ export async function GET() {
         content: a.content,
         contentSnippet: a.contentSnippet || "",
         keyTakeaways: a.keyTakeaways || [],
-        tags: [],
+        tags: a.tags || [],
         weeklyReads: a.weeklyReads,
         monthlyReads: a.monthlyReads,
         totalReads: a.totalReads,

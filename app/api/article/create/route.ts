@@ -77,7 +77,31 @@ export async function POST(req: Request) {
         : derivedDescription;
 
     const articleId = body.id || `art-${Date.now()}`;
-    const cleanCategorySlug = categorySlug || "dating";
+    const cleanCategorySlug = categorySlug || "general";
+
+    // Format tools to persist
+    const rawTools: any[] = Array.isArray(tools) && tools.length > 0 ? tools : [];
+    if (rawTools.length === 0 && link && (link.startsWith("http://") || link.startsWith("https://"))) {
+      rawTools.push({
+        id: `tool-${Date.now()}`,
+        name: title.trim() || "Operational Tool",
+        url: link.trim(),
+        type: "Verification",
+        category: "Operational Tool",
+        description: derivedDescription,
+        isExternal: true,
+      });
+    }
+
+    const toolsToStore: string[] = rawTools.map((t) =>
+      typeof t === "string" ? t : JSON.stringify(t)
+    );
+
+    const tagsToStore: string[] = [
+      cleanCategorySlug,
+      "guide",
+      ...(link ? [`link:${link.trim()}`] : []),
+    ];
 
     // 1. Persist to PostgreSQL via Prisma
     let savedInDb = false;
@@ -93,8 +117,8 @@ export async function POST(req: Request) {
           readTime: readTime?.trim() || "7 min read",
           coverImage: thumbnailUrl?.trim() || null,
           categorySlug: cleanCategorySlug,
-          keyTakeaways: Array.isArray(keyTakeaways) ? keyTakeaways : [],
-          tags: Array.isArray(tags) ? tags : [cleanCategorySlug, "guide"],
+          keyTakeaways: toolsToStore,
+          tags: tagsToStore,
           status: "published",
           published: true,
           updatedAt: new Date(),
@@ -110,8 +134,8 @@ export async function POST(req: Request) {
           readTime: readTime?.trim() || "7 min read",
           coverImage: thumbnailUrl?.trim() || null,
           categorySlug: cleanCategorySlug,
-          keyTakeaways: Array.isArray(keyTakeaways) ? keyTakeaways : [],
-          tags: Array.isArray(tags) ? tags : [cleanCategorySlug, "guide"],
+          keyTakeaways: toolsToStore,
+          tags: tagsToStore,
           status: "published",
           published: true,
           weeklyReads: 140,
@@ -141,9 +165,9 @@ export async function POST(req: Request) {
       content: fullContent,
       contentSnippet: snippet,
       thumbnailUrl: thumbnailUrl?.trim() || undefined,
-      tools: Array.isArray(tools) && tools.length > 0 ? tools : undefined,
-      keyTakeaways: Array.isArray(keyTakeaways) && keyTakeaways.length > 0 ? keyTakeaways : [],
-      tags: Array.isArray(tags) && tags.length > 0 ? tags : [cleanCategorySlug, "guide"],
+      tools: rawTools.length > 0 ? rawTools : undefined,
+      keyTakeaways: toolsToStore,
+      tags: tagsToStore,
       weeklyReads: 140,
       monthlyReads: 620,
       totalReads: 850,

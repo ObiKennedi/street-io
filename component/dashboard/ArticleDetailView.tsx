@@ -122,6 +122,49 @@ export function ArticleDetailView({
   const isAmountValid = enteredAmount >= numericPrice;
   const effectivePayAmount = isAmountValid ? enteredAmount : numericPrice;
 
+  // Active tools & links state with localStorage fallback for instant admin upload preview
+  const [activeTools, setActiveTools] = useState<ArticleTool[]>(tools);
+  const [activeLink, setActiveLink] = useState<string | undefined>(article.link);
+
+  useEffect(() => {
+    if (tools && tools.length > 0) {
+      setActiveTools(tools);
+    }
+  }, [tools]);
+
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem("streetio_custom_articles");
+      if (local) {
+        const parsed: Article[] = JSON.parse(local);
+        const match = parsed.find(
+          (a) => a.slug === article.slug || a.id === article.id
+        );
+        if (match) {
+          if (match.tools && match.tools.length > 0) {
+            setActiveTools(match.tools);
+          } else if (match.link && (match.link.startsWith("http://") || match.link.startsWith("https://"))) {
+            setActiveTools([
+              {
+                id: `tool-${match.slug}`,
+                name: `${match.title} Tool`,
+                description: match.description || "Operational tool and verification link.",
+                category: "Operational Tool",
+                type: "Verification",
+                url: match.link,
+                isExternal: true,
+                badge: "Uploaded Tool",
+              },
+            ]);
+          }
+          if (match.link) {
+            setActiveLink(match.link);
+          }
+        }
+      }
+    } catch {}
+  }, [article.slug, article.id]);
+
   // Check client-side storage / query params
   useEffect(() => {
     if (searchParams.get("unlocked") === "true") {
@@ -225,15 +268,15 @@ export function ArticleDetailView({
           </p>
         )}
 
-        {article.link && (
+        {activeLink && (
           <div className="article-page__link-wrap">
             <a
-              href={article.link}
-              target={article.link.startsWith("http") ? "_blank" : undefined}
-              rel={article.link.startsWith("http") ? "noopener noreferrer" : undefined}
+              href={activeLink}
+              target={activeLink.startsWith("http") ? "_blank" : undefined}
+              rel={activeLink.startsWith("http") ? "noopener noreferrer" : undefined}
               className="article-page__resource-link"
             >
-              <span>{article.link}</span>
+              <span>{activeLink}</span>
               <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -241,7 +284,7 @@ export function ArticleDetailView({
       </header>
 
       {/* ================= OPERATIONAL TOOLS AT THE TOP OF THE ARTICLE ================= */}
-      {tools && tools.length > 0 && (
+      {activeTools && activeTools.length > 0 && (
         <section className="article-tools article-tools--top" aria-labelledby="top-tools-heading">
           <div className="article-tools__head">
             <div className="article-tools__badge">
@@ -257,7 +300,7 @@ export function ArticleDetailView({
           </div>
 
           <ul className="article-tools__grid">
-            {tools.map((tool) => (
+            {activeTools.map((tool) => (
               <li key={tool.id} className="article-tools__card">
                 <div className="article-tools__card-top">
                   <div>
@@ -267,18 +310,33 @@ export function ArticleDetailView({
                         <span className="article-tools__badge-pill">{tool.badge}</span>
                       )}
                     </h3>
+                    <a
+                      href={tool.url}
+                      target={tool.url.startsWith("http") ? "_blank" : undefined}
+                      rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                      style={{
+                        fontSize: "12px",
+                        color: "#2563EB",
+                        textDecoration: "underline",
+                        wordBreak: "break-all",
+                        display: "block",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {tool.url}
+                    </a>
                   </div>
-                  <span className="article-tools__type-pill">{tool.type}</span>
+                  <span className="article-tools__type-pill">{tool.type || "Verification"}</span>
                 </div>
 
                 <p className="article-tools__tool-desc">{tool.description}</p>
 
                 <div className="article-tools__card-footer">
                   <span className="article-tools__tool-category">
-                    {tool.category}
+                    {tool.category || "Field Resource"}
                   </span>
 
-                  {tool.isExternal ? (
+                  {tool.isExternal || tool.url.startsWith("http") ? (
                     <a
                       href={tool.url}
                       target="_blank"
@@ -677,7 +735,7 @@ export function ArticleDetailView({
       )}
 
       {/* ================= OPERATIONAL TOOLS AT THE FOOT OF THE ARTICLE ================= */}
-      {tools && tools.length > 0 && (
+      {activeTools && activeTools.length > 0 && (
         <footer className="article-tools article-tools--foot" aria-labelledby="foot-tools-heading">
           <div className="article-tools__head">
             <div className="article-tools__badge">
@@ -693,7 +751,7 @@ export function ArticleDetailView({
           </div>
 
           <ul className="article-tools__grid">
-            {tools.map((tool) => (
+            {activeTools.map((tool) => (
               <li key={tool.id} className="article-tools__card">
                 <div className="article-tools__card-top">
                   <div>
@@ -703,18 +761,33 @@ export function ArticleDetailView({
                         <span className="article-tools__badge-pill">{tool.badge}</span>
                       )}
                     </h3>
+                    <a
+                      href={tool.url}
+                      target={tool.url.startsWith("http") ? "_blank" : undefined}
+                      rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                      style={{
+                        fontSize: "12px",
+                        color: "#2563EB",
+                        textDecoration: "underline",
+                        wordBreak: "break-all",
+                        display: "block",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {tool.url}
+                    </a>
                   </div>
-                  <span className="article-tools__type-pill">{tool.type}</span>
+                  <span className="article-tools__type-pill">{tool.type || "Verification"}</span>
                 </div>
 
                 <p className="article-tools__tool-desc">{tool.description}</p>
 
                 <div className="article-tools__card-footer">
                   <span className="article-tools__tool-category">
-                    {tool.category}
+                    {tool.category || "Field Resource"}
                   </span>
 
-                  {tool.isExternal ? (
+                  {tool.isExternal || tool.url.startsWith("http") ? (
                     <a
                       href={tool.url}
                       target="_blank"

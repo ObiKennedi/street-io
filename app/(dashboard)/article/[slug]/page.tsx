@@ -59,6 +59,31 @@ async function resolveArticle(slug: string): Promise<Article | undefined> {
         ? dbArticle.categorySlug.toUpperCase()
         : "GENERAL";
 
+      // Extract tools from dbArticle.keyTakeaways
+      const parsedTools: any[] = [];
+      if (Array.isArray(dbArticle.keyTakeaways)) {
+        for (const item of dbArticle.keyTakeaways) {
+          try {
+            if (item.startsWith("{") && item.includes('"url"')) {
+              const parsed = JSON.parse(item);
+              if (parsed && parsed.url) parsedTools.push(parsed);
+            }
+          } catch {}
+        }
+      }
+
+      // Extract link from dbArticle.tags
+      let dbLink = `/article/${dbArticle.slug}`;
+      if (Array.isArray(dbArticle.tags)) {
+        const linkTag = dbArticle.tags.find((t) => t.startsWith("link:"));
+        if (linkTag) {
+          dbLink = linkTag.replace(/^link:/, "");
+        }
+      }
+      if (parsedTools.length > 0 && !dbLink.startsWith("http")) {
+        dbLink = parsedTools[0].url;
+      }
+
       const articleObj: Article = {
         id: dbArticle.id,
         slug: dbArticle.slug,
@@ -67,17 +92,18 @@ async function resolveArticle(slug: string): Promise<Article | undefined> {
         categorySlug: dbArticle.categorySlug || "general",
         price: formattedPrice,
         readTime: dbArticle.readTime || "7 min read",
-        description: "",
+        description: dbArticle.description || "",
+        link: dbLink,
         content: dbArticle.content,
         contentSnippet: dbArticle.contentSnippet || "",
         keyTakeaways: dbArticle.keyTakeaways || [],
-        tags: [],
+        tags: dbArticle.tags || [],
         weeklyReads: dbArticle.weeklyReads || 0,
         monthlyReads: dbArticle.monthlyReads || 0,
         totalReads: dbArticle.totalReads || 0,
         trendingDelta: dbArticle.trendingDelta || "+100%",
         thumbnailUrl: dbArticle.coverImage || undefined,
-        tools: undefined,
+        tools: parsedTools.length > 0 ? parsedTools : undefined,
       };
 
       addArticle(articleObj);
@@ -115,9 +141,31 @@ export default async function ArticleMicroPage({ params }: Props) {
     notFound();
   }
 
+  // Authoritative tools resolution:
+  // 1. If the article has uploaded tools, use them!
+  // 2. If the article has an external link uploaded by admin, use it as the tool!
+  // 3. If it's a custom uploaded article without tools/link, keep tools empty (never show fake catfish tools!).
+  // 4. Only for legacy pre-seeded demo articles, fall back to getToolsForArticle.
   const tools =
     article.tools && article.tools.length > 0
       ? article.tools
+      : article.link && (article.link.startsWith("http://") || article.link.startsWith("https://"))
+      ? [
+          {
+            id: `tool-${article.slug}`,
+            name: `${article.title} Tool`,
+            description: article.description || "Operational tool and verification link.",
+            category: "Operational Tool",
+            type: "Verification" as const,
+            url: article.link,
+            isExternal: true,
+            badge: "Uploaded Tool",
+          },
+        ]
+      : article.id?.startsWith("art-custom") ||
+        article.slug?.startsWith("art-custom") ||
+        article.slug?.startsWith("article-")
+      ? []
       : getToolsForArticle(article.categorySlug || "general");
 
   const walletState = session?.user?.id

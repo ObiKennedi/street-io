@@ -19,6 +19,45 @@ export function AdminArticleUpload({
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [content, setContent] = useState("");
 
+  // Tool links management
+  type ToolDraft = {
+    id: string;
+    name: string;
+    url: string;
+    type?: string;
+    description?: string;
+  };
+  const [toolsList, setToolsList] = useState<ToolDraft[]>([]);
+  const [newToolName, setNewToolName] = useState("");
+  const [newToolUrl, setNewToolUrl] = useState("");
+
+  const handleAddTool = () => {
+    if (!newToolUrl.trim()) return;
+    const formattedUrl =
+      newToolUrl.trim().startsWith("http://") || newToolUrl.trim().startsWith("https://")
+        ? newToolUrl.trim()
+        : `https://${newToolUrl.trim()}`;
+
+    const toolName = newToolName.trim() || `Tool ${toolsList.length + 1}`;
+
+    setToolsList((prev) => [
+      ...prev,
+      {
+        id: `tool-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: toolName,
+        url: formattedUrl,
+        type: "Verification",
+        description: `Operational tool link for ${title.trim() || "article"}.`,
+      },
+    ]);
+    setNewToolName("");
+    setNewToolUrl("");
+  };
+
+  const handleRemoveTool = (toolId: string) => {
+    setToolsList((prev) => prev.filter((t) => t.id !== toolId));
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
@@ -148,16 +187,45 @@ export function AdminArticleUpload({
         .replace(/(^-|-$)/g, "");
     }
 
-    const finalLink =
-      cleanLink.startsWith("http://") || cleanLink.startsWith("https://")
-        ? cleanLink
-        : `/article/${slug}`;
-
     const finalDescription =
       description.trim() ||
       (content.trim()
         ? content.trim().replace(/^#+\s+/gm, "").replace(/\n+/g, " ").slice(0, 180).trim() + "..."
         : "");
+
+    // Assemble final tools list
+    const finalTools: any[] = [...toolsList];
+    if (newToolUrl.trim()) {
+      const formattedUrl =
+        newToolUrl.trim().startsWith("http://") || newToolUrl.trim().startsWith("https://")
+          ? newToolUrl.trim()
+          : `https://${newToolUrl.trim()}`;
+      if (!finalTools.some((t) => t.url.toLowerCase() === formattedUrl.toLowerCase())) {
+        finalTools.push({
+          id: `tool-${Date.now()}`,
+          name: newToolName.trim() || title.trim() || "Operational Tool",
+          url: formattedUrl,
+          type: "Verification",
+          description: `Operational tool for ${title.trim()}`,
+        });
+      }
+    } else if (cleanLink.startsWith("http://") || cleanLink.startsWith("https://")) {
+      if (!finalTools.some((t) => t.url.toLowerCase() === cleanLink.toLowerCase())) {
+        finalTools.push({
+          id: `tool-${Date.now()}`,
+          name: title.trim() || "Operational Tool",
+          url: cleanLink,
+          type: "Verification",
+          description: `Operational tool for ${title.trim()}`,
+        });
+      }
+    }
+
+    const primaryToolUrl = finalTools.length > 0 ? finalTools[0].url : "";
+    const finalLink =
+      cleanLink.startsWith("http://") || cleanLink.startsWith("https://")
+        ? cleanLink
+        : primaryToolUrl || `/article/${slug}`;
 
     const articlePayload = {
       id: `art-custom-${Date.now()}`,
@@ -167,6 +235,7 @@ export function AdminArticleUpload({
       description: finalDescription,
       content: content.trim() || finalDescription,
       thumbnailUrl: thumbnailUrl.trim() || undefined,
+      tools: finalTools,
     };
 
     (async () => {
@@ -180,13 +249,14 @@ export function AdminArticleUpload({
         const data = await res.json();
         const createdArticle: AdminArticle = (data && data.article) || {
           ...articlePayload,
+          tools: finalTools,
           category: "General",
           categorySlug: "general",
           price: "₦3,500",
           readTime: "5 min read",
           contentSnippet: finalDescription,
-          keyTakeaways: [],
-          tags: [],
+          keyTakeaways: finalTools.map((t) => JSON.stringify(t)),
+          tags: [`link:${finalLink}`],
           weeklyReads: 140,
           monthlyReads: 620,
           totalReads: 850,
@@ -212,6 +282,9 @@ export function AdminArticleUpload({
         setTitle("");
         setDescription("");
         setLink("");
+        setToolsList([]);
+        setNewToolName("");
+        setNewToolUrl("");
         setContent("");
         setThumbnailUrl("");
         setUploadError(null);
@@ -219,13 +292,14 @@ export function AdminArticleUpload({
         console.error("Publish error:", err);
         const fallbackArticle: AdminArticle = {
           ...articlePayload,
+          tools: finalTools,
           category: "General",
           categorySlug: "general",
           price: "₦3,500",
           readTime: "5 min read",
           contentSnippet: finalDescription,
-          keyTakeaways: [],
-          tags: [],
+          keyTakeaways: finalTools.map((t) => JSON.stringify(t)),
+          tags: [`link:${finalLink}`],
           weeklyReads: 140,
           monthlyReads: 620,
           totalReads: 850,
@@ -313,21 +387,123 @@ export function AdminArticleUpload({
             />
           </div>
 
-          {/* Link */}
+          {/* Tool Links & Verification Resources */}
+          <div className="admin-form__field admin-form__field--full">
+            <label className="admin-form__label">
+              Tool Link(s) &amp; Operational Resources
+            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="url"
+                  placeholder="Tool URL (e.g. https://...)"
+                  value={newToolUrl}
+                  onChange={(e) => setNewToolUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTool();
+                    }
+                  }}
+                  className="admin-form__input"
+                />
+                <input
+                  type="text"
+                  placeholder="Tool Name (e.g. Verification Portal)"
+                  value={newToolName}
+                  onChange={(e) => setNewToolName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTool();
+                    }
+                  }}
+                  className="admin-form__input"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTool}
+                  disabled={!newToolUrl.trim()}
+                  className="admin-form__cancel-btn"
+                  style={{
+                    height: "38px",
+                    padding: "0 14px",
+                    fontWeight: 700,
+                    background: newToolUrl.trim() ? "var(--brand-charcoal)" : "var(--color-steel-200)",
+                    color: newToolUrl.trim() ? "#FFF" : "var(--color-steel-500)",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: newToolUrl.trim() ? "pointer" : "not-allowed",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  + Add Tool
+                </button>
+              </div>
+
+              {toolsList.length > 0 && (
+                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {toolsList.map((t) => (
+                    <li
+                      key={t.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 12px",
+                        background: "var(--color-steel-100)",
+                        border: "1px solid var(--color-steel-300)",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
+                        <strong style={{ color: "var(--dash-text)" }}>{t.name}</strong>
+                        <span style={{ color: "var(--color-steel-600)", textDecoration: "underline", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t.url}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTool(t.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#DC2626",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          fontSize: "12px",
+                          padding: "2px 6px",
+                        }}
+                      >
+                        ✕ Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <span className="admin-form__hint">
+                Enter your tool or resource URL above. You can add multiple tools; they will appear boldly at the top and foot of the article.
+              </span>
+            </div>
+          </div>
+
+          {/* Direct Article Link / Custom Slug (Optional) */}
           <div className="admin-form__field admin-form__field--full">
             <label htmlFor="art-link" className="admin-form__label">
-              Link
+              Article Link / Custom Slug (Optional)
             </label>
             <input
               id="art-link"
               type="text"
-              placeholder="e.g. /article/repair-alternators or https://..."
+              placeholder="e.g. /article/repair-alternators or custom path"
               value={link}
               onChange={(e) => setLink(e.target.value)}
               className="admin-form__input"
             />
             <span className="admin-form__hint">
-              Optional direct URL or custom slug. Defaults to standard article page if left empty.
+              Optional custom route. Defaults to standard article slug if left empty.
             </span>
           </div>
 
