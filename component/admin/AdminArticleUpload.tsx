@@ -3,6 +3,7 @@
 
 import { useRef, useState } from "react";
 import type { AdminArticle } from "@/lib/admin-data";
+import { exploreCategories } from "@/component/dashboard/categories.config";
 
 type AdminArticleUploadProps = {
   onArticleCreated: (newArticle: AdminArticle) => void;
@@ -14,6 +15,8 @@ export function AdminArticleUpload({
   onCancel,
 }: AdminArticleUploadProps) {
   const [title, setTitle] = useState("");
+  const [categorySlug, setCategorySlug] = useState("make-money-online");
+  const [price, setPrice] = useState("3500");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -179,11 +182,20 @@ export function AdminArticleUpload({
 
     const finalLink = formattedUrl || `/article/${slug}`;
 
+    const numericPrice = parseInt(price.replace(/[^0-9]/g, ""), 10) || 3500;
+    const formattedPrice = `₦${numericPrice.toLocaleString()}`;
+    const selectedCategory =
+      exploreCategories.find((c) => c.slug === categorySlug)?.label ||
+      categorySlug.toUpperCase();
+
     const articlePayload = {
       id: `art-custom-${Date.now()}`,
       slug: slug || `article-${Date.now()}`,
       link: finalLink,
       title: title.trim(),
+      category: selectedCategory,
+      categorySlug: categorySlug,
+      price: numericPrice,
       description: finalDescription,
       content: content.trim() || finalDescription,
       thumbnailUrl: thumbnailUrl.trim() || undefined,
@@ -202,9 +214,9 @@ export function AdminArticleUpload({
         const createdArticle: AdminArticle = (data && data.article) || {
           ...articlePayload,
           tools: finalTools,
-          category: "General",
-          categorySlug: "general",
-          price: "₦3,500",
+          category: selectedCategory,
+          categorySlug: categorySlug,
+          price: formattedPrice,
           readTime: "5 min read",
           contentSnippet: finalDescription,
           keyTakeaways: finalTools.map((t) => JSON.stringify(t)),
@@ -233,6 +245,8 @@ export function AdminArticleUpload({
         // Reset form
         setTitle("");
         setDescription("");
+        setCategorySlug("make-money-online");
+        setPrice("3500");
         setLink("");
         setToolName("");
         setToolDescription("");
@@ -244,9 +258,9 @@ export function AdminArticleUpload({
         const fallbackArticle: AdminArticle = {
           ...articlePayload,
           tools: finalTools,
-          category: "General",
-          categorySlug: "general",
-          price: "₦3,500",
+          category: selectedCategory,
+          categorySlug: categorySlug,
+          price: formattedPrice,
           readTime: "5 min read",
           contentSnippet: finalDescription,
           keyTakeaways: finalTools.map((t) => JSON.stringify(t)),
@@ -320,6 +334,45 @@ export function AdminArticleUpload({
               onChange={(e) => setTitle(e.target.value)}
               className="admin-form__input"
             />
+          </div>
+
+          {/* Category */}
+          <div className="admin-form__field">
+            <label htmlFor="art-category" className="admin-form__label">
+              Category *
+            </label>
+            <select
+              id="art-category"
+              value={categorySlug}
+              onChange={(e) => setCategorySlug(e.target.value)}
+              className="admin-form__select"
+            >
+              {exploreCategories.map((cat) => (
+                <option key={cat.slug} value={cat.slug}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price */}
+          <div className="admin-form__field">
+            <label htmlFor="art-price" className="admin-form__label">
+              Price (₦) *
+            </label>
+            <input
+              id="art-price"
+              type="text"
+              inputMode="numeric"
+              required
+              placeholder="3500"
+              value={price}
+              onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ""))}
+              className="admin-form__input"
+            />
+            <span className="admin-form__hint">
+              Access fee in Naira (e.g. 3500).
+            </span>
           </div>
 
           {/* Description */}
