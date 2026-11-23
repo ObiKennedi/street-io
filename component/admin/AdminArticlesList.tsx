@@ -57,6 +57,8 @@ export function AdminArticlesList({
             <tr>
               <th style={{ width: "60px" }}>Thumbnail</th>
               <th>Article</th>
+              <th>Category</th>
+              <th>Price</th>
               <th>Description</th>
               <th>Link</th>
               <th className="admin-table__actions-head">Actions</th>
@@ -65,7 +67,7 @@ export function AdminArticlesList({
           <tbody>
             {filteredArticles.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
+                <td colSpan={7} style={{ textAlign: "center", padding: "48px 16px", color: "var(--color-steel-500)", fontSize: "14px" }}>
                   No articles in inventory yet. Use the <strong>Upload</strong> tab above to publish articles.
                 </td>
               </tr>
@@ -113,6 +115,20 @@ export function AdminArticlesList({
                     <td className="admin-table__title-cell">
                       <span className="admin-table__article-title" title={art.title} style={{ fontWeight: 600 }}>
                         {art.title}
+                      </span>
+                    </td>
+
+                    {/* Category */}
+                    <td>
+                      <span style={{ fontSize: "11px", fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--brand-charcoal)", background: "var(--color-steel-100)", padding: "2px 8px", borderRadius: "9999px", whiteSpace: "nowrap" }}>
+                        {art.category || "General"}
+                      </span>
+                    </td>
+
+                    {/* Price */}
+                    <td>
+                      <span style={{ fontSize: "12px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#065F46", background: "#ECFDF5", border: "1px solid #A7F3D0", padding: "2px 8px", borderRadius: "4px", whiteSpace: "nowrap" }}>
+                        {art.price || "₦3,500"}
                       </span>
                     </td>
 
@@ -217,6 +233,16 @@ export function AdminArticlesList({
                     <img src={art.thumbnailUrl} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   </div>
                 )}
+
+                {/* Category & Price Meta */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", gap: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--brand-charcoal)", background: "var(--color-steel-100)", padding: "2px 8px", borderRadius: "9999px" }}>
+                    {art.category || "General"}
+                  </span>
+                  <span style={{ fontSize: "12px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#065F46", background: "#ECFDF5", border: "1px solid #A7F3D0", padding: "2px 8px", borderRadius: "4px" }}>
+                    {art.price || "₦3,500"}
+                  </span>
+                </div>
 
                 {/* Title */}
                 <h3 className="admin-article-card__title" style={{ margin: "0 0 6px", fontSize: "15px", color: "var(--color-charcoal-900)" }}>

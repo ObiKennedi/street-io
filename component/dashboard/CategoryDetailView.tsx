@@ -208,6 +208,11 @@ export function CategoryDetailView({
                       </div>
                     )}
 
+                    <div className="category-page__card-meta">
+                      <span className="category-page__card-tag">{article.category}</span>
+                      <span className="category-page__card-price">{article.price || "₦3,500"}</span>
+                    </div>
+
                     <h3 className="category-page__card-title">
                       <Link href={articleUrl} style={{ color: "inherit", textDecoration: "none" }}>
                         {article.title}

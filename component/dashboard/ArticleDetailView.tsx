@@ -273,6 +273,20 @@ export function ArticleDetailView({
           </div>
         )}
 
+        <div className="article-page__meta-strip">
+          {article.category && (
+            <Link
+              href={`/category/${article.categorySlug || "general"}`}
+              className="article-page__category-badge"
+            >
+              {article.category}
+            </Link>
+          )}
+          <span className="article-page__price-chip">
+            {article.price || "₦3,500"}
+          </span>
+        </div>
+
         <h1 id="article-heading" className="article-page__title">
           {article.title}
         </h1>
@@ -341,6 +355,26 @@ export function ArticleDetailView({
           <h2 className="article-paywall__title">
             Complete Field Guide Locked
           </h2>
+
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 16px",
+              borderRadius: "9999px",
+              background: "#ECFDF5",
+              border: "1.5px solid #10B981",
+              color: "#065F46",
+              fontFamily: "var(--font-mono)",
+              fontSize: "13px",
+              fontWeight: 800,
+              marginBottom: "var(--space-3)",
+            }}
+          >
+            <span>Access Price:</span>
+            <span style={{ fontSize: "15px", color: "#047857" }}>{article.price || "₦3,500"}</span>
+          </div>
 
           <p className="article-paywall__desc">
             This actionable tactical playbook contains unlisted, practical tradecraft protocols. Unlock full access with a one-time micro-payment.

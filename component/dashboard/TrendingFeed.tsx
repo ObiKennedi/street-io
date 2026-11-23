@@ -163,6 +163,29 @@ export function TrendingFeed() {
                         </div>
                       )}
 
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", gap: "8px" }}>
+                        {article.category && (
+                          <span style={{ fontSize: "11px", fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--brand-charcoal)", background: "var(--color-steel-100)", padding: "2px 8px", borderRadius: "9999px" }}>
+                            {article.category}
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            color: "#065F46",
+                            background: "#ECFDF5",
+                            border: "1px solid #A7F3D0",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            marginLeft: "auto",
+                          }}
+                        >
+                          {article.price || "₦3,500"}
+                        </span>
+                      </div>
+
                       <h2 className="trending-card__title">
                         <Link href={articleUrl} style={{ color: "inherit", textDecoration: "none" }}>
                           {article.title}
