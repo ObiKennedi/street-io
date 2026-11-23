@@ -139,7 +139,7 @@ export function TrendingFeed() {
         ) : (
           <ol className="trending-list">
             {articles.map((article) => {
-              const articleUrl = article.link || `/article/${article.slug}`;
+              const articleUrl = `/article/${article.slug}`;
 
               return (
                 <li key={article.id}>

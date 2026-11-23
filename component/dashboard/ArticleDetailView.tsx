@@ -3,7 +3,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { type Article } from "@/lib/articles";
 import { type ArticleTool } from "@/lib/article-tools";
 import { formatNaira } from "@/lib/paga";
@@ -108,10 +107,7 @@ export function ArticleDetailView({
   initialIsUnlocked = false,
   userWalletBalance = 0,
 }: ArticleDetailViewProps) {
-  const searchParams = useSearchParams();
-  const [isUnlocked, setIsUnlocked] = useState(
-    initialIsUnlocked || searchParams.get("unlocked") === "true"
-  );
+  const [isUnlocked, setIsUnlocked] = useState(initialIsUnlocked);
   const [walletBalance, setWalletBalance] = useState(userWalletBalance);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -180,22 +176,7 @@ export function ArticleDetailView({
     } catch {}
   }, [article.slug, article.id]);
 
-  // Check client-side storage / query params
-  useEffect(() => {
-    if (searchParams.get("unlocked") === "true") {
-      setIsUnlocked(true);
-      try {
-        localStorage.setItem(`unlocked_${article.slug}`, "true");
-      } catch {}
-    } else {
-      try {
-        const stored = localStorage.getItem(`unlocked_${article.slug}`);
-        if (stored === "true") {
-          setIsUnlocked(true);
-        }
-      } catch {}
-    }
-  }, [searchParams, article.slug]);
+  // Server-side unlock is authoritative — no client-side query param or localStorage bypass
 
   // Fetch live wallet balance from server on mount to ensure fresh state
   useEffect(() => {

@@ -130,7 +130,7 @@ export function NewArticlesFeed({ initialArticles }: NewArticlesFeedProps) {
       ) : (
         <ul className="new-feed">
           {articles.map((article) => {
-            const articleUrl = article.link || `/article/${encodeURIComponent(article.slug)}`;
+            const articleUrl = `/article/${encodeURIComponent(article.slug)}`;
 
             return (
               <li key={article.id} className="new-card">

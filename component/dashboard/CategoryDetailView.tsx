@@ -186,7 +186,7 @@ export function CategoryDetailView({
         ) : (
           <ul className="category-page__list">
             {filteredArticles.map((article) => {
-              const articleUrl = article.link || `/article/${article.slug}`;
+              const articleUrl = `/article/${article.slug}`;
 
               return (
                 <li key={article.id}>

@@ -219,7 +219,7 @@ export function ExploreSearch() {
             ) : (
               <ul className="explore-results__list">
                 {searchResults.map((article) => {
-                  const articleUrl = article.link || `/article/${article.slug}`;
+                  const articleUrl = `/article/${article.slug}`;
 
                   return (
                     <li key={article.id} className="explore-results__item">
