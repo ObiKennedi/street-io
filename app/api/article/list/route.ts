@@ -1,12 +1,11 @@
 // File: app/api/article/list/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ARTICLES_DATABASE, mapDbArticleToArticle } from "@/lib/articles";
 import { INITIAL_ADMIN_ARTICLES, type AdminArticle } from "@/lib/admin-data";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
+  await connection();
   try {
     const dbArticles = await prisma.article.findMany({
       orderBy: { createdAt: "desc" },
