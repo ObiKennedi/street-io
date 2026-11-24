@@ -40,7 +40,7 @@ export function DashboardArticlesFeed({
     } catch {}
 
     // 2. Fetch live articles from PostgreSQL via /api/article/list
-    fetch("/api/article/list")
+    fetch("/api/article/list", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data?.articles && Array.isArray(data.articles) && data.articles.length > 0) {

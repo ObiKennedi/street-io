@@ -147,8 +147,12 @@ export async function POST(req: Request) {
         },
       });
       savedInDb = true;
-    } catch (dbErr) {
+    } catch (dbErr: any) {
       console.error("Prisma article upsert error:", dbErr);
+      return NextResponse.json(
+        { error: `Database save failed: ${dbErr?.message || "Could not persist article to PostgreSQL."}` },
+        { status: 500 }
+      );
     }
 
     // 2. Keep in-memory runtime synchronous

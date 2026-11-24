@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { ARTICLES_DATABASE, mapDbArticleToArticle } from "@/lib/articles";
 import { INITIAL_ADMIN_ARTICLES, type AdminArticle } from "@/lib/admin-data";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const dbArticles = await prisma.article.findMany({
@@ -34,15 +36,21 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      articles: articles.length > 0 ? articles : INITIAL_ADMIN_ARTICLES,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        articles: articles.length > 0 ? articles : INITIAL_ADMIN_ARTICLES,
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     console.error("Error fetching articles list from DB:", err);
-    return NextResponse.json({
-      success: true,
-      articles: INITIAL_ADMIN_ARTICLES,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        articles: INITIAL_ADMIN_ARTICLES,
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   }
 }

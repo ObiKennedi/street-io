@@ -211,7 +211,12 @@ export function AdminArticleUpload({
         });
 
         const data = await res.json();
-        const createdArticle: AdminArticle = (data && data.article) || {
+        if (!res.ok || !data?.success) {
+          setUploadError(data?.error || "Failed to publish article to database.");
+          setIsSubmitting(false);
+          return;
+        }
+        const createdArticle: AdminArticle = data.article || {
           ...articlePayload,
           tools: finalTools,
           category: selectedCategory,
