@@ -55,6 +55,7 @@ export default async function CategoryPage({ params }: Props) {
           id: a.id,
           slug: a.slug,
           title: a.title,
+          link: `/article/${a.slug}`,
           category: category.label,
           categorySlug: a.categorySlug || slug,
           price: `₦${a.price.toLocaleString()}`,

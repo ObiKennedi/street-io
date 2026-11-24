@@ -38,6 +38,7 @@ export default async function NewPage() {
           id: a.id,
           slug: a.slug,
           title: a.title,
+          link: `/article/${a.slug}`,
           category: categoryLabel,
           categorySlug: a.categorySlug || "general",
           price: formattedPrice,

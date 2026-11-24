@@ -29,17 +29,8 @@ export async function GET() {
         }
       }
 
-      // Extract link from a.tags
-      let articleLink = `/article/${a.slug}`;
-      if (Array.isArray(a.tags)) {
-        const linkTag = a.tags.find((t) => t.startsWith("link:"));
-        if (linkTag) {
-          articleLink = linkTag.replace(/^link:/, "");
-        }
-      }
-      if (parsedTools.length > 0 && !articleLink.startsWith("http")) {
-        articleLink = parsedTools[0].url;
-      }
+      // article.link is always the internal article page — tool URLs stay inside article.tools
+      const articleLink = `/article/${a.slug}`;
 
       return {
         id: a.id,
