@@ -7,6 +7,7 @@ export { MembershipCard, WalletCard } from "./MembershipCard";
 export { RecentActivity } from "./RecentActivity";
 export { TrendingFeed } from "./TrendingFeed";
 export { NewArticlesFeed } from "./NewArticlesFeed";
+export { DashboardArticlesFeed } from "./DashboardArticlesFeed";
 export { ProfileView } from "./ProfileView";
 export { CategoryDetailView } from "./CategoryDetailView";
 export { ArticleDetailView } from "./ArticleDetailView";

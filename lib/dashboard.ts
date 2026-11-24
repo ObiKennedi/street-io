@@ -43,6 +43,39 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   const walletState = await resolveUserWalletState(userId, userEmail);
 
+  let recentActivity: ReadingActivity[] = [];
+  if (walletState.unlockedSlugs && walletState.unlockedSlugs.length > 0) {
+    try {
+      const { prisma } = await import("./prisma");
+      const dbArticles = await prisma.article.findMany({
+        where: {
+          slug: { in: walletState.unlockedSlugs },
+        },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          categorySlug: true,
+          updatedAt: true,
+        },
+        take: 6,
+      });
+
+      recentActivity = dbArticles.map((art) => ({
+        id: art.id,
+        title: art.title,
+        href: `/article/${encodeURIComponent(art.slug)}`,
+        category: art.categorySlug
+          ? art.categorySlug.replace(/-/g, " ").toUpperCase()
+          : "PLAYBOOK",
+        progress: 100,
+        readAt: art.updatedAt || new Date(),
+      }));
+    } catch (err) {
+      console.error("Error loading unlocked articles for recentActivity:", err);
+    }
+  }
+
   return {
     wallet: {
       balance: walletState.balance,
@@ -53,7 +86,7 @@ export async function getDashboardData(
       hasPending: walletState.hasPending,
     },
     membership: null,
-    recentActivity: [],
+    recentActivity,
   };
 }
 

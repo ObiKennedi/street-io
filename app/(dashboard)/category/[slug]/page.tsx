@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/session";
-import { getCategoryBySlug, getArticlesByCategory, addArticle, type Article } from "@/lib/articles";
+import { getCategoryBySlug, getArticlesByCategory, addArticle, mapDbArticleToArticle, type Article } from "@/lib/articles";
 import { exploreCategories } from "@/component/dashboard/categories.config";
 import { CategoryDetailView } from "@/component/dashboard/CategoryDetailView";
 import { prisma } from "@/lib/prisma";
@@ -51,26 +51,7 @@ export default async function CategoryPage({ params }: Props) {
       });
 
       if (records.length > 0) {
-        articles = records.map((a) => ({
-          id: a.id,
-          slug: a.slug,
-          title: a.title,
-          link: `/article/${a.slug}`,
-          category: category.label,
-          categorySlug: a.categorySlug || slug,
-          price: `₦${a.price.toLocaleString()}`,
-          readTime: a.readTime || "7 min read",
-          description: a.description,
-          content: a.content,
-          contentSnippet: a.contentSnippet || a.description,
-          keyTakeaways: a.keyTakeaways || [],
-          tags: a.tags || [],
-          weeklyReads: a.weeklyReads,
-          monthlyReads: a.monthlyReads,
-          totalReads: a.totalReads,
-          trendingDelta: a.trendingDelta || "+100%",
-          thumbnailUrl: a.coverImage || undefined,
-        }));
+        articles = records.map(mapDbArticleToArticle);
 
         for (const art of articles) {
           addArticle(art);

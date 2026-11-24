@@ -176,3 +176,71 @@ export function searchArticles(query: string): Article[] {
     .sort((a, b) => b.score - a.score)
     .map((entry) => entry.article);
 }
+
+export function mapDbArticleToArticle(a: any): Article {
+  const formattedPrice =
+    typeof a.price === "number"
+      ? `₦${a.price.toLocaleString()}`
+      : String(a.price || "₦3,500");
+
+  const catConfig = exploreCategories.find(
+    (c) => c.slug.toLowerCase() === (a.categorySlug || "").toLowerCase()
+  );
+  const categoryLabel = catConfig
+    ? catConfig.label
+    : a.categorySlug
+    ? a.categorySlug.replace(/-/g, " ").toUpperCase()
+    : "GENERAL";
+
+  const parsedTools: ArticleTool[] = [];
+  if (Array.isArray(a.keyTakeaways)) {
+    for (const item of a.keyTakeaways) {
+      try {
+        if (typeof item === "string" && item.startsWith("{") && item.includes('"url"')) {
+          const parsed = JSON.parse(item);
+          if (parsed && parsed.url) parsedTools.push(parsed);
+        }
+      } catch {}
+    }
+  }
+
+  let articleLink: string | undefined = undefined;
+  if (Array.isArray(a.tags)) {
+    const linkTag = a.tags.find((t: string) => typeof t === "string" && t.startsWith("link:"));
+    if (linkTag) {
+      articleLink = linkTag.replace(/^link:/, "");
+    }
+  }
+  if (!articleLink && parsedTools.length > 0) {
+    articleLink = parsedTools[0].url;
+  }
+
+  return {
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    description: a.description || "",
+    link: articleLink,
+    thumbnailUrl: a.coverImage || undefined,
+    tools: parsedTools.length > 0 ? parsedTools : undefined,
+    category: categoryLabel,
+    categorySlug: a.categorySlug || "general",
+    price: formattedPrice,
+    readTime: a.readTime || "7 min read",
+    content: a.content,
+    contentSnippet: a.contentSnippet || a.description || "",
+    keyTakeaways: a.keyTakeaways || [],
+    tags: a.tags || [],
+    weeklyReads: a.weeklyReads,
+    monthlyReads: a.monthlyReads,
+    totalReads: a.totalReads,
+    trendingDelta: a.trendingDelta || "+100%",
+    uploadedAt:
+      a.createdAt instanceof Date
+        ? a.createdAt.toISOString()
+        : typeof a.createdAt === "string"
+        ? a.createdAt
+        : undefined,
+  };
+}
+

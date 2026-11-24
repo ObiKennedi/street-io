@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { NewArticlesFeed } from "@/component/dashboard";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { exploreCategories } from "@/component/dashboard/categories.config";
-import { ARTICLES_DATABASE, addArticle, type Article } from "@/lib/articles";
+import { ARTICLES_DATABASE, addArticle, mapDbArticleToArticle, type Article } from "@/lib/articles";
 
 export const metadata: Metadata = {
   title: "Latest Releases · streetio",
@@ -25,37 +24,7 @@ export default async function NewPage() {
     });
 
     if (dbArticles.length > 0) {
-      const mapped: Article[] = dbArticles.map((a) => {
-        const formattedPrice = `₦${a.price.toLocaleString()}`;
-        const catConfig = exploreCategories.find((c) => c.slug === a.categorySlug);
-        const categoryLabel = catConfig
-          ? catConfig.label
-          : a.categorySlug
-          ? a.categorySlug.toUpperCase()
-          : "GENERAL";
-
-        return {
-          id: a.id,
-          slug: a.slug,
-          title: a.title,
-          link: `/article/${a.slug}`,
-          category: categoryLabel,
-          categorySlug: a.categorySlug || "general",
-          price: formattedPrice,
-          readTime: a.readTime || "7 min read",
-          description: a.description,
-          content: a.content,
-          contentSnippet: a.contentSnippet || a.description,
-          keyTakeaways: a.keyTakeaways || [],
-          tags: a.tags || [],
-          weeklyReads: a.weeklyReads,
-          monthlyReads: a.monthlyReads,
-          totalReads: a.totalReads,
-          trendingDelta: a.trendingDelta || "+100%",
-          thumbnailUrl: a.coverImage || undefined,
-          uploadedAt: a.createdAt.toISOString(),
-        };
-      });
+      const mapped: Article[] = dbArticles.map(mapDbArticleToArticle);
 
       for (const item of mapped) {
         addArticle(item);

@@ -7,13 +7,12 @@ import {
   WalletCard,
   CategoryGrid,
   RecentActivity,
-  NewArticlesFeed,
+  DashboardArticlesFeed,
 } from "@/component/dashboard";
 import { getDashboardData } from "@/lib/dashboard";
 import { requireSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { exploreCategories } from "@/component/dashboard/categories.config";
-import { addArticle, type Article } from "@/lib/articles";
+import { mapDbArticleToArticle, ARTICLES_DATABASE, type Article } from "@/lib/articles";
 
 export const metadata: Metadata = {
   title: "Dashboard · streetio",
@@ -28,49 +27,18 @@ export default async function DashboardPage() {
   const userRole = (session.user as { role?: string | null })?.role;
   const isAdmin = userRole === "admin" || userRole === "owner";
 
-  // Fetch published articles from DB and seed in-memory list
-  let initialArticles: Article[] = [];
+  let initialArticles: Article[] = [...ARTICLES_DATABASE];
   try {
     const dbArticles = await prisma.article.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 8,
     });
-
-    initialArticles = dbArticles.map((a) => {
-      const catConfig = exploreCategories.find((c) => c.slug === a.categorySlug);
-      const categoryLabel = catConfig
-        ? catConfig.label
-        : a.categorySlug
-        ? a.categorySlug.toUpperCase()
-        : "GENERAL";
-
-      return {
-        id: a.id,
-        slug: a.slug,
-        title: a.title,
-        link: `/article/${a.slug}`,
-        category: categoryLabel,
-        categorySlug: a.categorySlug || "general",
-        price: `₦${a.price.toLocaleString()}`,
-        readTime: a.readTime || "7 min read",
-        description: a.description,
-        content: a.content,
-        contentSnippet: a.contentSnippet || a.description,
-        thumbnailUrl: a.coverImage || undefined,
-        weeklyReads: a.weeklyReads,
-        monthlyReads: a.monthlyReads,
-        totalReads: a.totalReads,
-        trendingDelta: a.trendingDelta || "+100%",
-        uploadedAt: a.createdAt.toISOString(),
-      } satisfies Article;
-    });
-
-    for (const article of initialArticles) {
-      addArticle(article);
+    if (dbArticles.length > 0) {
+      initialArticles = dbArticles.map(mapDbArticleToArticle);
     }
   } catch (err) {
-    console.error("Prisma error fetching articles for dashboard:", err);
+    console.error("Error loading articles on dashboard page:", err);
   }
 
   return (
@@ -125,11 +93,11 @@ export default async function DashboardPage() {
 
       <WalletCard wallet={data.wallet} />
 
-      <RecentActivity items={data.recentActivity} />
-
-      <NewArticlesFeed initialArticles={initialArticles} />
-
       <CategoryGrid />
+
+      <DashboardArticlesFeed initialArticles={initialArticles} isAdmin={isAdmin} />
+
+      <RecentActivity items={data.recentActivity} />
     </div>
   );
 }
