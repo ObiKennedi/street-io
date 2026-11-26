@@ -280,31 +280,6 @@ export function ArticleDetailView({
 
       </header>
 
-      {/* ================= COMPACT TOOL LINK (TOP OF ARTICLE) ================= */}
-      {displayTools.length > 0 && (
-        <div className="article-tool-compact" aria-label="Tool Link">
-          {displayTools.map((tool) => (
-            <div key={tool.id} className="article-tool-compact__item">
-              <div className="article-tool-compact__info">
-                <strong className="article-tool-compact__name">{tool.name}</strong>
-                {tool.description && (
-                  <span className="article-tool-compact__desc">{tool.description}</span>
-                )}
-              </div>
-              <a
-                href={tool.url}
-                target={tool.url.startsWith("http") ? "_blank" : undefined}
-                rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                className="article-tool-compact__btn"
-              >
-                <span>Open Tool</span>
-                <span aria-hidden="true">↗</span>
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* ACCESS CONTROL: Paid vs Unpaid */}
       {!isUnlocked ? (
         /* ================= LOCKED STATE: GIANT PADLOCK PAYWALL ================= */
@@ -386,7 +361,7 @@ export function ArticleDetailView({
               <li>
                 <span>✓</span>
                 <span>
-                  <strong>Curated Operational Tools:</strong> Direct access to field verification utilities listed above and below.
+                  <strong>Curated Operational Tools:</strong> Direct access to the tools and resource links included inside this guide.
                 </span>
               </li>
             </ul>
@@ -642,6 +617,31 @@ export function ArticleDetailView({
             <span>✓ OPERATIONAL CLEARANCE GRANTED · PLAYBOOK UNLOCKED</span>
             <span>VERIFIED ACCESS</span>
           </div>
+
+          {/* ================= COMPACT TOOL LINK (INSIDE UNLOCKED ARTICLE) ================= */}
+          {displayTools.length > 0 && (
+            <div className="article-tool-compact" aria-label="Tool Link">
+              {displayTools.map((tool) => (
+                <div key={tool.id} className="article-tool-compact__item">
+                  <div className="article-tool-compact__info">
+                    <strong className="article-tool-compact__name">{tool.name}</strong>
+                    {tool.description && (
+                      <span className="article-tool-compact__desc">{tool.description}</span>
+                    )}
+                  </div>
+                  <a
+                    href={tool.url}
+                    target={tool.url.startsWith("http") ? "_blank" : undefined}
+                    rel={tool.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                    className="article-tool-compact__btn"
+                  >
+                    <span>Open Tool</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="article-unlocked-body__content">
             {article.content && article.content.trim() ? (
