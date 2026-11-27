@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { unlockArticleForUser, isArticleUnlockedForUser } from "@/lib/paga";
-import { getArticleBySlug, ARTICLES_DATABASE } from "@/lib/articles";
+import { getArticleBySlug, ARTICLES_DATABASE, mapDbArticleToArticle } from "@/lib/articles";
 import { debitUserWalletState, resolveUserWalletState } from "@/lib/manual-payments";
 
 export async function POST(req: Request) {
@@ -31,24 +31,7 @@ export async function POST(req: Request) {
           where: { OR: [{ slug: articleSlug }, { id: articleSlug }] },
         });
         if (dbArticle) {
-          article = {
-            id: dbArticle.id,
-            slug: dbArticle.slug,
-            title: dbArticle.title,
-            category: dbArticle.categorySlug || "GENERAL",
-            categorySlug: dbArticle.categorySlug || "general",
-            price: typeof dbArticle.price === "number" ? `₦${dbArticle.price.toLocaleString()}` : String(dbArticle.price),
-            readTime: dbArticle.readTime || "7 min read",
-            description: dbArticle.description,
-            content: dbArticle.content,
-            contentSnippet: dbArticle.contentSnippet || dbArticle.description,
-            keyTakeaways: dbArticle.keyTakeaways || [],
-            tags: dbArticle.tags || [],
-            weeklyReads: dbArticle.weeklyReads,
-            monthlyReads: dbArticle.monthlyReads,
-            totalReads: dbArticle.totalReads,
-            trendingDelta: dbArticle.trendingDelta || "+100%",
-          };
+          article = mapDbArticleToArticle(dbArticle);
         }
       } catch {}
     }
@@ -70,6 +53,9 @@ export async function POST(req: Request) {
         articleSlug,
         balance: walletState.balance,
         formattedBalance: walletState.formattedBalance,
+        unlockedContent: article.content || "",
+        unlockedLink: article.link,
+        unlockedTools: article.tools || [],
         message: `You already have unlocked access to "${article.title}".`,
       });
     }
@@ -106,6 +92,9 @@ export async function POST(req: Request) {
       articleSlug,
       balance: debitResult.balance,
       formattedBalance: debitResult.formattedBalance,
+      unlockedContent: article.content || "",
+      unlockedLink: article.link,
+      unlockedTools: article.tools || [],
       message: `Unlocked "${article.title}" successfully! Access granted.`,
     });
   } catch (error) {

@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type Article } from "@/lib/articles";
 import { type ArticleTool } from "@/lib/article-tools";
 import { formatNaira } from "@/lib/paga";
@@ -107,6 +108,7 @@ export function ArticleDetailView({
   initialIsUnlocked = false,
   userWalletBalance = 0,
 }: ArticleDetailViewProps) {
+  const router = useRouter();
   const [isUnlocked, setIsUnlocked] = useState(initialIsUnlocked);
   const [walletBalance, setWalletBalance] = useState(userWalletBalance);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -118,11 +120,19 @@ export function ArticleDetailView({
   const isAmountValid = enteredAmount >= numericPrice;
   const effectivePayAmount = isAmountValid ? enteredAmount : numericPrice;
 
-  // Active tools & links state with localStorage fallback for instant admin upload preview
-  const [activeTools, setActiveTools] = useState<ArticleTool[]>(tools);
-  const [activeLink, setActiveLink] = useState<string | undefined>(article.link);
+  // Paid content, tools & links state — strictly empty until unlocked
+  const [activeContent, setActiveContent] = useState<string | undefined>(
+    initialIsUnlocked ? article.content : undefined
+  );
+  const [activeTools, setActiveTools] = useState<ArticleTool[]>(
+    initialIsUnlocked ? tools : []
+  );
+  const [activeLink, setActiveLink] = useState<string | undefined>(
+    initialIsUnlocked ? article.link : undefined
+  );
 
   const displayTools = useMemo(() => {
+    if (!isUnlocked) return [];
     if (activeTools && activeTools.length > 0) return activeTools;
     if (activeLink && (activeLink.startsWith("http://") || activeLink.startsWith("https://"))) {
       return [
@@ -135,15 +145,19 @@ export function ArticleDetailView({
       ];
     }
     return [];
-  }, [activeTools, activeLink, article.slug, article.title, article.description]);
+  }, [isUnlocked, activeTools, activeLink, article.slug, article.title, article.description]);
 
   useEffect(() => {
-    if (tools && tools.length > 0) {
-      setActiveTools(tools);
+    if (initialIsUnlocked) {
+      setIsUnlocked(true);
+      if (article.content) setActiveContent(article.content);
+      if (tools && tools.length > 0) setActiveTools(tools);
+      if (article.link) setActiveLink(article.link);
     }
-  }, [tools]);
+  }, [initialIsUnlocked, article.content, article.link, tools]);
 
   useEffect(() => {
+    if (!isUnlocked) return;
     try {
       const local = localStorage.getItem("streetio_custom_articles");
       if (local) {
@@ -152,6 +166,9 @@ export function ArticleDetailView({
           (a) => a.slug === article.slug || a.id === article.id
         );
         if (match) {
+          if (match.content && !activeContent) {
+            setActiveContent(match.content);
+          }
           if (match.tools && match.tools.length > 0) {
             setActiveTools(match.tools);
           } else if (match.link && (match.link.startsWith("http://") || match.link.startsWith("https://"))) {
@@ -174,7 +191,7 @@ export function ArticleDetailView({
         }
       }
     } catch {}
-  }, [article.slug, article.id]);
+  }, [isUnlocked, article.slug, article.id, activeContent]);
 
   // Server-side unlock is authoritative — no client-side query param or localStorage bypass
 
@@ -188,12 +205,15 @@ export function ArticleDetailView({
             setWalletBalance(data.wallet.balance);
           }
           if (Array.isArray(data.wallet.unlockedSlugs) && data.wallet.unlockedSlugs.includes(article.slug.toLowerCase())) {
-            setIsUnlocked(true);
+            if (!isUnlocked) {
+              setIsUnlocked(true);
+              router.refresh();
+            }
           }
         }
       })
       .catch(() => {});
-  }, [article.slug]);
+  }, [article.slug, isUnlocked, router]);
 
   const handleWalletUnlock = async () => {
     setErrorMsg(null);
@@ -213,9 +233,16 @@ export function ArticleDetailView({
         if (typeof data.balance === "number") {
           setWalletBalance(data.balance);
         }
-        try {
-          localStorage.setItem(`unlocked_${article.slug}`, "true");
-        } catch {}
+        if (typeof data.unlockedContent === "string" && data.unlockedContent.trim()) {
+          setActiveContent(data.unlockedContent);
+        }
+        if (Array.isArray(data.unlockedTools) && data.unlockedTools.length > 0) {
+          setActiveTools(data.unlockedTools);
+        }
+        if (typeof data.unlockedLink === "string" && data.unlockedLink) {
+          setActiveLink(data.unlockedLink);
+        }
+        router.refresh();
       } else if (res.status === 402) {
         setErrorMsg("Insufficient wallet balance. Please transfer funds to our Moniepoint account.");
       } else {
@@ -603,7 +630,7 @@ export function ArticleDetailView({
               Step 1: Execute immediate out-of-band callback using pre-established telecommunications records. Never utilize numbers embedded inside suspect invoices or digital contracts...
             </p>
             <p>
-              Step 2: Cross-reference metadata using ExifTool extraction matrices and coordinate mapping to identify jurisdictional divergence between claims and physical infrastructure...
+              Step 2: Follow the step-by-step execution checklist and curated resource workflow included inside this unlocked guide...
             </p>
           </div>
         </section>
@@ -644,8 +671,8 @@ export function ArticleDetailView({
           )}
 
           <div className="article-unlocked-body__content">
-            {article.content && article.content.trim() ? (
-              renderArticleContent(article.content)
+            {activeContent && activeContent.trim() ? (
+              renderArticleContent(activeContent)
             ) : (
               <>
                 <h2>1. Adversary Mechanics & Situational Modus Operandi</h2>

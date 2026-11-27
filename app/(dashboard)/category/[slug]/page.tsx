@@ -67,10 +67,14 @@ export default async function CategoryPage({ params }: Props) {
     .filter((c) => c.slug !== category.slug)
     .slice(0, 4);
 
+  const publicArticles: Article[] = articles.map(
+    ({ content, link, tools, keyTakeaways, tags, ...preview }) => preview
+  );
+
   return (
     <CategoryDetailView
       category={category}
-      articles={articles}
+      articles={publicArticles}
       relatedCategories={relatedCategories}
     />
   );

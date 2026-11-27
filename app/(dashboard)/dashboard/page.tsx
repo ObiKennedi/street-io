@@ -41,6 +41,10 @@ export default async function DashboardPage() {
     console.error("Error loading articles on dashboard page:", err);
   }
 
+  const publicArticles: Article[] = initialArticles.map(
+    ({ content, link, tools, keyTakeaways, tags, ...preview }) => preview
+  );
+
   return (
     <div className="dash-feed">
       {isAdmin && (
@@ -95,7 +99,7 @@ export default async function DashboardPage() {
 
       <CategoryGrid />
 
-      <DashboardArticlesFeed initialArticles={initialArticles} isAdmin={isAdmin} />
+      <DashboardArticlesFeed initialArticles={publicArticles} isAdmin={isAdmin} />
 
       <RecentActivity items={data.recentActivity} />
     </div>

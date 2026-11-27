@@ -179,10 +179,22 @@ export default async function ArticleMicroPage({ params }: Props) {
 
   const walletBalance = walletState ? walletState.balance : 0;
 
+  // Never expose tool links, external URLs, or full article content to unpaid users
+  const safeArticle: Article = isUnlocked
+    ? article
+    : {
+        ...article,
+        content: undefined,
+        link: undefined,
+        tools: undefined,
+        keyTakeaways: [],
+        tags: [],
+      };
+
   return (
     <ArticleDetailView
-      article={article}
-      tools={tools}
+      article={safeArticle}
+      tools={isUnlocked ? tools : []}
       initialIsUnlocked={isUnlocked}
       userWalletBalance={walletBalance}
     />

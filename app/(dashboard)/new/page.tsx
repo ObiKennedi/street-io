@@ -35,5 +35,9 @@ export default async function NewPage() {
     console.error("Prisma error fetching articles in /new:", err);
   }
 
-  return <NewArticlesFeed initialArticles={initialArticles} />;
+  const publicArticles: Article[] = initialArticles.map(
+    ({ content, link, tools, keyTakeaways, tags, ...preview }) => preview
+  );
+
+  return <NewArticlesFeed initialArticles={publicArticles} />;
 }

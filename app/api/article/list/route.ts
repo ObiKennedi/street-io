@@ -35,19 +35,26 @@ export async function GET() {
       }
     }
 
+    const publicArticles = (articles.length > 0 ? articles : INITIAL_ADMIN_ARTICLES).map(
+      ({ content, link, tools, keyTakeaways, tags, ...preview }) => preview
+    );
+
     return NextResponse.json(
       {
         success: true,
-        articles: articles.length > 0 ? articles : INITIAL_ADMIN_ARTICLES,
+        articles: publicArticles,
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {
     console.error("Error fetching articles list from DB:", err);
+    const publicFallback = INITIAL_ADMIN_ARTICLES.map(
+      ({ content, link, tools, keyTakeaways, tags, ...preview }) => preview
+    );
     return NextResponse.json(
       {
         success: true,
-        articles: INITIAL_ADMIN_ARTICLES,
+        articles: publicFallback,
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
